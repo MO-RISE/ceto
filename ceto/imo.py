@@ -90,6 +90,42 @@ def calculate_fuel_volume(mass, fuel_type):
         return mass / 790
 
 
+def calculate_fuel_mass(volume, fuel_type):
+    """Calculate the fuel mass
+
+    Arguments:
+    -----------
+
+        volume: float
+            Volume of fuel (m3).
+
+        fuel_type: string
+            Type of fuel. Possible values:
+                - HFO: Heavy Fuel Oil
+                - MDO: Marine Diesel Oil
+                - LNG: Liquid Natural Gas
+                - MeOH: Methanol
+
+    Returns:
+    --------
+
+        float
+            Mass of the fuel (kg).
+
+    Source:
+        Table 10 in page 294 of [1].
+    """
+    verify_set("fuel_type", fuel_type, FUEL_TYPES)
+    if fuel_type == "HFO":
+        return volume * 1001
+    elif fuel_type == "MDO":
+        return volume * 895
+    elif fuel_type == "LNG":
+        return volume * 450
+    else:
+        return volume * 790
+
+
 def estimate_specific_fuel_consumption(engine_load, engine_type, fuel_type, engine_age):
     """
     According to [1]
@@ -688,7 +724,11 @@ def estimate_fuel_consumption_of_auxiliary_systems(vessel_data, operation_mode, 
 
 
 def estimate_fuel_consumption(
-    vessel_data, voyage_profile, include_steam_boilers=True, limit_7_percent=True
+    vessel_data,
+    voyage_profile,
+    include_steam_boilers=True,
+    limit_7_percent=True,
+    delta_w=None,
 ):
     """Estimate the fuel consumption of a vessel
 
@@ -719,18 +759,19 @@ def estimate_fuel_consumption(
 
     # Manoeuvring
     total_time_manoeuvring = sum(
-        [
-            distance / speed
-            for distance, speed, draft in voyage_profile["legs_manoeuvring"]
-        ]
+        [distance / speed for distance, speed, _ in voyage_profile["legs_manoeuvring"]]
     )
     fc_aux_manoeuvring = estimate_fuel_consumption_of_auxiliary_systems(
         vessel_data, "manoeuvring", total_time_manoeuvring
     )
 
     fc_prop_manoeuvring = 0
+    dist_manoeuvring = 0.0
     for distance, speed, draft in voyage_profile["legs_manoeuvring"]:
-        load = estimate_propulsion_engine_load(speed, draft, vessel_data)
+        load = estimate_propulsion_engine_load(
+            speed, draft, vessel_data, delta_w=delta_w
+        )
+        dist_manoeuvring += distance
         if load < 0.07 and limit_7_percent:
             continue
         sfc = estimate_specific_fuel_consumption(
@@ -741,15 +782,20 @@ def estimate_fuel_consumption(
 
     # At sea
     total_time_at_sea = sum(
-        [distance / speed for distance, speed, draft in voyage_profile["legs_at_sea"]]
+        [distance / speed for distance, speed, _ in voyage_profile["legs_at_sea"]]
     )
     fc_aux_at_sea = estimate_fuel_consumption_of_auxiliary_systems(
         vessel_data, "at_sea", total_time_at_sea
     )
 
     fc_prop_at_sea = 0.0
+    dist_at_sea = 0.0
     for distance, speed, draft in voyage_profile["legs_at_sea"]:
-        load = estimate_propulsion_engine_load(speed, draft, vessel_data)
+
+        load = estimate_propulsion_engine_load(
+            speed, draft, vessel_data, delta_w=delta_w
+        )
+        dist_at_sea += distance
         if load < 0.07 and limit_7_percent:
             continue
         sfc = estimate_specific_fuel_consumption(
@@ -758,54 +804,91 @@ def estimate_fuel_consumption(
         time = distance / speed
         fc_prop_at_sea += installed_propulsion_power * load * sfc * time
 
-    total_fc = (
-        fc_aux_at_berth["auxiliary_engine"]
-        + fc_aux_anchored["auxiliary_engine"]
-        + fc_aux_manoeuvring["auxiliary_engine"]
-        + fc_prop_manoeuvring
-        + fc_aux_at_sea["auxiliary_engine"]
-        + fc_prop_at_sea
+    fc_at_berth = fc_aux_at_berth["auxiliary_engine"]
+    fc_anchored = fc_aux_anchored["auxiliary_engine"]
+    fc_manoeuvring = fc_aux_manoeuvring["auxiliary_engine"] + fc_prop_manoeuvring
+    fc_at_sea = fc_aux_at_sea["auxiliary_engine"] + fc_prop_at_sea
+
+    print(fc_manoeuvring)
+    print(dist_manoeuvring)
+    avg_fc_manoeuvring = (
+        calculate_fuel_volume(
+            fc_manoeuvring, vessel_data["propulsion_engine_fuel_type"]
+        )
+        * 1_000
+        / dist_manoeuvring
+    )
+    avg_fc_at_sea = (
+        calculate_fuel_volume(fc_at_sea, vessel_data["propulsion_engine_fuel_type"])
+        * 1_000
+        / dist_at_sea
     )
 
-    fc_breakdown = {
+    fc_ = {
+        "total_kg": fc_at_berth + fc_anchored + fc_manoeuvring + fc_at_sea,
         "at_berth": {
+            "sub_total_kg": fc_at_berth,
             "auxiliary_engine": fc_aux_at_berth["auxiliary_engine"],
-            "steam_boiler": fc_aux_at_berth["steam_boiler"],
         },
         "anchored": {
+            "sub_total_kg": fc_anchored,
             "auxiliary_engine": fc_aux_anchored["auxiliary_engine"],
-            "steam_boiler": fc_aux_anchored["steam_boiler"],
         },
         "manoeuvring": {
+            "sub_total_kg": fc_manoeuvring,
             "auxiliary_engine": fc_aux_manoeuvring["auxiliary_engine"],
-            "steam_boiler": fc_aux_manoeuvring["steam_boiler"],
             "propulsion_engine": fc_prop_manoeuvring,
+            "average_fuel_consumption_l_per_nm": avg_fc_manoeuvring,
         },
         "at_sea": {
-            "auxiliary_engine": fc_aux_at_sea["auxiliary_engine"],
-            "steam_boiler": fc_aux_at_sea["steam_boiler"],
-            "propulsion_engine": fc_prop_at_sea,
+            "sub_total_kg": fc_at_sea,
+            "auxiliary_engine_kg": fc_aux_at_sea["auxiliary_engine"],
+            "propulsion_engine_kg": fc_prop_at_sea,
+            "average_fuel_consumption_l_per_nm": avg_fc_at_sea,
         },
     }
 
     if include_steam_boilers:
-        fc_boiler = (
-            fc_aux_at_berth["steam_boiler"]
-            + fc_aux_anchored["steam_boiler"]
-            + fc_aux_manoeuvring["steam_boiler"]
-            + fc_aux_at_sea["steam_boiler"]
-        )
-        total_fc += fc_boiler
-        fc_breakdown["at_berth"]["steam_boiler"] = fc_aux_at_berth["steam_boiler"]
-        fc_breakdown["anchored"]["steam_boiler"] = fc_aux_anchored["steam_boiler"]
-        fc_breakdown["manoeuvring"]["steam_boiler"] = fc_aux_manoeuvring["steam_boiler"]
-        fc_breakdown["at_sea"]["steam_boiler"] = fc_aux_at_sea["steam_boiler"]
 
-    return total_fc, fc_breakdown
+        fc_at_berth += fc_aux_at_berth["steam_boiler"]
+        fc_anchored += fc_aux_anchored["steam_boiler"]
+        fc_manoeuvring += fc_aux_manoeuvring["steam_boiler"]
+        fc_at_sea += fc_aux_at_sea["steam_boiler"]
+
+        avg_fc_manoeuvring = (
+            calculate_fuel_volume(
+                fc_manoeuvring, vessel_data["propulsion_engine_fuel_type"]
+            )
+            * 1_000
+            / dist_manoeuvring
+        )
+        avg_fc_at_sea = (
+            calculate_fuel_volume(fc_at_sea, vessel_data["propulsion_engine_fuel_type"])
+            * 1_000
+            / dist_at_sea
+        )
+
+        fc_["total_kg"] = fc_at_berth + fc_anchored + fc_manoeuvring + fc_at_sea
+        fc_["at_berth"]["steam_boiler"] = fc_aux_at_berth["steam_boiler"]
+        fc_["at_berth"]["sub_total_kg"] = fc_at_berth
+        fc_["anchored"]["steam_boiler"] = fc_aux_anchored["steam_boiler"]
+        fc_["anchered"]["sub_total_kg"] = fc_anchored
+        fc_["manoeuvring"]["steam_boiler"] = fc_aux_manoeuvring["steam_boiler"]
+        fc_["manoeuvring"]["sub_total_kg"] = fc_manoeuvring
+        fc_["manoeuvring"]["average_fuel_consumption_l_per_nm"] = avg_fc_manoeuvring
+        fc_["at_sea"]["steam_boiler"] = fc_aux_at_sea["steam_boiler"]
+        fc_["at_sea"]["sub_total_kg"] = fc_at_sea
+        fc_["at_sea"]["average_fuel_consumption_l_per_nm"] = avg_fc_at_sea
+
+    return fc_
 
 
 def estimate_energy_consumption(
-    vessel_data, voyage_profile, include_steam_boilers=True, limit_7_percent=True
+    vessel_data,
+    voyage_profile,
+    include_steam_boilers=True,
+    limit_7_percent=True,
+    delta_w=None,
 ):
     """Estimate the energy consumption of a vessel
 
@@ -868,7 +951,9 @@ def estimate_energy_consumption(
     propulsion_energy_manoeuvring = []
     propulsion_power_manoeuvring = []
     for distance, speed, draft in voyage_profile["legs_manoeuvring"]:
-        load = estimate_propulsion_engine_load(speed, draft, vessel_data)
+        load = estimate_propulsion_engine_load(
+            speed, draft, vessel_data, delta_w=delta_w
+        )
         if load < 0.07 and limit_7_percent:
             propulsion_energy_manoeuvring.append(0.0)
             propulsion_power_manoeuvring.append(0.0)
@@ -892,8 +977,9 @@ def estimate_energy_consumption(
     propulsion_energy_at_sea = []
     propulsion_power_at_sea = []
     for distance, speed, draft in voyage_profile["legs_at_sea"]:
-        load = estimate_propulsion_engine_load(speed, draft, vessel_data)
-        print(f"load {load}")
+        load = estimate_propulsion_engine_load(
+            speed, draft, vessel_data, delta_w=delta_w
+        )
         if load < 0.07 and limit_7_percent:
             propulsion_energy_at_sea.append(0.0)
             propulsion_power_at_sea.append(0.0)
