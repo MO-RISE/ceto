@@ -809,35 +809,40 @@ def estimate_fuel_consumption(
     fc_manoeuvring = fc_aux_manoeuvring["auxiliary_engine"] + fc_prop_manoeuvring
     fc_at_sea = fc_aux_at_sea["auxiliary_engine"] + fc_prop_at_sea
 
-    print(fc_manoeuvring)
-    print(dist_manoeuvring)
-    avg_fc_manoeuvring = (
-        calculate_fuel_volume(
-            fc_manoeuvring, vessel_data["propulsion_engine_fuel_type"]
+    if len(voyage_profile["legs_manoeuvring"]) != 0:
+        avg_fc_manoeuvring = (
+            calculate_fuel_volume(
+                fc_manoeuvring, vessel_data["propulsion_engine_fuel_type"]
+            )
+            * 1_000
+            / dist_manoeuvring
         )
-        * 1_000
-        / dist_manoeuvring
-    )
-    avg_fc_at_sea = (
-        calculate_fuel_volume(fc_at_sea, vessel_data["propulsion_engine_fuel_type"])
-        * 1_000
-        / dist_at_sea
-    )
+    else:
+        avg_fc_manoeuvring = 0
+
+    if len(voyage_profile["legs_manoeuvring"]) != 0:
+        avg_fc_at_sea = (
+            calculate_fuel_volume(fc_at_sea, vessel_data["propulsion_engine_fuel_type"])
+            * 1_000
+            / dist_at_sea
+        )
+    else:
+        avg_fc_at_sea = 0
 
     fc_ = {
         "total_kg": fc_at_berth + fc_anchored + fc_manoeuvring + fc_at_sea,
         "at_berth": {
             "sub_total_kg": fc_at_berth,
-            "auxiliary_engine": fc_aux_at_berth["auxiliary_engine"],
+            "auxiliary_engine_kg": fc_aux_at_berth["auxiliary_engine"],
         },
         "anchored": {
             "sub_total_kg": fc_anchored,
-            "auxiliary_engine": fc_aux_anchored["auxiliary_engine"],
+            "auxiliary_engine_kg": fc_aux_anchored["auxiliary_engine"],
         },
         "manoeuvring": {
             "sub_total_kg": fc_manoeuvring,
-            "auxiliary_engine": fc_aux_manoeuvring["auxiliary_engine"],
-            "propulsion_engine": fc_prop_manoeuvring,
+            "auxiliary_engine_kg": fc_aux_manoeuvring["auxiliary_engine"],
+            "propulsion_engine_kg": fc_prop_manoeuvring,
             "average_fuel_consumption_l_per_nm": avg_fc_manoeuvring,
         },
         "at_sea": {
@@ -855,28 +860,37 @@ def estimate_fuel_consumption(
         fc_manoeuvring += fc_aux_manoeuvring["steam_boiler"]
         fc_at_sea += fc_aux_at_sea["steam_boiler"]
 
-        avg_fc_manoeuvring = (
-            calculate_fuel_volume(
-                fc_manoeuvring, vessel_data["propulsion_engine_fuel_type"]
+        if len(voyage_profile["legs_manoeuvring"]) != 0:
+            avg_fc_manoeuvring = (
+                calculate_fuel_volume(
+                    fc_manoeuvring, vessel_data["propulsion_engine_fuel_type"]
+                )
+                * 1_000
+                / dist_manoeuvring
             )
-            * 1_000
-            / dist_manoeuvring
-        )
-        avg_fc_at_sea = (
-            calculate_fuel_volume(fc_at_sea, vessel_data["propulsion_engine_fuel_type"])
-            * 1_000
-            / dist_at_sea
-        )
+        else:
+            avg_fc_manoeuvring = 0
+
+        if len(voyage_profile["legs_manoeuvring"]) != 0:
+            avg_fc_at_sea = (
+                calculate_fuel_volume(
+                    fc_at_sea, vessel_data["propulsion_engine_fuel_type"]
+                )
+                * 1_000
+                / dist_at_sea
+            )
+        else:
+            avg_fc_at_sea = 0
 
         fc_["total_kg"] = fc_at_berth + fc_anchored + fc_manoeuvring + fc_at_sea
-        fc_["at_berth"]["steam_boiler"] = fc_aux_at_berth["steam_boiler"]
+        fc_["at_berth"]["steam_boiler_kg"] = fc_aux_at_berth["steam_boiler"]
         fc_["at_berth"]["sub_total_kg"] = fc_at_berth
-        fc_["anchored"]["steam_boiler"] = fc_aux_anchored["steam_boiler"]
-        fc_["anchered"]["sub_total_kg"] = fc_anchored
-        fc_["manoeuvring"]["steam_boiler"] = fc_aux_manoeuvring["steam_boiler"]
+        fc_["anchored"]["steam_boiler_kg"] = fc_aux_anchored["steam_boiler"]
+        fc_["anchored"]["sub_total_kg"] = fc_anchored
+        fc_["manoeuvring"]["steam_boiler_kg"] = fc_aux_manoeuvring["steam_boiler"]
         fc_["manoeuvring"]["sub_total_kg"] = fc_manoeuvring
         fc_["manoeuvring"]["average_fuel_consumption_l_per_nm"] = avg_fc_manoeuvring
-        fc_["at_sea"]["steam_boiler"] = fc_aux_at_sea["steam_boiler"]
+        fc_["at_sea"]["steam_boiler_kg"] = fc_aux_at_sea["steam_boiler"]
         fc_["at_sea"]["sub_total_kg"] = fc_at_sea
         fc_["at_sea"]["average_fuel_consumption_l_per_nm"] = avg_fc_at_sea
 

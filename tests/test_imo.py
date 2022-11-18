@@ -146,12 +146,12 @@ def test_estimate_fuel_consumption():
         "legs_manoeuvring": [],
         "legs_at_sea": [],
     }
-    fc_, fc_breakdown = estimate_fuel_consumption(DUMMY_VESSEL_DATA, vp0)
-    assert fc_ == 0
-    assert max(fc_breakdown["at_berth"].values()) == 0
-    assert max(fc_breakdown["anchored"].values()) == 0
-    assert max(fc_breakdown["manoeuvring"].values()) == 0
-    assert max(fc_breakdown["at_sea"].values()) == 0
+    fc_ = estimate_fuel_consumption(DUMMY_VESSEL_DATA, vp0)
+    assert fc_["total_kg"] == 0
+    assert max(fc_["at_berth"].values()) == 0
+    assert max(fc_["anchored"].values()) == 0
+    assert max(fc_["manoeuvring"].values()) == 0
+    assert max(fc_["at_sea"].values()) == 0
 
     design_draft = DUMMY_VESSEL_DATA["design_draft"]
     vp1 = {
@@ -161,18 +161,18 @@ def test_estimate_fuel_consumption():
         "legs_at_sea": [(5, 5, design_draft), (10, 10, design_draft)],
     }
 
-    fc_, fc_breakdown = estimate_fuel_consumption(DUMMY_VESSEL_DATA, vp1)
-    assert fc_ != approx(0.0)
-    assert fc_breakdown["at_berth"]["auxiliary_engine"] != approx(0.0)
-    assert fc_breakdown["anchored"]["auxiliary_engine"] != approx(0.0)
-    assert fc_breakdown["manoeuvring"]["auxiliary_engine"] != approx(0.0)
-    assert fc_breakdown["at_sea"]["auxiliary_engine"] != approx(0.0)
+    fc_ = estimate_fuel_consumption(DUMMY_VESSEL_DATA, vp1)
+    assert fc_["total_kg"] != approx(0.0)
+    assert fc_["at_berth"]["auxiliary_engine_kg"] != approx(0.0)
+    assert fc_["anchored"]["auxiliary_engine_kg"] != approx(0.0)
+    assert fc_["manoeuvring"]["auxiliary_engine_kg"] != approx(0.0)
+    assert fc_["at_sea"]["auxiliary_engine_kg"] != approx(0.0)
 
     # No boiler
-    assert fc_breakdown["at_berth"]["steam_boiler"] == approx(0.0)
-    assert fc_breakdown["anchored"]["steam_boiler"] == approx(0.0)
-    assert fc_breakdown["manoeuvring"]["steam_boiler"] == approx(0.0)
-    assert fc_breakdown["at_sea"]["steam_boiler"] == approx(0.0)
+    assert fc_["at_berth"]["steam_boiler_kg"] == approx(0.0)
+    assert fc_["anchored"]["steam_boiler_kg"] == approx(0.0)
+    assert fc_["manoeuvring"]["steam_boiler_kg"] == approx(0.0)
+    assert fc_["at_sea"]["steam_boiler_kg"] == approx(0.0)
 
-    assert fc_breakdown["manoeuvring"]["propulsion_engine"] != approx(0.0)
-    assert fc_breakdown["at_sea"]["propulsion_engine"] != approx(0.0)
+    assert fc_["manoeuvring"]["propulsion_engine_kg"] != approx(0.0)
+    assert fc_["at_sea"]["propulsion_engine_kg"] != approx(0.0)
