@@ -45,7 +45,7 @@ def estimate_electrical_engine(power):
 
     # The range of values comes from the statistical analysis of
     # electrical engines.
-    verify_range("power", power, 50, 1100)
+    verify_range("power", power, 50, 1500)
     power = math.ceil(power / 10) * 10
     details = {}
     details["volume"] = 0.0006 * power
@@ -104,7 +104,7 @@ def estimate_change_in_draft(vessel_data, load_change):
     """
 
     # Approximations of length and breadth on waterline (l_wl, b_wl)
-    l_wl = vessel_data["length"] / 0.97  # See Ch 1. p. 1 in [1]
+    l_wl = vessel_data["length"] * 0.98
     b_wl = vessel_data["beam"]
 
     # Approximation of design block coefficient (c_b)
@@ -112,7 +112,7 @@ def estimate_change_in_draft(vessel_data, load_change):
     c_b = 0.7 + (1 / 8) * math.atan((23 - 100 * f_n) / 4)
 
     # Approximation of the waterplane area coefficient (c_wp)
-    c_wp = (1 + 2 * c_b) / 3  # see Ch 1.6 p. 31 in [2]
+    c_wp = (1 + 2 * c_b) / 3  # see Ch 1.6 p. 31 in [1]
 
     # Waterplane area (a_wp)
     a_wp = c_wp * l_wl * b_wl
@@ -276,7 +276,7 @@ def estimate_vessel_battery_system(vessel_data, voyage_profile):
 
     """
 
-    energy, maximum_power, _ = estimate_energy_consumption(
+    energy = estimate_energy_consumption(
         vessel_data,
         voyage_profile,
         include_steam_boilers=False,
@@ -285,12 +285,20 @@ def estimate_vessel_battery_system(vessel_data, voyage_profile):
     )
 
     # Batteries
-    battery_capacity = energy / 0.8  # Depth of discharge of 80%
+    battery_capacity = energy["total_kWh"] / 0.8  # Depth of discharge of 80%
     mass_battery_system = (battery_capacity + 2.8172) / 0.075
     volume_battery_system = (battery_capacity + 5.0624) / 72.268
 
     # Electrical engine
-    engine_power = maximum_power / vessel_data["number_of_propulsion_engines"]
+    if vessel_data["double_ended"]:
+        engine_power = energy["maximum_required_propulsion_power_kW"] / (
+            vessel_data["number_of_propulsion_engines"] / 2
+        )
+    else:
+        engine_power = (
+            energy["maximum_required_propulsion_power_kW"]
+            / vessel_data["number_of_propulsion_engines"]
+        )
     el_engine = estimate_electrical_engine(engine_power)
 
     # Total weight and volume
@@ -304,32 +312,27 @@ def estimate_vessel_battery_system(vessel_data, voyage_profile):
     )
 
     # Costs
-    electricity_cost = battery_capacity * COST_ESTIMATES["electricity_cost_sek_per_kWh"]
-    battery_system_cost = (
-        mass_battery_system * COST_ESTIMATES["battery_cost_sek_per_kWh"]
-    )
-    components_cost = (
-        battery_system_cost
-        + el_engine["cost"] * vessel_data["number_of_propulsion_engines"]
-    )
+    # electricity_cost = battery_capacity * COST_ESTIMATES["electricity_cost_sek_per_kWh"]
+    # battery_system_cost = (
+    #     mass_battery_system * COST_ESTIMATES["battery_cost_sek_per_kWh"]
+    # )
+    # components_cost = (
+    #     battery_system_cost
+    #     + el_engine["cost"] * vessel_data["number_of_propulsion_engines"]
+    # )
 
     return {
         "total_weight_kg": total_mass_battery_system,
         "total_volume_m3": total_volume_battery_system,
-        "energy_cost": electricity_cost,
-        "components_cost_sek": components_cost,
-        "recharging_time_with_100_kW_charger_minutes": battery_capacity / 100 * 60,
-        "breakdown": {
+        "details": {
             "battery_system": {
                 "weight_kg": mass_battery_system,
                 "volume_m3": volume_battery_system,
-                "cost_sek": battery_system_cost,
                 "capacity_kWh": battery_capacity,
             },
             "electrical_engines": {
                 "weight_per_engine_kg": el_engine["weight"],
                 "volume_per_engine_m3": el_engine["volume"],
-                "cost_per_engine_sek": el_engine["cost"],
                 "power_per_engine_kW": el_engine["power"],
                 "number_of_engines": vessel_data["number_of_propulsion_engines"],
             },
@@ -371,7 +374,7 @@ def estimate_vessel_gas_hydrogen_system(
             Albuquerque, NM (United States).
 
     """
-    energy, maximum_power, _ = estimate_energy_consumption(
+    energy = estimate_energy_consumption(
         vessel_data,
         voyage_profile,
         include_steam_boilers=False,
@@ -380,14 +383,24 @@ def estimate_vessel_gas_hydrogen_system(
     )
 
     # Hydrogen
-    energy_as_hydrogen = energy / fuel_cell_efficiency
+    energy_as_hydrogen = energy["total_kWh"] / fuel_cell_efficiency
     mass_hydrogen = energy_as_hydrogen * 3.6 / 119.96
 
     # Fuel cell
-    fuel_cell_system = estimate_fuel_cell_system(maximum_power)
+    fuel_cell_system = estimate_fuel_cell_system(
+        energy["maximum_required_total_power_kW"]
+    )
 
     # Electrical engine
-    engine_power = maximum_power / vessel_data["number_of_propulsion_engines"]
+    if vessel_data["double_ended"]:
+        engine_power = energy["maximum_required_propulsion_power_kW"] / (
+            vessel_data["number_of_propulsion_engines"] / 2
+        )
+    else:
+        engine_power = (
+            energy["maximum_required_propulsion_power_kW"]
+            / vessel_data["number_of_propulsion_engines"]
+        )
     el_engine = estimate_electrical_engine(engine_power)
 
     # Hydrogen stored as high pressure gas (350 bar / 500 psi)
@@ -413,36 +426,30 @@ def estimate_vessel_gas_hydrogen_system(
         + el_engine["volume"] * vessel_data["number_of_propulsion_engines"]
     )
 
-    # Costs
-    hydrogen_cost = COST_ESTIMATES["green_hydrogen_sek_per_kg"] * mass_hydrogen
-    hydrogen_cost_2030 = (
-        COST_ESTIMATES["green_hydrogen_2030_sek_per_kg"] * mass_hydrogen
-    )
-    tank_cost = COST_ESTIMATES["hydrogen_gas_tank_sek_per_stored_kg"] * mass_hydrogen
-    components_cost = (
-        fuel_cell_system["cost"]
-        + tank_cost
-        + el_engine["cost"] * vessel_data["number_of_propulsion_engines"]
-    )
+    # # Costs
+    # hydrogen_cost = COST_ESTIMATES["green_hydrogen_sek_per_kg"] * mass_hydrogen
+    # hydrogen_cost_2030 = (
+    #     COST_ESTIMATES["green_hydrogen_2030_sek_per_kg"] * mass_hydrogen
+    # )
+    # tank_cost = COST_ESTIMATES["hydrogen_gas_tank_sek_per_stored_kg"] * mass_hydrogen
+    # components_cost = (
+    #     fuel_cell_system["cost"]
+    #     + tank_cost
+    #     + el_engine["cost"] * vessel_data["number_of_propulsion_engines"]
+    # )
 
     return {
         "total_weight_kg": total_mass_gas_system,
         "total_volume_m3": total_volume_gas_system,
-        "hydrogen_fuel_cost_sek": hydrogen_cost,
-        "hydrogen_fuel_cost_2030_sek": hydrogen_cost_2030,
-        "components_cost_sek": components_cost,
-        "refueling_time_minutes": mass_hydrogen / 5 * 3,
-        "breakdown": {
+        "details": {
             "fuel_cell_system": {
                 "weight_kg": fuel_cell_system["weight"],
                 "volume_m3": fuel_cell_system["volume"],
                 "power_kW": fuel_cell_system["power"],
-                "cost_sek": fuel_cell_system["cost"],
             },
             "electrical_engines": {
                 "weight_per_engine_kg": el_engine["weight"],
                 "volume_per_engine_m3": el_engine["volume"],
-                "cost_per_engine_sek": el_engine["cost"],
                 "power_per_engine_kW": el_engine["power"],
                 "number_of_engines": vessel_data["number_of_propulsion_engines"],
             },
@@ -450,11 +457,9 @@ def estimate_vessel_gas_hydrogen_system(
                 "weight_kg": mass_gas_tank,
                 "volume_m3": volume_gas_tank,
                 "capacity_kg": mass_hydrogen,
-                "cost_sek": tank_cost,
             },
             "hydrogen": {
                 "weight_kg": mass_hydrogen,
-                "cost_sek": hydrogen_cost,
             },
         },
     }

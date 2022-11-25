@@ -1,5 +1,5 @@
 """
-[1] IMO. Fourth IMO GHG Study 2020. IMO.
+
 
 
 
@@ -25,9 +25,9 @@ VESSEL_TYPES = [
     "liquified_gas_tanker",
     "oil_tanker",
     "other_liquids_tanker",
-    "ferry",
+    "ferry-pax",
     "cruise",
-    "ropax",
+    "ferry-ropax",
     "refrigerated_cargo",
     "roro",
     "vehicle",
@@ -51,7 +51,103 @@ ENGINE_TYPES = [
     "steam_turbine",
 ]
 
-ENGINE_AGES = ["before_1983", "1984-2000", "after_2001"]
+ENGINE_AGES = ["before_1984", "1984-2000", "after_2000"]
+
+
+MAX_VESSEL_SPEED_KN = 50
+MIN_VESSEL_DRAFT = 0.1
+MAX_VESSEL_DRAFT_M = 25
+MIN_ENGINE_RPM = 50
+MIN_ENGINE_POWER_KW = 5
+MAX_ENGINE_RPM = 5_000
+MAX_ENGINE_POWER_KW = 60_000
+
+
+def verify_vessel_data(vessel_data):
+    """Verify the contents of the 'vessel_data' dictionary"""
+
+    try:
+
+        verify_key_value_range(
+            "vessel_data", "design_speed", vessel_data, 1.0, MAX_VESSEL_SPEED_KN
+        )
+        verify_key_value_range(
+            "vessel_data",
+            "design_draft",
+            vessel_data,
+            MIN_VESSEL_DRAFT,
+            MAX_VESSEL_DRAFT_M,
+        )
+        verify_key_value_set(
+            "vessel_data", "number_of_propulsion_engines", vessel_data, [1, 2]
+        )
+        verify_key_value_range(
+            "vessel_data",
+            "propulsion_engine_power",
+            vessel_data,
+            MIN_ENGINE_POWER_KW,
+            MAX_ENGINE_POWER_KW,
+        )
+        verify_key_value_set(
+            "vessel_data", "propulsion_engine_type", vessel_data, ENGINE_TYPES
+        )
+        verify_key_value_set(
+            "vessel_data", "propulsion_engine_age", vessel_data, ENGINE_AGES
+        )
+        verify_key_value_set(
+            "vessel_data", "propulsion_engine_fuel_type", vessel_data, FUEL_TYPES
+        )
+        verify_key_value_set("vessel_data", "type", vessel_data, VESSEL_TYPES)
+
+        verify_key_value_set("vessel_data", "double_ended", vessel_data, [True, False])
+
+        verify_key_value_range("vessel_data", "size", vessel_data, 0, 500_000)
+
+        # if vessel_data["size"] is not None:
+        # else:
+        #     none_vessel_types = [
+        #         "yacht",
+        #         "service-tug",
+        #         "miscellaneous-fishing",
+        #         "offshore",
+        #         "service-other",
+        #         "miscellaneous-other",
+        #     ]
+        #     if vessel_data["type"] not in none_vessel_types:
+        #         raise ValueError(
+        #             f"The value for the key 'size', in the variable 'vessel_data', can ONLYs be 'None' for the vessel types: {none_vessel_types}."
+        #         )
+
+    except KeyError as err:
+        raise KeyError(
+            f"The variable 'vessel_data' is missing the {err} key-value pair."
+        ) from err
+
+
+def verify_voyage_profile(voyage_profile):
+    """Verify the contents of a voyage_profile variable"""
+    max_hours = 24 * 365  # One year's worth of hours
+    try:
+        verify_key_value_type("voyage_profile", "time_anchored", voyage_profile, float)
+        verify_key_value_range(
+            "voyage_profile", "time_anchored", voyage_profile, 0, max_hours
+        )
+
+        verify_key_value_type("voyage_profile", "time_at_berth", voyage_profile, float)
+        verify_key_value_range(
+            "voyage_profile", "time_at_berth", voyage_profile, 0, max_hours
+        )
+
+        verify_key_value_type(
+            "voyage_profile", "legs_manoeuvring", voyage_profile, list
+        )
+
+        verify_key_value_type("voyage_profile", "legs_at_sea", voyage_profile, list)
+
+    except KeyError as err:
+        raise KeyError(
+            f"The variable 'voyage_profile' is missing the {err} key-value pair."
+        ) from err
 
 
 def calculate_fuel_volume(mass, fuel_type):
@@ -100,11 +196,11 @@ def calculate_fuel_mass(volume, fuel_type):
             Volume of fuel (m3).
 
         fuel_type: string
-            Type of fuel. Possible values:
-                - HFO: Heavy Fuel Oil
-                - MDO: Marine Diesel Oil
-                - LNG: Liquid Natural Gas
-                - MeOH: Methanol
+            Type of fuel used by the engine. The possible types/values are:
+                - 'HFO': Heavy Fuel Oil
+                - 'MDO': Marine Diesel Oil
+                - 'MeOH': Methanol
+                - 'LNG': Liquid Natural Gas
 
     Returns:
     --------
@@ -113,7 +209,10 @@ def calculate_fuel_mass(volume, fuel_type):
             Mass of the fuel (kg).
 
     Source:
-        Table 10 in page 294 of [1].
+    -------
+
+        [1] IMO. Fourth IMO GHG Study 2020. IMO. (Table 10, page 294)
+
     """
     verify_set("fuel_type", fuel_type, FUEL_TYPES)
     if fuel_type == "HFO":
@@ -127,40 +226,40 @@ def calculate_fuel_mass(volume, fuel_type):
 
 
 def estimate_specific_fuel_consumption(engine_load, engine_type, fuel_type, engine_age):
-    """
-    According to [1]
+    """Estimate the the specific fuel consumption of an engine
 
     NOTE: The duel fuel engine types LNG-Otto-SS and LNG-Diesel are not
     implemented.
 
+
     Arguments:
     ----------
 
-            engine_load: float
-                Engine load as a fraction between 0.0 and 1.0.
+        engine_load: float
+            Engine load as a fraction between 0.0 and 1.0.
 
-            engine_type: string
-                Possible values:
-                    - SSD: Slow-Speed Diesel (RPM <= 300)
-                    - MSD: Medium-Speed Diesel (300 < RPM <= 900)
-                    - HSD: High-Speed Diesel (RPM > 900)
-                    - LNG-Otto-MS
-                    - LBSI
-                    - gas_turbine
-                    - steam_turbine
-                    - steam_boiler
-                    - auxiliary_engine
+        engine_type: string
+            Type of engine. The possible types/values are:
+                - 'SSD': Slow-Speed Diesel. An oil engine with a speed equal or lower than 300 RPM.
+                - 'MSD': Medium-Speed Diesel. An oil engine with a speed ranging from 300 to 900 RPM.
+                - 'HSD': High-Speed Diesel. An oil engine with a speed above 900 RPM.
+                - 'LNG-Otto-MS': Four-stroke, medium-speed (300 > RPM > 900), dual-fuel engines (LNG and oils) that operate on the Otto cycle.
+                - 'LBSI': LNG engines built by Rolls-Royce/Bergen.
+                - 'gas_turbine': Gas turbine engine.
+                - 'steam_turbine': Steam turbine engine. Includes oil-based fuels, LNG, and boil-off gas.
 
-            fuel_type: string
-                Type of fuel used by the engine. Possible values:
-                    - HFO: Heavy Fuel Oil
-                    - MDO: Marine Diesel Oil
-                    - MeOH: Methanol
-                    - LNG: Liquid Natural Gas
+        fuel_type: string
+            Type of fuel used by the engine. The possible types/values are:
+                - 'HFO': Heavy Fuel Oil
+                - 'MDO': Marine Diesel Oil
+                - 'MeOH': Methanol
+                - 'LNG': Liquid Natural Gas
 
-
-
-            engine_age: string
+        engine_age: string
+            The age of the propulsion engine. The possible types/values are:
+                - `'before_1984'`: All engines manufactured before 1984.
+                - `'1984-2000'`: All engines manufactured between 1984 and 2000.
+                - `'after_2000'`: All engines manufactured after 2000.
 
     Returns:
     --------
@@ -168,56 +267,61 @@ def estimate_specific_fuel_consumption(engine_load, engine_type, fuel_type, engi
         float
             Specific fuel consumption (kg/kWh)
 
+    Source:
+    -------
+
+        [1] IMO. Fourth IMO GHG Study 2020. IMO.
+
     """
 
     # Baseline SFC in g/kWh (Table 19 in [1])
     sfc_baselines = {
         "SSD": {
-            "HFO": {"before_1983": 205, "1984-2000": 185, "after_2001": 175},
-            "MDO": {"before_1983": 190, "1984-2000": 175, "after_2001": 165},
-            "MeOH": {"after_2001": 350},
+            "HFO": {"before_1984": 205, "1984-2000": 185, "after_2000": 175},
+            "MDO": {"before_1984": 190, "1984-2000": 175, "after_2000": 165},
+            "MeOH": {"after_2000": 350},
         },
         "MSD": {
-            "HFO": {"before_1983": 215, "1984-2000": 195, "after_2001": 185},
-            "MDO": {"before_1983": 200, "1984-2000": 185, "after_2001": 175},
-            "MeOH": {"after_2001": 370},
+            "HFO": {"before_1984": 215, "1984-2000": 195, "after_2000": 185},
+            "MDO": {"before_1984": 200, "1984-2000": 185, "after_2000": 175},
+            "MeOH": {"after_2000": 370},
         },
         "HSD": {
-            "HFO": {"before_1983": 225, "1984-2000": 205, "after_2001": 195},
-            "MDO": {"before_1983": 210, "1984-2000": 190, "after_2001": 185},
+            "HFO": {"before_1984": 225, "1984-2000": 205, "after_2000": 195},
+            "MDO": {"before_1984": 210, "1984-2000": 190, "after_2000": 185},
         },
-        "LNG-Otto-MS": {"LNG": {"1984-2000": 173, "after_2001": 156}},
-        "LBSI": {"LNG": {"1984-2000": 156, "after_2001": 156}},
+        "LNG-Otto-MS": {"LNG": {"1984-2000": 173, "after_2000": 156}},
+        "LBSI": {"LNG": {"1984-2000": 156, "after_2000": 156}},
         "gas_turbine": {
-            "HFO": {"before_1983": 305, "1984-2000": 305, "after_2001": 305},
-            "MDO": {"before_1983": 300, "1984-2000": 300, "after_2001": 300},
-            "LNG": {"after_2001": 203},
+            "HFO": {"before_1984": 305, "1984-2000": 305, "after_2000": 305},
+            "MDO": {"before_1984": 300, "1984-2000": 300, "after_2000": 300},
+            "LNG": {"after_2000": 203},
         },
         "steam_turbine": {
-            "HFO": {"before_1983": 340, "1984-2000": 340, "after_2001": 340},
-            "MDO": {"before_1983": 320, "1984-2000": 320, "after_2001": 320},
-            "LNG": {"before_1983": 285, "1984-2000": 285, "after_2001": 285},
+            "HFO": {"before_1984": 340, "1984-2000": 340, "after_2000": 340},
+            "MDO": {"before_1984": 320, "1984-2000": 320, "after_2000": 320},
+            "LNG": {"before_1984": 285, "1984-2000": 285, "after_2000": 285},
         },
         "steam_boiler": {
-            "HFO": {"before_1983": 340, "1984-2000": 340, "after_2001": 340},
-            "MDO": {"before_1983": 320, "1984-2000": 320, "after_2001": 320},
-            "LNG": {"before_1983": 285, "1984-2000": 285, "after_2001": 285},
+            "HFO": {"before_1984": 340, "1984-2000": 340, "after_2000": 340},
+            "MDO": {"before_1984": 320, "1984-2000": 320, "after_2000": 320},
+            "LNG": {"before_1984": 285, "1984-2000": 285, "after_2000": 285},
         },
         "auxiliary_engine": {
-            "HFO": {"before_1983": 225, "1984-2000": 205, "after_2001": 195},
-            "MDO": {"before_1983": 210, "1984-2000": 190, "after_2001": 185},
-            "LNG": {"after_2001": 156},
+            "HFO": {"before_1984": 225, "1984-2000": 205, "after_2000": 195},
+            "MDO": {"before_1984": 210, "1984-2000": 190, "after_2000": 185},
+            "LNG": {"after_2000": 156},
         },
     }
 
     # Verify
-    # engine_types = ENGINE_TYPES.extend(["steam_boiler", "auxiliary_engine"])
-    # print(engine_types)
-    # verify_set(
-    #    "engine_type",
-    #    engine_type,
-    #    engine_types,
-    # )
+    engine_types = ["steam_boiler", "auxiliary_engine"]
+    engine_types.extend(ENGINE_TYPES)
+    verify_set(
+        "engine_type",
+        engine_type,
+        engine_types,
+    )
     verify_set("fuel_type", fuel_type, FUEL_TYPES)
     verify_set("engine_age", engine_age, ENGINE_AGES)
     verify_range("engine_load", engine_load, 0, 1.5)
@@ -246,151 +350,6 @@ def estimate_specific_fuel_consumption(engine_load, engine_type, fuel_type, engi
         )
 
     return sfc
-
-
-MAX_VESSEL_SPEED_KN = 50
-MIN_VESSEL_DRAFT = 0.1
-MAX_VESSEL_DRAFT_M = 25
-MIN_ENGINE_RPM = 50
-MIN_ENGINE_POWER_KW = 5
-MAX_ENGINE_RPM = 5_000
-MAX_ENGINE_POWER_KW = 60_000
-
-
-"""
-vessel_type: string
-            One fo the following vessel types:
-                - 'bulk_carrier'
-                - 'chemical_tanker'
-                - 'container'
-                - 'general_cargo'
-                - 'liquified_gas_tanker'
-                - 'oil_tanker'
-                - 'other_liquids_tanker'
-                - 'ferry'
-                - 'cruise'
-                - 'ropax'
-                - 'refrigerated_cargo'
-                - 'roro'
-                - 'vehicle'
-                - 'yacht'
-                - 'miscellaneous-fishing'
-                - 'service-tug'
-                - 'offshore'
-                - 'service-other'
-                - 'miscellaneous-other'
-
-
-        size: int
-            Size of the vessel in the appropriate units for the vessel type.
-                - 'bulk_carrier' -> DWT
-                - 'chemical_tanker' -> DWT
-                - 'container' -> TEU
-                - 'general_cargo' -> DWT
-                - 'liquified_gas_tanker' -> CBM
-                - 'oil_tanker' -> DWT
-                - 'other_liquids_tanker' -> DWT
-                - 'ferry' -> GT
-                - 'cruise' -> GT
-                - 'ropax' -> GT
-                - 'refrigerated_cargo' -> DWT
-                - 'roro' -> DWT
-                - 'vehicle' -> NC
-                - 'yacht' -> GT
-                - 'miscellaneous-fishing' -> GT
-                - 'service-tug' -> GT
-                - 'offshore' -> GT
-                - 'service-other' -> GT
-                - 'miscellaneous-other' -> GT
-            where:
-                - DWT: Deadweight Tonnage
-                - TEU: Twenty-foot Equivalent Units
-                - CBM: Cubic Metre
-                - GT: Gross Tonnes
-                - NC: Number of cars
-
-
-"""
-
-
-def verify_vessel_data(vessel_data):
-    """Verify the contents of the 'vessel_data' dictionary"""
-
-    try:
-
-        verify_key_value_range(
-            "vessel_data", "design_speed", vessel_data, 0, MAX_VESSEL_SPEED_KN
-        )
-        verify_key_value_range(
-            "vessel_data", "design_draft", vessel_data, 0, MAX_VESSEL_DRAFT_M
-        )
-        verify_key_value_set(
-            "vessel_data", "number_of_propulsion_engines", vessel_data, [1, 2]
-        )
-        verify_key_value_range(
-            "vessel_data",
-            "propulsion_engine_power",
-            vessel_data,
-            MIN_ENGINE_POWER_KW,
-            MAX_ENGINE_POWER_KW,
-        )
-        verify_key_value_set(
-            "vessel_data", "propulsion_engine_type", vessel_data, ENGINE_TYPES
-        )
-        verify_key_value_set(
-            "vessel_data", "propulsion_engine_age", vessel_data, ENGINE_AGES
-        )
-        verify_key_value_set(
-            "vessel_data", "propulsion_engine_fuel_type", vessel_data, FUEL_TYPES
-        )
-        verify_key_value_set("vessel_data", "type", vessel_data, VESSEL_TYPES)
-
-        if vessel_data["size"] is not None:
-            verify_key_value_range("vessel_data", "size", vessel_data, 0, 500_000)
-        else:
-            none_vessel_types = [
-                "yacht",
-                "service-tug",
-                "miscellaneous-fishing",
-                "offshore",
-                "service-other",
-                "miscellaneous-other",
-            ]
-            if vessel_data["type"] not in none_vessel_types:
-                raise ValueError(
-                    f"The value for the key 'size', in the variable 'vessel_data', can ONLYs be 'None' for the vessel types: {none_vessel_types}."
-                )
-
-    except KeyError as err:
-        raise KeyError(
-            f"The variable 'vessel_data' is missing the {err} key-value pair."
-        ) from err
-
-
-def verify_voyage_profile(voyage_profile):
-    """Verify the contents of a voyage_profile variable"""
-    max_hours = 24 * 365  # One year's worth of hours
-    try:
-        verify_key_value_type("voyage_profile", "time_anchored", voyage_profile, float)
-        verify_key_value_range(
-            "voyage_profile", "time_anchored", voyage_profile, 0, max_hours
-        )
-
-        verify_key_value_type("voyage_profile", "time_at_berth", voyage_profile, float)
-        verify_key_value_range(
-            "voyage_profile", "time_at_berth", voyage_profile, 0, max_hours
-        )
-
-        verify_key_value_type(
-            "voyage_profile", "legs_manoeuvring", voyage_profile, list
-        )
-
-        verify_key_value_type("voyage_profile", "legs_at_sea", voyage_profile, list)
-
-    except KeyError as err:
-        raise KeyError(
-            f"The variable 'voyage_profile' is missing the {err} key-value pair."
-        ) from err
 
 
 def estimate_auxiliary_power_demand(vessel_data, operation_mode):
@@ -437,9 +396,9 @@ def estimate_auxiliary_power_demand(vessel_data, operation_mode):
         "liquified_gas_tanker": [0, 50_000, 100_000, 20_000],
         "oil_tanker": [0, 5_000, 10_000, 20_000, 60_00, 80_000, 120_000, 200_000],
         "other_liquids_tankers": [0, 1_000],
-        "ferry": [0, 300, 1_000, 2_000],
+        "ferry-pax": [0, 300, 1_000, 2_000],
         "cruise": [0, 2_000, 10_000, 60_000, 100_000, 150_000],
-        "ropax": [0, 2_000, 5_000, 10_000, 20_000],
+        "ferry-ropax": [0, 2_000, 5_000, 10_000, 20_000],
         "refrigerated_bulk": [0, 2_000, 6_000, 10_000],
         "roro": [0, 5_000, 10_000, 15_000],
         "vehicle": [0, 10_000, 20_000],
@@ -504,7 +463,7 @@ def estimate_auxiliary_power_demand(vessel_data, operation_mode):
             [1_000, 200, 200, 100, 500, 500, 750, 500],
             [1_000, 200, 200, 100, 500, 500, 750, 500],
         ],
-        "ferry": [
+        "ferry-pax": [
             [0, 0, 0, 0, 190, 190, 190],
             [0, 0, 0, 0, 190, 190, 190],
             [0, 0, 0, 0, 190, 190, 190],
@@ -518,7 +477,7 @@ def estimate_auxiliary_power_demand(vessel_data, operation_mode):
             [1_100, 950, 980, 0, 11_500, 11_500, 14_900, 11_500],
             [1_100, 950, 980, 0, 11_500, 11_500, 14_900, 11_500],
         ],
-        "ropax": [
+        "ferry-ropax": [
             [260, 250, 170, 0, 105, 105, 105, 105],
             [260, 250, 170, 0, 330, 330, 330, 330],
             [260, 250, 170, 0, 670, 670, 670, 670],
@@ -559,10 +518,7 @@ def estimate_auxiliary_power_demand(vessel_data, operation_mode):
 
     size = 0 if vessel_data["size"] is None else vessel_data["size"]
     vessel_type = vessel_data["type"]
-    installed_propulsion_power = (
-        vessel_data["number_of_propulsion_engines"]
-        * vessel_data["propulsion_engine_power"]
-    )
+    installed_propulsion_power = calculate_installed_propulsion_power(vessel_data)
 
     # Determine indexes for vessel type and operation mode
     boiler_index, engine_index = column_indexes[operation_mode]
@@ -614,6 +570,11 @@ def estimate_propulsion_engine_load(speed, draft, vessel_data, delta_w=None):
         float
             Engine load as a value between 0.0 and 1.0
 
+    Source:
+    -------
+
+        [1] IMO. Fourth IMO GHG Study 2020. IMO.
+
     """
     # Verify arguments
     verify_range("speed", speed, 0, MAX_VESSEL_SPEED_KN)
@@ -641,8 +602,8 @@ def estimate_propulsion_engine_load(speed, draft, vessel_data, delta_w=None):
         "offshore",
         "service-other",
         "miscellaneous-other",
-        "ropax",
-        "ferry",
+        "ferry-ropax",
+        "ferry-pax",
     ]
 
     size = vessel_data["size"]
@@ -718,9 +679,32 @@ def estimate_fuel_consumption_of_auxiliary_systems(vessel_data, operation_mode, 
     fc_boiler = boiler_power * boiler_sfc * time
 
     return {
-        "auxiliary_engine": fc_aux_engine,
-        "steam_boiler": fc_boiler,
+        "auxiliary_engines": fc_aux_engine,
+        "steam_boilers": fc_boiler,
     }
+
+
+def calculate_installed_propulsion_power(vessel_data):
+    """Calculate the installed propulsion power of a vessel
+
+    Arguments:
+    ----------
+
+        vessel_data: dict
+
+    Returns:
+    --------
+
+        float
+            Installed propulsion power (kW)
+    """
+    if vessel_data["double_ended"]:
+        return vessel_data["propulsion_engine_power"]
+    else:
+        return (
+            vessel_data["number_of_propulsion_engines"]
+            * vessel_data["propulsion_engine_power"]
+        )
 
 
 def estimate_fuel_consumption(
@@ -732,169 +716,163 @@ def estimate_fuel_consumption(
 ):
     """Estimate the fuel consumption of a vessel
 
+    Arguments:
+    ----------
+
+        vessel_data: dict
+            Dictionary describing the vessel.
+
+        voyage_profile: dict
+            Dictionary describing the voyage profile.
+
+        include_steam_boilers (optional): boolean
+            If True, the fuel consumption of the steam boilers is included in the calculation.
+            Defaults to True.
+
+        limit_7_percent (optional): boolean
+            If True, when the engine load is less than 7% the fuel consumption is neglected (i.e. 0.0).
+            Defaults to True.
+
+        delta_w (optional): float
+            Speed-power correction factor: percentage of the Maximum Continous Rating (MCR) of the
+            installed propulsion power at which the design speed is reached in calm water. Defaults
+            to the considerations in [1] to be equal to 0.75 for container ships over 14,500 TEU,
+            0.7 for cruise ships, and 1.0 for all other vessels (i.e. 75%, 70%, and 100% MCR,
+            respectively). If given a value, the value will override these defaults. Defaults to None.
+
     Returns:
     --------
 
-        Tuple(total_fuel, fuel_breakdown)
+        Dict
             Total fuel consumed (kg) and breakdown according to the voyage profile.
+
+    Source:
+    -------
+
+        [1] IMO. Fourth IMO GHG Study 2020. IMO.
+
     """
-    installed_propulsion_power = (
-        vessel_data["number_of_propulsion_engines"]
-        * vessel_data["propulsion_engine_power"]
-    )
+
+    installed_propulsion_power = calculate_installed_propulsion_power(vessel_data)
 
     fuel_type = vessel_data["propulsion_engine_fuel_type"]
     engine_age = vessel_data["propulsion_engine_age"]
     engine_type = vessel_data["propulsion_engine_type"]
 
+    def estimate_sailing_fuel_consumption(legs, operation_mode):
+        if len(legs) == 0:
+            fc_ = {
+                "subtotal_kg": 0.0,
+                "auxiliary_engines_kg": 0.0,
+                "propulsion_engines_kg": 0.0,
+                "average_fuel_consumption_l_per_nm": 0.0,
+            }
+            if include_steam_boilers:
+                fc_["steam_boilers_kg"] = 0.0
+            return fc_
+        else:
+            total_time = sum([distance / speed for distance, speed, _ in legs])
+            fc_aux = estimate_fuel_consumption_of_auxiliary_systems(
+                vessel_data, operation_mode, total_time
+            )
+            fc_prop = 0.0
+            total_dist = 0.0
+            for distance, speed, draft in legs:
+                load = estimate_propulsion_engine_load(
+                    speed, draft, vessel_data, delta_w=delta_w
+                )
+                total_dist += distance
+                if load < 0.07 and limit_7_percent:
+                    sfc = 0.0
+                else:
+                    sfc = estimate_specific_fuel_consumption(
+                        load, engine_type, fuel_type, engine_age
+                    )
+                time = distance / speed
+                fc_prop += installed_propulsion_power * load * sfc * time
+
+            if include_steam_boilers:
+                fc_subtotal = (
+                    fc_aux["auxiliary_engines"] + fc_aux["steam_boilers"] + fc_prop
+                )
+                return {
+                    "subtotal_kg": fc_subtotal,
+                    "auxiliary_engines_kg": fc_aux["auxiliary_engines"],
+                    "steam_boilers_kg": fc_aux["steam_boilers"],
+                    "propulsion_engines_kg": fc_prop,
+                    "average_fuel_consumption_l_per_nm": calculate_fuel_volume(
+                        fc_subtotal, vessel_data["propulsion_engine_fuel_type"]
+                    )
+                    * 1_000
+                    / total_dist,
+                }
+            else:
+                fc_subtotal = fc_aux["auxiliary_engines"] + fc_prop
+                return {
+                    "subtotal_kg": fc_subtotal,
+                    "auxiliary_engines_kg": fc_aux["auxiliary_engines"],
+                    "propulsion_engines_kg": fc_prop,
+                    "average_fuel_consumption_l_per_nm": calculate_fuel_volume(
+                        fc_subtotal, vessel_data["propulsion_engine_fuel_type"]
+                    )
+                    * 1_000
+                    / total_dist,
+                }
+
     # At berth
     fc_aux_at_berth = estimate_fuel_consumption_of_auxiliary_systems(
         vessel_data, "at_berth", voyage_profile["time_at_berth"]
     )
+    if include_steam_boilers:
+        fc_at_berth = {
+            "subtotal_kg": fc_aux_at_berth["auxiliary_engines"]
+            + fc_aux_at_berth["steam_boilers"],
+            "auxiliary_engines_kg": fc_aux_at_berth["auxiliary_engines"],
+            "steam_boilers_kg": fc_aux_at_berth["steam_boilers"],
+        }
+    else:
+        fc_at_berth = {
+            "subtotal_kg": fc_aux_at_berth["auxiliary_engines"],
+            "auxiliary_engines_kg": fc_aux_at_berth["auxiliary_engines"],
+        }
 
     # Anchored
     fc_aux_anchored = estimate_fuel_consumption_of_auxiliary_systems(
         vessel_data, "anchored", voyage_profile["time_anchored"]
     )
+    if include_steam_boilers:
+        fc_anchored = {
+            "subtotal_kg": fc_aux_anchored["auxiliary_engines"]
+            + fc_aux_anchored["steam_boilers"],
+            "auxiliary_engines_kg": fc_aux_anchored["auxiliary_engines"],
+            "steam_boilers_kg": fc_aux_anchored["steam_boilers"],
+        }
+    else:
+        fc_anchored = {
+            "subtotal_kg": fc_aux_anchored["auxiliary_engines"],
+            "auxiliary_engines_kg": fc_aux_anchored["auxiliary_engines"],
+        }
 
     # Manoeuvring
-    total_time_manoeuvring = sum(
-        [distance / speed for distance, speed, _ in voyage_profile["legs_manoeuvring"]]
+    fc_manoeuvring = estimate_sailing_fuel_consumption(
+        voyage_profile["legs_manoeuvring"], "manoeuvring"
     )
-    fc_aux_manoeuvring = estimate_fuel_consumption_of_auxiliary_systems(
-        vessel_data, "manoeuvring", total_time_manoeuvring
-    )
-
-    fc_prop_manoeuvring = 0
-    dist_manoeuvring = 0.0
-    for distance, speed, draft in voyage_profile["legs_manoeuvring"]:
-        load = estimate_propulsion_engine_load(
-            speed, draft, vessel_data, delta_w=delta_w
-        )
-        dist_manoeuvring += distance
-        if load < 0.07 and limit_7_percent:
-            continue
-        sfc = estimate_specific_fuel_consumption(
-            load, engine_type, fuel_type, engine_age
-        )
-        time = distance / speed
-        fc_prop_manoeuvring += installed_propulsion_power * load * sfc * time
 
     # At sea
-    total_time_at_sea = sum(
-        [distance / speed for distance, speed, _ in voyage_profile["legs_at_sea"]]
-    )
-    fc_aux_at_sea = estimate_fuel_consumption_of_auxiliary_systems(
-        vessel_data, "at_sea", total_time_at_sea
+    fc_at_sea = estimate_sailing_fuel_consumption(
+        voyage_profile["legs_at_sea"], "at_sea"
     )
 
-    fc_prop_at_sea = 0.0
-    dist_at_sea = 0.0
-    for distance, speed, draft in voyage_profile["legs_at_sea"]:
-
-        load = estimate_propulsion_engine_load(
-            speed, draft, vessel_data, delta_w=delta_w
-        )
-        dist_at_sea += distance
-        if load < 0.07 and limit_7_percent:
-            continue
-        sfc = estimate_specific_fuel_consumption(
-            load, engine_type, fuel_type, engine_age
-        )
-        time = distance / speed
-        fc_prop_at_sea += installed_propulsion_power * load * sfc * time
-
-    fc_at_berth = fc_aux_at_berth["auxiliary_engine"]
-    fc_anchored = fc_aux_anchored["auxiliary_engine"]
-    fc_manoeuvring = fc_aux_manoeuvring["auxiliary_engine"] + fc_prop_manoeuvring
-    fc_at_sea = fc_aux_at_sea["auxiliary_engine"] + fc_prop_at_sea
-
-    if len(voyage_profile["legs_manoeuvring"]) != 0:
-        avg_fc_manoeuvring = (
-            calculate_fuel_volume(
-                fc_manoeuvring, vessel_data["propulsion_engine_fuel_type"]
-            )
-            * 1_000
-            / dist_manoeuvring
-        )
-    else:
-        avg_fc_manoeuvring = 0
-
-    if len(voyage_profile["legs_manoeuvring"]) != 0:
-        avg_fc_at_sea = (
-            calculate_fuel_volume(fc_at_sea, vessel_data["propulsion_engine_fuel_type"])
-            * 1_000
-            / dist_at_sea
-        )
-    else:
-        avg_fc_at_sea = 0
-
-    fc_ = {
-        "total_kg": fc_at_berth + fc_anchored + fc_manoeuvring + fc_at_sea,
-        "at_berth": {
-            "sub_total_kg": fc_at_berth,
-            "auxiliary_engine_kg": fc_aux_at_berth["auxiliary_engine"],
-        },
-        "anchored": {
-            "sub_total_kg": fc_anchored,
-            "auxiliary_engine_kg": fc_aux_anchored["auxiliary_engine"],
-        },
-        "manoeuvring": {
-            "sub_total_kg": fc_manoeuvring,
-            "auxiliary_engine_kg": fc_aux_manoeuvring["auxiliary_engine"],
-            "propulsion_engine_kg": fc_prop_manoeuvring,
-            "average_fuel_consumption_l_per_nm": avg_fc_manoeuvring,
-        },
-        "at_sea": {
-            "sub_total_kg": fc_at_sea,
-            "auxiliary_engine_kg": fc_aux_at_sea["auxiliary_engine"],
-            "propulsion_engine_kg": fc_prop_at_sea,
-            "average_fuel_consumption_l_per_nm": avg_fc_at_sea,
-        },
+    return {
+        "total_kg": fc_at_berth["subtotal_kg"]
+        + fc_anchored["subtotal_kg"]
+        + fc_manoeuvring["subtotal_kg"]
+        + fc_at_sea["subtotal_kg"],
+        "at_berth": fc_at_berth,
+        "anchored": fc_anchored,
+        "manoeuvring": fc_manoeuvring,
+        "at_sea": fc_at_sea,
     }
-
-    if include_steam_boilers:
-
-        fc_at_berth += fc_aux_at_berth["steam_boiler"]
-        fc_anchored += fc_aux_anchored["steam_boiler"]
-        fc_manoeuvring += fc_aux_manoeuvring["steam_boiler"]
-        fc_at_sea += fc_aux_at_sea["steam_boiler"]
-
-        if len(voyage_profile["legs_manoeuvring"]) != 0:
-            avg_fc_manoeuvring = (
-                calculate_fuel_volume(
-                    fc_manoeuvring, vessel_data["propulsion_engine_fuel_type"]
-                )
-                * 1_000
-                / dist_manoeuvring
-            )
-        else:
-            avg_fc_manoeuvring = 0
-
-        if len(voyage_profile["legs_manoeuvring"]) != 0:
-            avg_fc_at_sea = (
-                calculate_fuel_volume(
-                    fc_at_sea, vessel_data["propulsion_engine_fuel_type"]
-                )
-                * 1_000
-                / dist_at_sea
-            )
-        else:
-            avg_fc_at_sea = 0
-
-        fc_["total_kg"] = fc_at_berth + fc_anchored + fc_manoeuvring + fc_at_sea
-        fc_["at_berth"]["steam_boiler_kg"] = fc_aux_at_berth["steam_boiler"]
-        fc_["at_berth"]["sub_total_kg"] = fc_at_berth
-        fc_["anchored"]["steam_boiler_kg"] = fc_aux_anchored["steam_boiler"]
-        fc_["anchored"]["sub_total_kg"] = fc_anchored
-        fc_["manoeuvring"]["steam_boiler_kg"] = fc_aux_manoeuvring["steam_boiler"]
-        fc_["manoeuvring"]["sub_total_kg"] = fc_manoeuvring
-        fc_["manoeuvring"]["average_fuel_consumption_l_per_nm"] = avg_fc_manoeuvring
-        fc_["at_sea"]["steam_boiler_kg"] = fc_aux_at_sea["steam_boiler"]
-        fc_["at_sea"]["sub_total_kg"] = fc_at_sea
-        fc_["at_sea"]["average_fuel_consumption_l_per_nm"] = avg_fc_at_sea
-
-    return fc_
 
 
 def estimate_energy_consumption(
@@ -918,183 +896,165 @@ def estimate_energy_consumption(
             consumption breakdown according to the voyage profile.
 
     """
-    installed_propulsion_power = (
-        vessel_data["number_of_propulsion_engines"]
-        * vessel_data["propulsion_engine_power"]
-    )
+    installed_propulsion_power = calculate_installed_propulsion_power(vessel_data)
+
+    def estimate_sailing_energy(legs, operation_mode):
+        if len(legs) == 0:
+            en_ = {
+                "subtotal_kWh": 0.0,
+                "auxiliary_engines_kWh": 0.0,
+                "propulsion_engines_kWh": 0.0,
+                "average_energy_consumption_kWh_per_nm": 0.0,
+                "maximum_required_total_power_kW": 0.0,
+            }
+            if include_steam_boilers:
+                en_["steam_boilers_kWh"] = 0.0
+            return en_
+        else:
+            total_time = sum([distance / speed for distance, speed, _ in legs])
+            (
+                power_auxiliary_engines,
+                power_steam_boilers,
+            ) = estimate_auxiliary_power_demand(vessel_data, operation_mode)
+            energy_auxiliary_engines = power_auxiliary_engines * total_time
+            energy_steam_boilers = power_steam_boilers * total_time
+            energy_prop = []
+            power_prop = []
+            load_prop = []
+            total_dist = 0.0
+            for distance, speed, draft in legs:
+                total_dist += distance
+                load = estimate_propulsion_engine_load(
+                    speed, draft, vessel_data, delta_w=delta_w
+                )
+                load_prop.append(load)
+                if load < 0.07 and limit_7_percent:
+                    energy_prop.append(0.0)
+                    power_prop.append(0.0)
+                else:
+                    time = distance / speed
+                    energy_prop.append(installed_propulsion_power * load * time)
+                    power_prop.append(installed_propulsion_power * load)
+
+            if include_steam_boilers:
+                energy_subtotal = (
+                    energy_auxiliary_engines + energy_steam_boilers + sum(energy_prop)
+                )
+                power_max = (
+                    power_auxiliary_engines + power_steam_boilers + max(power_prop)
+                )
+                return {
+                    "subtotal_kWh": energy_subtotal,
+                    "auxiliary_engines_kWh": energy_auxiliary_engines,
+                    "steam_boilers_kWh": energy_steam_boilers,
+                    "average_energy_consumption_kWh_per_nm": energy_subtotal
+                    / total_dist,
+                    "maximum_required_total_power_kW": power_max,
+                    "maxium_engine_load_percent": max(load_prop) * 100,
+                    "maximum_required_propulsion_power_kW": max(power_prop),
+                }
+            else:
+                energy_subtotal = energy_auxiliary_engines + sum(energy_prop)
+                power_max = power_auxiliary_engines + max(power_prop)
+                return {
+                    "subtotal_kWh": energy_subtotal,
+                    "auxiliary_engines_kWh": energy_auxiliary_engines,
+                    "average_energy_consumption_kWh_per_nm": energy_subtotal
+                    / total_dist,
+                    "maximum_required_total_power_kW": power_max,
+                    "maxium_engine_load_percent": max(load_prop) * 100,
+                    "maximum_required_propulsion_power_kW": max(power_prop),
+                }
 
     # At berth
     (
-        aux_engine_power_at_berth,
-        aux_boiler_power_at_berth,
+        power_auxiliary_engines_at_berth,
+        power_steam_boilers_at_berth,
     ) = estimate_auxiliary_power_demand(vessel_data, "at_berth")
-    aux_engine_energy_at_berth = (
-        aux_engine_power_at_berth * voyage_profile["time_at_berth"]
+    energy_auxiliary_engines_at_berth = (
+        power_auxiliary_engines_at_berth * voyage_profile["time_at_berth"]
     )
-    aux_boiler_energy_at_berth = (
-        aux_boiler_power_at_berth * voyage_profile["time_at_berth"]
+    energy_steam_boilers_at_berth = (
+        power_steam_boilers_at_berth * voyage_profile["time_at_berth"]
     )
+    if include_steam_boilers:
+        energy_at_berth = {
+            "subtotal_kWh": energy_auxiliary_engines_at_berth
+            + energy_steam_boilers_at_berth,
+            "auxiliary_engines_kWh": energy_auxiliary_engines_at_berth,
+            "steam_boilers_kWh": energy_steam_boilers_at_berth,
+            "maximum_required_total_power_kW": 0.0
+            if voyage_profile["time_at_berth"] == 0
+            else power_auxiliary_engines_at_berth + power_steam_boilers_at_berth,
+        }
+    else:
+        energy_at_berth = {
+            "subtotal_kWh": energy_auxiliary_engines_at_berth,
+            "auxiliary_engines_kWh": energy_auxiliary_engines_at_berth,
+            "maximum_required_total_power_kW": 0.0
+            if voyage_profile["time_at_berth"] == 0
+            else power_auxiliary_engines_at_berth,
+        }
 
     # Anchored
     (
-        aux_engine_power_anchored,
-        aux_boiler_power_anchored,
+        power_auxiliary_engines_anchored,
+        power_steam_boilers_anchored,
     ) = estimate_auxiliary_power_demand(vessel_data, "anchored")
-    aux_engine_energy_anchored = (
-        aux_engine_power_anchored * voyage_profile["time_anchored"]
+    energy_auxiliary_engines_anchored = (
+        power_auxiliary_engines_anchored * voyage_profile["time_anchored"]
     )
-    aux_boiler_energy_anchored = (
-        aux_boiler_power_anchored * voyage_profile["time_anchored"]
+    energy_steam_boilers_anchored = (
+        power_steam_boilers_anchored * voyage_profile["time_anchored"]
     )
+    if include_steam_boilers:
+        energy_anchored = {
+            "subtotal_kWh": energy_auxiliary_engines_anchored
+            + energy_steam_boilers_anchored,
+            "auxiliary_engines_kWh": energy_auxiliary_engines_anchored,
+            "steam_boilers_kWh": energy_steam_boilers_anchored,
+            "maximum_required_total_power_kW": 0.0
+            if voyage_profile["time_anchored"] == 0
+            else power_auxiliary_engines_anchored + power_steam_boilers_anchored,
+        }
+    else:
+        energy_anchored = {
+            "subtotal_kWh": energy_auxiliary_engines_anchored,
+            "auxiliary_engines_kWh": energy_auxiliary_engines_anchored,
+            "maximum_required_total_power_kW": 0.0
+            if voyage_profile["time_anchored"] == 0
+            else power_auxiliary_engines_anchored,
+        }
 
     # Manoeuvring
-    total_time_manoeuvring = sum(
-        [distance / speed for distance, speed, _ in voyage_profile["legs_manoeuvring"]]
+    energy_manoeuvring = estimate_sailing_energy(
+        voyage_profile["legs_manoeuvring"], "manoeuvring"
     )
-    (
-        aux_engine_power_manoeuvring,
-        aux_boiler_power_manoeuvring,
-    ) = estimate_auxiliary_power_demand(vessel_data, "manoeuvring")
-    aux_engine_energy_manoeuvring = (
-        aux_engine_power_manoeuvring * total_time_manoeuvring
-    )
-    aux_boiler_energy_manoeuvring = (
-        aux_boiler_power_manoeuvring * total_time_manoeuvring
-    )
-
-    propulsion_energy_manoeuvring = []
-    propulsion_power_manoeuvring = []
-    for distance, speed, draft in voyage_profile["legs_manoeuvring"]:
-        load = estimate_propulsion_engine_load(
-            speed, draft, vessel_data, delta_w=delta_w
-        )
-        if load < 0.07 and limit_7_percent:
-            propulsion_energy_manoeuvring.append(0.0)
-            propulsion_power_manoeuvring.append(0.0)
-        else:
-            time = distance / speed
-            propulsion_energy_manoeuvring.append(
-                installed_propulsion_power * load * time
-            )
-            propulsion_power_manoeuvring.append(installed_propulsion_power * load)
 
     # At sea
-    total_time_at_sea = sum(
-        [distance / speed for distance, speed, _ in voyage_profile["legs_at_sea"]]
-    )
-    aux_engine_power_at_sea, aux_boiler_power_at_sea = estimate_auxiliary_power_demand(
-        vessel_data, "at_sea"
-    )
-    aux_engine_energy_at_sea = aux_engine_power_at_sea * total_time_at_sea
-    aux_boiler_energy_at_sea = aux_boiler_power_at_sea * total_time_at_sea
+    energy_at_sea = estimate_sailing_energy(voyage_profile["legs_at_sea"], "at_sea")
 
-    propulsion_energy_at_sea = []
-    propulsion_power_at_sea = []
-    for distance, speed, draft in voyage_profile["legs_at_sea"]:
-        load = estimate_propulsion_engine_load(
-            speed, draft, vessel_data, delta_w=delta_w
-        )
-        if load < 0.07 and limit_7_percent:
-            propulsion_energy_at_sea.append(0.0)
-            propulsion_power_at_sea.append(0.0)
-        else:
-            time = distance / speed
-            propulsion_energy_at_sea.append(installed_propulsion_power * load * time)
-            propulsion_power_at_sea.append(installed_propulsion_power * load)
-
-    total_energy_consumption = (
-        aux_engine_energy_at_berth
-        + aux_engine_energy_anchored
-        + aux_engine_energy_manoeuvring
-        + sum(propulsion_energy_manoeuvring)
-        + aux_engine_energy_at_sea
-        + sum(propulsion_energy_at_sea)
-    )
-
-    energy_and_power_consumption_breakdown = {
-        "at_berth": {
-            "auxiliary_engine": {
-                "energy": aux_engine_energy_at_berth,
-                "power": aux_engine_power_at_berth,
-            }
-        },
-        "anchored": {
-            "auxiliary_engine": {
-                "energy": aux_engine_energy_anchored,
-                "power": aux_engine_power_anchored,
-            }
-        },
-        "manoeuvring": {
-            "auxiliary_engine": {
-                "energy": aux_engine_energy_manoeuvring,
-                "power": aux_engine_power_manoeuvring,
-            },
-            "propulsion_engine": {
-                "energy": propulsion_energy_manoeuvring,
-                "power": propulsion_power_manoeuvring,
-            },
-        },
-        "at_sea": {
-            "auxiliary_engine": {
-                "energy": aux_engine_energy_at_sea,
-                "power": aux_engine_power_at_sea,
-            },
-            "propulsion_engine": {
-                "energy": propulsion_energy_at_sea,
-                "power": propulsion_power_at_sea,
-            },
-        },
-    }
-
-    maximum_power_demand = max(
-        [
-            aux_engine_power_at_berth,
-            aux_engine_power_anchored,
-            aux_engine_power_manoeuvring + max(propulsion_power_manoeuvring),
-            aux_engine_power_at_sea + max(propulsion_power_at_sea),
-        ]
-    )
-
-    if include_steam_boilers:
-        total_energy_consumption += (
-            aux_boiler_energy_at_berth
-            + aux_boiler_energy_anchored
-            + aux_boiler_energy_manoeuvring
-            + aux_boiler_energy_at_sea
-        )
-
-        energy_and_power_consumption_breakdown["at_berth"]["steam_boiler"] = {
-            "energy": aux_boiler_energy_at_berth,
-            "power": aux_boiler_energy_at_berth,
-        }
-        energy_and_power_consumption_breakdown["anchored"]["steam_boiler"] = {
-            "energy": aux_boiler_energy_anchored,
-            "power": aux_boiler_energy_anchored,
-        }
-        energy_and_power_consumption_breakdown["manoeuvring"]["steam_boiler"] = {
-            "energy": aux_boiler_energy_manoeuvring,
-            "power": aux_boiler_energy_manoeuvring,
-        }
-        energy_and_power_consumption_breakdown["at_sea"]["steam_boiler"] = {
-            "energy": aux_boiler_energy_at_sea,
-            "power": aux_boiler_energy_at_sea,
-        }
-
-        maximum_power_demand = max(
+    return {
+        "total_kWh": energy_at_berth["subtotal_kWh"]
+        + energy_anchored["subtotal_kWh"]
+        + energy_manoeuvring["subtotal_kWh"]
+        + energy_at_sea["subtotal_kWh"],
+        "maximum_required_total_power_kW": max(
             [
-                aux_engine_power_at_berth + aux_boiler_power_at_berth,
-                aux_engine_power_anchored + aux_boiler_power_anchored,
-                aux_engine_power_manoeuvring
-                + aux_boiler_power_manoeuvring
-                + max(propulsion_power_manoeuvring),
-                aux_engine_power_at_sea
-                + aux_boiler_power_at_sea
-                + max(propulsion_power_at_sea),
+                energy_at_berth["maximum_required_total_power_kW"],
+                energy_anchored["maximum_required_total_power_kW"],
+                energy_manoeuvring["maximum_required_total_power_kW"],
+                energy_at_sea["maximum_required_total_power_kW"],
             ]
-        )
-
-    return (
-        total_energy_consumption,
-        maximum_power_demand,
-        energy_and_power_consumption_breakdown,
-    )
+        ),
+        "maximum_required_propulsion_power_kW": max(
+            [
+                energy_manoeuvring["maximum_required_propulsion_power_kW"],
+                energy_at_sea["maximum_required_propulsion_power_kW"],
+            ]
+        ),
+        "at_berth": energy_at_berth,
+        "anchored": energy_anchored,
+        "manoeuvring": energy_manoeuvring,
+        "at_sea": energy_at_sea,
+    }
