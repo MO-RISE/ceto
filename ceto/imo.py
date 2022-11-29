@@ -101,7 +101,8 @@ def verify_vessel_data(vessel_data):
 
         verify_key_value_set("vessel_data", "double_ended", vessel_data, [True, False])
 
-        verify_key_value_range("vessel_data", "size", vessel_data, 0, 500_000)
+        if vessel_data["size"] is not None:
+            verify_key_value_range("vessel_data", "size", vessel_data, 0, 500_000)
 
         # if vessel_data["size"] is not None:
         # else:
@@ -906,6 +907,7 @@ def estimate_energy_consumption(
                 "propulsion_engines_kWh": 0.0,
                 "average_energy_consumption_kWh_per_nm": 0.0,
                 "maximum_required_total_power_kW": 0.0,
+                "maximum_required_propulsion_power_kW": 0.0,
             }
             if include_steam_boilers:
                 en_["steam_boilers_kWh"] = 0.0
