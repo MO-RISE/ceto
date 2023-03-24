@@ -9,6 +9,8 @@ from ceto.imo import (
     estimate_energy_consumption,
     calculate_fuel_volume,
     calculate_fuel_mass,
+    verify_vessel_data,
+    verify_voyage_profile
 )
 
 DENSITY_SEAWATER = 1025  # kg/m3
@@ -466,6 +468,12 @@ def estimate_vessel_gas_hydrogen_system(
 
 
 def suggest_alternative_energy_systems(vessel_data, voyage_profile):
+    try:
+        verify_vessel_data(vessel_data)
+        verify_voyage_profile(vessel_data)
+    except Exception as e:
+        return {"error":str(e)}
+        
     gas = iterate_energy_system(
         vessel_data, voyage_profile, estimate_vessel_gas_hydrogen_system
     )
@@ -474,7 +482,7 @@ def suggest_alternative_energy_systems(vessel_data, voyage_profile):
         vessel_data, voyage_profile, estimate_vessel_battery_system
     )
 
-    return gas, battery
+    return {"gas": gas, "battery":battery}
 
 
 def iterate_energy_system(vessel_data, voyage_profile, estimate_weight_and_volume):

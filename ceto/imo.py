@@ -121,7 +121,7 @@ def verify_vessel_data(vessel_data):
 
     except KeyError as err:
         raise KeyError(
-            f"The variable 'vessel_data' is missing the {err} key-value pair."
+            f"'vessel_data' is missing a value for '{err}'."
         ) from err
 
 
