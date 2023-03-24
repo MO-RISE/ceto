@@ -179,9 +179,12 @@ def estimate_internal_combustion_system(vessel_data, voyage_profile):
         if boiler_power > max_boiler_power:
             max_boiler_power = boiler_power
 
-    aux_engines = estimate_internal_combustion_engine(max_aux_engine_power)
-    aux_engines["weight"] *= 2.0
-    aux_engines["volume"] *= 2.0
+    if max_aux_engine_power != 0.0:
+        aux_engines = estimate_internal_combustion_engine(max_aux_engine_power)
+        aux_engines["weight"] *= 2.0
+        aux_engines["volume"] *= 2.0
+    else:
+        aux_engines = {"weight": 0.0, "volume": 0.0}
 
     # Fuel
     fuel_consumption = estimate_fuel_consumption(
