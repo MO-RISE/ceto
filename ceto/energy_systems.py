@@ -470,7 +470,7 @@ def estimate_vessel_gas_hydrogen_system(
 def suggest_alternative_energy_systems(vessel_data, voyage_profile):
     
     verify_vessel_data(vessel_data)
-    verify_voyage_profile(vessel_data)
+    verify_voyage_profile(voyage_profile)
     
         
     gas = iterate_energy_system(

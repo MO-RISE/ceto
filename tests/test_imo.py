@@ -12,7 +12,9 @@ DUMMY_VESSEL_DATA = {
     "propulsion_engine_fuel_type": "MDO",
     "type": "offshore",
     "size": None,
-    "double_ended": False
+    "double_ended": False,
+    "length": 100,
+    "beam": 20
 }
 
 DUMMY_VOYAGE_PROFILE = {
