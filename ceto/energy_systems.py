@@ -47,7 +47,8 @@ def estimate_electrical_engine(power):
 
     # The range of values comes from the statistical analysis of
     # electrical engines.
-    verify_range("power", power, 50, 1500)
+    #try:
+    #   verify_range("power", power, 50, 1500)
     power = math.ceil(power / 10) * 10
     details = {}
     details["volume"] = 0.0006 * power
