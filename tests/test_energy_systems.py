@@ -13,7 +13,7 @@ DUMMY_VESSEL_DATA = {
     "size": None,
     "double_ended": False,
     "length": 100,
-    "beam": 20
+    "beam": 20,
 }
 
 DUMMY_VOYAGE_PROFILE = {
@@ -25,12 +25,15 @@ DUMMY_VOYAGE_PROFILE = {
     "legs_at_sea": [(10, 10, 6), (20, 10, 6)],  # distance (nm), speed (kn), draft (m)
 }
 
+
 def test_suggest_alternative_energy_systems():
     vessel_data = {}
     voyage_profile = {}
     with raises(KeyError) as info:
         suggest_alternative_energy_systems(vessel_data, voyage_profile)
 
-    gas, batter = suggest_alternative_energy_systems(DUMMY_VESSEL_DATA, DUMMY_VOYAGE_PROFILE)
+    gas, batter = suggest_alternative_energy_systems(
+        DUMMY_VESSEL_DATA, DUMMY_VOYAGE_PROFILE
+    )
     assert len(gas) != 0
     assert len(batter) != 0

@@ -10,7 +10,7 @@ from ceto.imo import (
     calculate_fuel_volume,
     calculate_fuel_mass,
     verify_vessel_data,
-    verify_voyage_profile
+    verify_voyage_profile,
 )
 
 DENSITY_SEAWATER = 1025  # kg/m3
@@ -47,7 +47,7 @@ def estimate_electrical_engine(power):
 
     # The range of values comes from the statistical analysis of
     # electrical engines.
-    #try:
+    # try:
     #   verify_range("power", power, 50, 1500)
     power = math.ceil(power / 10) * 10
     details = {}
@@ -472,11 +472,9 @@ def estimate_vessel_gas_hydrogen_system(
 
 
 def suggest_alternative_energy_systems(vessel_data, voyage_profile):
-    
     verify_vessel_data(vessel_data)
     verify_voyage_profile(voyage_profile)
-    
-        
+
     gas = iterate_energy_system(
         vessel_data, voyage_profile, estimate_vessel_gas_hydrogen_system
     )
