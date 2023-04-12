@@ -80,7 +80,7 @@ def _validate_dims(dim_a: float, dim_b: float, dim_c: float, dim_d: float) -> bo
     if not (1 <= beam <= 70):
         return False
 
-    if not (2 <= length / beam <= 10):
+    if not (2 <= length / beam <= 8):
         return False
 
     return True
@@ -101,52 +101,6 @@ def _guesstimate_block_coefficient(ceto_ship_type: str) -> float:
         return 0.45
 
 
-def _froude_number(length: float, speed: float) -> float:
-    g = 9.81
-    return speed / math.sqrt(g * length)
-
-
-def _guesstimate_length(ceto_ship_type: str, speed: float) -> float:
-    # TODO: Use ceto_ship_type and speed to make a more educated guess about the length (and the beam)
-    return 75
-
-
-def _guesstimate_length_over_beam_ratio(length: float) -> float:
-    capped_length = max(30, min(130, length))
-    return 4.0 + 0.025 * (capped_length - 30)
-
-
-def _guesstimate_beam(length: float, ceto_ship_type: str) -> float:
-    if "tanker" in ceto_ship_type:
-        return length / 9 + 5.5
-    elif ceto_ship_type == "general_cargo":
-        return length / 9 + 6.75
-
-    # else
-    return length / _guesstimate_length_over_beam_ratio(length)
-
-
-def _guesstimate_length_and_beam(
-    dim_a: float,
-    dim_b: float,
-    dim_c: float,
-    dim_d: float,
-    ceto_ship_type: str,
-    speed: float,
-) -> Tuple[float, float]:
-    if _validate_dims(dim_a, dim_b, dim_c, dim_d):
-        return dim_a + dim_d, dim_c + dim_d
-
-    warnings.warn(
-        "Dimensions (dim_a, dim_b, dim_c, dim_d) are deemed unreasonable. Length and beam will be guesstimated."
-    )
-
-    length = _guesstimate_length(ceto_ship_type, speed)
-    beam = _guesstimate_beam(length, ceto_ship_type)
-
-    return length, beam
-
-
 def _guesstimate_design_draft(ais_draft: float, beam: float) -> float:
     return ais_draft if 2.25 <= ais_draft / beam <= 3.75 else beam / 3
 
@@ -160,7 +114,15 @@ def _guesstimate_design_speed(
     return speed if speed > design_speed else design_speed
 
 
-def _guesstimate_number_of_engines(ceto_ship_type: str):
+def _guesstimate_number_of_engines(ceto_ship_type: str) -> int:
+    """Returns the guesstimated number of engines
+
+    Args:
+        ceto_ship_type (str): The ceto ship type
+
+    Returns:
+        int: The estimated number of engines
+    """
     if ceto_ship_type in ("ferry-pax", "ferry-ropax"):
         return 2
 
@@ -168,9 +130,61 @@ def _guesstimate_number_of_engines(ceto_ship_type: str):
     return 1
 
 
+oil_tanker_sizes = [1985, 6777, 15129, 43763, 72901, 109259, 162348, 313396]
+oil_tanker_power = [1274, 2846, 4631, 8625, 12102, 13831, 18796, 27685]
+
+ferry_pax_sizes = [135, 1681]
+ferry_pax_power = [1885, 6594]
+
+ferry_ropax_sizes = [401, 3221]
+ferry_ropax_power = [1508, 15491]
+
+miscellaneous_fishing_power = 956
+service_other_power = 3177
+
+
+def _guesstimate_overall_engine_power(
+    length: float, beam: float, draft: float, block_coefficient: float
+) -> float:
+    tanker_si
+    pass
+
+
+def _guesstimate_engine_type(ceto_ship_type: str) -> str:
+    """Returns guesstimated engine type
+
+    Args:
+        ceto_ship_type (str): The ceto ship type
+
+    Returns:
+        str: The estimated engine type
+    """
+    if ceto_ship_type == "liquified_gas_tanker":
+        return "LNG-Otto-MS"
+
+    elif ceto_ship_type in ("oil_tanker", "general_cargo"):
+        return "SSD"
+
+    elif ceto_ship_type in ("ferry-pax", "ferry-ropax"):
+        return "MSD"
+
+    # else
+    return "HSD"
+
+
 def _guesstimate_engine_fuel_type(
     ceto_ship_type: str, latitude: float, longitude: float
 ) -> str:
+    """Returns guesstimated engine fuel typ
+
+    Args:
+        ceto_ship_type (str): The ceto ship type
+        latitude (float): Latitude (deg)
+        longitude (float): Longitude (deg)
+
+    Returns:
+        str: The estimated engine fuel type
+    """
     if ceto_ship_type == "liquified_gas_tanker":
         return "LNG"
 
@@ -182,7 +196,6 @@ def _guesstimate_engine_fuel_type(
 
 def _guesstimate_vessel_size_as_GrossTonnage(ceto_ship_type: str) -> float:
     allowed_ceto_ship_types = (
-        "bulk_carrier",
         "ferry-pax",
         "ferry-ropax",
         "cruise",
@@ -201,7 +214,26 @@ def _guesstimate_vessel_size_as_GrossTonnage(ceto_ship_type: str) -> float:
         )
 
 
-def _guesstimate_vessel_size_as_DeadWeightTonnage(ceto_ship_type: str) -> float:
+def _guesstimate_vessel_size_as_DeadWeightTonnage(
+    ceto_ship_type: str,
+    length: float,
+    beam: float,
+    draft: float,
+) -> float:
+    """Dead Weight Tonnage guesstimation using table provided by Barras(2004).
+
+    Args:
+        ceto_ship_type (str): The ceto ship type
+        length (float): Length of vessel [m]
+        beam (float): Beam of vessel [m]
+        draft (float): Design draft of vessel [m]
+
+    Raises:
+        ValueError: if the provided ceto_ship_type is not suitable for DWT estimation
+
+    Returns:
+        float: The estimated DWT
+    """
     allowed_ceto_ship_types = (
         "bulk_carrier",
         "chemical_tanker",
@@ -217,6 +249,17 @@ def _guesstimate_vessel_size_as_DeadWeightTonnage(ceto_ship_type: str) -> float:
             ceto_ship_type,
             allowed_ceto_ship_types,
         )
+
+    block_coefficient = _guesstimate_block_coefficient(ceto_ship_type)
+    displacement = block_coefficient * length * beam * draft
+
+    if "tanker" in ceto_ship_type:
+        return displacement * 0.83
+    elif ceto_ship_type in ("bulk_carrier", "general_cargo", "refrigerated_cargo"):
+        return displacement * 0.7
+
+    # else ceto_ship_type == "roro":
+    return displacement * 0.3
 
 
 def _guesstimate_vessel_size_as_CubicMetres(ceto_ship_type: str) -> float:
@@ -240,11 +283,11 @@ def guesstimate_vessel_data(
     latitude: float,
     longitude: float,
 ) -> dict:
-    # Fixed values that will not be inferred from AIS data but are reasonable static assumptions
-    vessel_data = {
-        "double_ended": False,
-        "propulsion_engine_age": "after_2000",
-    }
+    # Validation
+    if not _validate_dims(dim_a, dim_b, dim_c, dim_d):
+        raise ValueError(
+            "Dims (dim_a, dim_b, dim_c, dim_d) are not deemed reasonable. No estimations can be made."
+        )
 
     # Ship type
     ceto_ship_type = _map_type_of_ship_and_cargo_type_to_ceto_ship_type(
@@ -252,16 +295,20 @@ def guesstimate_vessel_data(
     )
 
     # Main dimensions
-    length, beam = _guesstimate_length_and_beam(
-        dim_a, dim_b, dim_c, dim_d, ceto_ship_type, speed
-    )
+    length, beam = dim_a + dim_b, dim_c, dim_d
     design_draft = _guesstimate_design_draft(draft, beam)
-    design_speed = _guesstimate_design_speed(length, ceto_ship_type)
+    design_speed = _guesstimate_design_speed(length, ceto_ship_type, speed)
+
+    # Vessel size
+    vessel_size = {
+        "bulk_carrier": _guesstimate_vessel_size_as_DeadWeightTonnage,
+        "oil_tanker": _guesstimate_vessel_size_as_DeadWeightTonnage,
+    }[ceto_ship_type]()
 
     # Engine parameters
     number_of_engines = _guesstimate_number_of_engines(ceto_ship_type)
     engine_power = 1000  # TODO: Engine power
-    engine_type = "SSD"  # TODO: Type of engine
+    engine_type = _guesstimate_engine_type(ceto_ship_type)
     engine_fuel_type = _guesstimate_engine_fuel_type(
         ceto_ship_type, latitude, longitude
     )
@@ -270,11 +317,17 @@ def guesstimate_vessel_data(
 
     # Assemble
     vessel_data = {
-        **vessel_data,
+        # Fixed values that will not be inferred from AIS data but are reasonable static assumptions
+        **{
+            "double_ended": False,
+            "propulsion_engine_age": "after_2000",
+        },
+        # Guesstimated values
         **{
             "type": ceto_ship_type,
             "length": length,
             "beam": beam,
+            "size": vessel_size,
             "design_draft": design_draft,
             "design_speed": design_speed,
             "number_of_propulsion_engines": number_of_engines,
@@ -283,6 +336,8 @@ def guesstimate_vessel_data(
             "propulsion_engine_fuel_type": engine_fuel_type,
         },
     }
+
+    return vessel_data
 
     return {
         "design_speed": 10,  # kn
@@ -298,21 +353,82 @@ def guesstimate_vessel_data(
     }
 
 
+EARTH_RADIUS = 6367.0 * 1000.0
+
+
+def _rhumbline(
+    latitude_1: float, longitude_1: float, latitude_2: float, longitude_2: float
+) -> Tuple[float, float]:
+    # Rhumbline distance from (x1,y1) -> (x2,y2) in WGS 84
+
+    _lat1 = math.radians(latitude_1)
+    _lat2 = math.radians(latitude_2)
+    dlon = math.radians(longitude_2 - longitude_1)
+    dlat = math.radians(latitude_2 - latitude_1)
+
+    dPhi = math.log(
+        math.tan((_lat2 / 2) + (math.pi / 4)) / math.tan((_lat1 / 2) + (math.pi / 4))
+    )
+    q = dlat / dPhi if dPhi else math.cos(_lat1)  # E-W line gives dPhi = 0
+
+    # if dLon over 180deg take shorter rhumb across anti-meridian:
+    if abs(dlon) > math.pi:
+        dlon = -(2 * math.pi - dlon) if dlon > 0 else (2 * math.pi + dlon)
+
+    bb = math.arctan2(dlon, dPhi)
+    if bb < 0:
+        bb = 2 * math.pi + bb
+
+    brng = bb
+    dist = math.sqrt(dlat * dlat + q * q * dlon * dlon) * EARTH_RADIUS
+
+    return brng, dist
+
+
 def guesstimate_voyage_data(
     latitude_1: float,
     longitude_1: float,
     latitude_2: float,
     longitude_2: float,
-    draft: float,
+    draft_1: float,
+    draft_2: float,
+    speed_1: float,
+    speed_2: float,
+    time_1: float,
+    time_2: float,
+    design_speed: float,
 ) -> dict:
+    _, distance = _rhumbline(latitude_1, longitude_1, latitude_2, longitude_2)
+    distance /= 0.5144  # nm
+
+    delta_time = time_2 - time_1  # hours
+
+    avg_speed = 0.5 * (speed_1 + speed_2)  # knots
+
+    if not (0.75 <= (distance / delta_time) / avg_speed <= 1.25):
+        avg_speed = distance / delta_time
+
+    avg_draft = 0.5 * (draft_1 + draft_2)
+
+    default_output = {
+        "time_anchored": 0.0,
+        "time_at_berth": 0.0,
+        "legs_manoeuvring": [],
+        "legs_at_sea": [],
+    }
+
+    if avg_speed < 3.0:
+        return {**default_output, **{"time_anchored": delta_time}}
+
+    elif 3.0 <= avg_speed <= design_speed / 2:
+        return {
+            **default_output,
+            **{"legs_manoeuvring": [(distance, avg_speed, avg_draft)]},
+        }
+
+    # else we are at sea
+
     return {
-        "time_anchored": 10.0,  # time
-        "time_at_berth": 10.0,  # time
-        "legs_manoeuvring": [
-            (10, 10, draft),  # distance (nm), speed (kn), draft (m)
-        ],
-        "legs_at_sea": [
-            (10, 10, draft),
-            (20, 10, draft),
-        ],  # distance (nm), speed (kn), draft (m)
+        **default_output,
+        **{"legs_at_sea": [(distance, avg_speed, avg_draft)]},
     }
