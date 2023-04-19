@@ -4,6 +4,9 @@ Functions for estimating input to ceto using AIS data
 import math
 import warnings
 from typing import Tuple
+from datetime import datetime
+
+import numpy as np
 
 from ceto.utils import ms_to_knots
 
@@ -26,6 +29,9 @@ def _map_type_of_ship_and_cargo_type_to_ceto_ship_type(
     84                          -> liquified_gas_tanker
     90-99                       -> service-other
     unknown                     -> service-other
+
+    Sources:
+     - https://help.marinetraffic.com/hc/en-us/articles/205579997-What-is-the-significance-of-the-AIS-Shiptype-number-
 
     Args:
         type_of_ship_and_cargo_type (int): According to AIS message 5 standard
@@ -64,8 +70,8 @@ def _map_type_of_ship_and_cargo_type_to_ceto_ship_type(
 
     # else
     warnings.warn(
-        "Type of ship and cargo type: %d cannot be mapped to a CETO ship type, will be treated as 'service-other'",
-        type_of_ship_and_cargo_type,
+        f"Type of ship and cargo type: {type_of_ship_and_cargo_type} cannot be"
+        " mapped to a CETO ship type, will be treated as 'service-other'"
     )
     return "service-other"
 
@@ -74,10 +80,10 @@ def _validate_dims(dim_a: float, dim_b: float, dim_c: float, dim_d: float) -> bo
     length = dim_a + dim_b
     beam = dim_c + dim_d
 
-    if not (5 <= length <= 500):
+    if not (5 <= length <= 450):
         return False
 
-    if not (1 <= beam <= 70):
+    if not (1.5 <= beam <= 70):
         return False
 
     if not (2 <= length / beam <= 8):
@@ -87,6 +93,20 @@ def _validate_dims(dim_a: float, dim_b: float, dim_c: float, dim_d: float) -> bo
 
 
 def _guesstimate_block_coefficient(ceto_ship_type: str) -> float:
+    """Guesstimate the block coefficient based on ceto_ship_type
+
+    Sources:
+     - Based on engineering estimates
+
+    Args:
+        ceto_ship_type (str): The ceto ship type
+
+    Raises:
+        ValueError: If an invalid ceto_ship_type was provided as input
+
+    Returns:
+        float: The estimated block coefficient [-]
+    """
     if ceto_ship_type == "oil_tanker":
         return 0.85
     elif ceto_ship_type in ("general_cargo", "ferry-ropax"):
@@ -100,22 +120,61 @@ def _guesstimate_block_coefficient(ceto_ship_type: str) -> float:
     elif ceto_ship_type == "miscellaneous-fishing":
         return 0.45
 
+    # else
+    raise ValueError("Invalid ceto shiptype %s was provided as input!", ceto_ship_type)
+
 
 def _guesstimate_design_draft(ais_draft: float, beam: float) -> float:
-    return ais_draft if 2.25 <= ais_draft / beam <= 3.75 else beam / 3
+    """Guesstimate the design draft
+
+    If the ais draft falls within the expected T/B ratio, use it directly,
+    otherwise estimate the design draft as the B/3.25
+
+    Args:
+        ais_draft (float): Draft from ais message 5 [m]
+        beam (float): Beam [m]
+
+    Returns:
+        float: Estimated design draft [m]
+    """
+    return ais_draft if 2.25 <= beam / ais_draft <= 3.75 else beam / 3.25
 
 
 def _guesstimate_design_speed(
     length: float, ceto_ship_type: str, speed: float
 ) -> float:
+    """Guesstimate the design speed
+
+    Assuming the there is a linear correlation between block coefficient
+    and design froude number. If the inputted actual speedis higher than
+    the estimated design spee it is used directly.
+
+    Args:
+        length (float): Length of vessel [m]
+        ceto_ship_type (str): The ceto ship type
+        speed (float): Speed of vessel [kn]
+
+    Returns:
+        float: Estimated design speed [kn]
+    """
     g = 9.81
     block_coefficient = _guesstimate_block_coefficient(ceto_ship_type)
-    design_speed = ms_to_knots((0.145 * math.sqrt(g * length)) / block_coefficient)
+
+    blocks = [0.45, 0.8]
+    froude_numbers = [0.32, 0.145]
+
+    froude_number = np.interp(block_coefficient, blocks, froude_numbers)
+
+    design_speed = ms_to_knots(
+        (froude_number * math.sqrt(g * length)) / block_coefficient
+    )
     return speed if speed > design_speed else design_speed
 
 
 def _guesstimate_number_of_engines(ceto_ship_type: str) -> int:
-    """Returns the guesstimated number of engines
+    """Guesstimate number of engines
+
+    Self-explanatory and very simplistic approach...
 
     Args:
         ceto_ship_type (str): The ceto ship type
@@ -123,35 +182,46 @@ def _guesstimate_number_of_engines(ceto_ship_type: str) -> int:
     Returns:
         int: The estimated number of engines
     """
-    if ceto_ship_type in ("ferry-pax", "ferry-ropax"):
-        return 2
-
-    # else
-    return 1
+    return 2 if ceto_ship_type in ("ferry-pax", "ferry-ropax") else 1
 
 
-oil_tanker_sizes = [1985, 6777, 15129, 43763, 72901, 109259, 162348, 313396]
-oil_tanker_power = [1274, 2846, 4631, 8625, 12102, 13831, 18796, 27685]
-
-ferry_pax_sizes = [135, 1681]
-ferry_pax_power = [1885, 6594]
-
-ferry_ropax_sizes = [401, 3221]
-ferry_ropax_power = [1508, 15491]
-
-miscellaneous_fishing_power = 956
-service_other_power = 3177
-
-
-def _guesstimate_overall_engine_power(
-    length: float, beam: float, draft: float, block_coefficient: float
+def _guesstimate_engine_MCR(
+    ceto_ship_type: str, dwt: float, design_speed: float
 ) -> float:
-    tanker_si
-    pass
+    """Guesstimate the engine MCR based on deadweight and design speed
+
+    Sources:
+     - Cepowski, Tomasz. (2019). Regression Formulas for The Estimation of
+       Engine Total Power for Tankers, Container Ships and Bulk Carriers on
+       The Basis of Cargo Capacity and Design Speed. Polish Maritime Research.
+       26. 82-94. 10.2478/pomr-2019-0010.
+
+    Args:
+        ceto_ship_type (str): The ceto ship type
+        dwt (float): Deadweight tonnage [t]
+        design_speed (float): Design speed [kn]
+
+    Returns:
+        float: Estimated engine MCR [kW]
+    """
+    # Very crude model to differentiate between some (...) ship types
+    if "tanker" in ceto_ship_type:
+        # Coefficients for "All tanker types"
+        coefficients = (2.66, 0.6, 0.6)
+    else:
+        # Coefficients for "All Bulk carrier types"
+        coefficients = (4.297, 0.6, 0.4)
+
+    def _regression(alpha: float, beta: float, gamma: float) -> float:
+        return alpha * dwt**beta * design_speed**gamma
+
+    return _regression(*coefficients)
 
 
 def _guesstimate_engine_type(ceto_ship_type: str) -> str:
-    """Returns guesstimated engine type
+    """Guesstimate engine type
+
+    Crude differentiation based on assumptions,
 
     Args:
         ceto_ship_type (str): The ceto ship type
@@ -175,7 +245,9 @@ def _guesstimate_engine_type(ceto_ship_type: str) -> str:
 def _guesstimate_engine_fuel_type(
     ceto_ship_type: str, latitude: float, longitude: float
 ) -> str:
-    """Returns guesstimated engine fuel typ
+    """Guesstimate engine fuel type
+
+    Self-explanatory and very simplistic...
 
     Args:
         ceto_ship_type (str): The ceto ship type
@@ -194,24 +266,22 @@ def _guesstimate_engine_fuel_type(
     return "MDO"
 
 
-def _guesstimate_vessel_size_as_GrossTonnage(ceto_ship_type: str) -> float:
-    allowed_ceto_ship_types = (
-        "ferry-pax",
-        "ferry-ropax",
-        "cruise",
-        "yacht",
-        "miscellaneous-fishing",
-        "service-tug",
-        "offshore",
-        "service-other",
-        "miscellaneous-other",
-    )
-    if ceto_ship_type not in allowed_ceto_ship_types:
-        raise ValueError(
-            "Cannot guesstimate vessel size as Gross Tonnage for %s, allowed types are %s",
-            ceto_ship_type,
-            allowed_ceto_ship_types,
-        )
+def _guesstimate_vessel_size_as_GrossTonnage(
+    length: float, beam: float, design_draft: float
+) -> float:
+    """Guesstimate vessel size as Gross Tonnage
+
+    Args:
+        length (float): Length [m]
+        beam (float): Beam [m]
+        design_draft (float): Design draft [m]
+
+    Returns:
+        float: Estimated Gross Tonnage [m3]
+    """
+    # TODO: Estimate depth (D) from design draft (T) in a better way
+    depth = design_draft * 1.65
+    return 0.3 * (length * beam * depth)
 
 
 def _guesstimate_vessel_size_as_DeadWeightTonnage(
@@ -220,7 +290,11 @@ def _guesstimate_vessel_size_as_DeadWeightTonnage(
     beam: float,
     draft: float,
 ) -> float:
-    """Dead Weight Tonnage guesstimation using table provided by Barras(2004).
+    """Guesstimate the Deadweight Tonnage
+
+    Sources:
+     - Barras, C.B. (2004), “Ship Design and Performance for Masters and
+       Mates”, Elsevier Butterworth-Heinemann.
 
     Args:
         ceto_ship_type (str): The ceto ship type
@@ -228,48 +302,44 @@ def _guesstimate_vessel_size_as_DeadWeightTonnage(
         beam (float): Beam of vessel [m]
         draft (float): Design draft of vessel [m]
 
-    Raises:
-        ValueError: if the provided ceto_ship_type is not suitable for DWT estimation
-
     Returns:
-        float: The estimated DWT
+        float: Estimated Deadweight Tonnage [t]
     """
-    allowed_ceto_ship_types = (
-        "bulk_carrier",
-        "chemical_tanker",
-        "general_cargo",
-        "oil_tanker",
-        "other_liquids_tanker",
-        "refrigerated_cargo",
-        "roro",
-    )
-    if ceto_ship_type not in allowed_ceto_ship_types:
-        raise ValueError(
-            "Cannot guesstimate vessel size as Dead Weight Tonnage for %s, allowed types are %s",
-            ceto_ship_type,
-            allowed_ceto_ship_types,
-        )
 
     block_coefficient = _guesstimate_block_coefficient(ceto_ship_type)
     displacement = block_coefficient * length * beam * draft
 
-    if "tanker" in ceto_ship_type:
+    if ceto_ship_type == "oil_tanker":
         return displacement * 0.83
-    elif ceto_ship_type in ("bulk_carrier", "general_cargo", "refrigerated_cargo"):
-        return displacement * 0.7
 
-    # else ceto_ship_type == "roro":
-    return displacement * 0.3
+    elif ceto_ship_type == "liquified_gas_tanker":
+        return displacement * 0.62
+
+    elif ceto_ship_type in ("ferry-pax", "ferry-ropax"):
+        return displacement * 0.35
+
+    # else
+
+    return displacement * 0.7
 
 
-def _guesstimate_vessel_size_as_CubicMetres(ceto_ship_type: str) -> float:
-    allowed_ceto_ship_types = ("liquified_gas_tanker",)
-    if ceto_ship_type not in allowed_ceto_ship_types:
-        raise ValueError(
-            "Cannot guesstimate vessel size as Cubic Metres for %s, allowed types are %s",
-            ceto_ship_type,
-            allowed_ceto_ship_types,
-        )
+def _guesstimate_vessel_size_as_CubicMetres(
+    length: float, beam: float, design_draft: float
+) -> float:
+    """Guesstimate the vessel size as CBM (Cubic Metres)
+
+    Sources:
+     - None, fallback to Gross Tonnage
+
+    Args:
+        length (float): Length [m]
+        beam (float): Beam [m]
+        design_draft (float): Design draft [m]
+
+    Returns:
+        float: Estimated size in CBM [m3]
+    """
+    return _guesstimate_vessel_size_as_GrossTonnage(length, beam, design_draft)
 
 
 def guesstimate_vessel_data(
@@ -283,6 +353,26 @@ def guesstimate_vessel_data(
     latitude: float,
     longitude: float,
 ) -> dict:
+    """Guesstimate vessel_data input to ceto using parameters readily avilable in AIS data
+
+    Args:
+        type_of_ship_and_cargo_type (int): Type of ship and cargo
+        dim_a (float): Dim a [m]
+        dim_b (float): Dim b [m]
+        dim_c (float): Dim c [m]
+        dim_d (float): Dim d [m]
+        speed (float): Current speed [kn]
+        draft (float): Current draft [kn]
+        latitude (float): Current position (latitude) [deg]
+        longitude (float): Current position (longitude) [deg]
+
+    Raises:
+        ValueError: If validation of inputted parameters fail,
+        which they do if they are not deemed resonable for further guesstimations.
+
+    Returns:
+        dict: Vessel data
+    """
     # Validation
     if not _validate_dims(dim_a, dim_b, dim_c, dim_d):
         raise ValueError(
@@ -295,27 +385,44 @@ def guesstimate_vessel_data(
     )
 
     # Main dimensions
-    length, beam = dim_a + dim_b, dim_c, dim_d
+    length, beam = dim_a + dim_b, dim_c + dim_d
     design_draft = _guesstimate_design_draft(draft, beam)
     design_speed = _guesstimate_design_speed(length, ceto_ship_type, speed)
 
-    # Vessel size
-    vessel_size = {
-        "bulk_carrier": _guesstimate_vessel_size_as_DeadWeightTonnage,
-        "oil_tanker": _guesstimate_vessel_size_as_DeadWeightTonnage,
-    }[ceto_ship_type]()
+    # Vessel size (DWT)
+    vessel_size = _guesstimate_vessel_size_as_DeadWeightTonnage(
+        ceto_ship_type, length, beam, draft
+    )
 
     # Engine parameters
     number_of_engines = _guesstimate_number_of_engines(ceto_ship_type)
-    engine_power = 1000  # TODO: Engine power
+    engine_power = _guesstimate_engine_MCR(ceto_ship_type, vessel_size, design_speed)
     engine_type = _guesstimate_engine_type(ceto_ship_type)
     engine_fuel_type = _guesstimate_engine_fuel_type(
         ceto_ship_type, latitude, longitude
     )
 
-    # Vessel size
+    # Vessel size as GT
+    if ceto_ship_type in (
+        "ferry-pax",
+        "ferry-ropax",
+        "cruise",
+        "yacht",
+        "miscellaneous-fishing",
+        "service-tug",
+        "offshore",
+        "service-other",
+        "miscellaneous-other",
+    ):
+        vessel_size = _guesstimate_vessel_size_as_GrossTonnage(
+            length, beam, design_draft
+        )
+    elif ceto_ship_type == "liquified_gas_tanker":
+        vessel_size = _guesstimate_vessel_size_as_CubicMetres(
+            length, beam, design_draft
+        )
 
-    # Assemble
+    # Assemble output dictionary
     vessel_data = {
         # Fixed values that will not be inferred from AIS data but are reasonable static assumptions
         **{
@@ -339,19 +446,6 @@ def guesstimate_vessel_data(
 
     return vessel_data
 
-    return {
-        "design_speed": 10,  # kn
-        "design_draft": 7,  # m
-        "number_of_propulsion_engines": 1,
-        "propulsion_engine_power": 1_000,
-        "propulsion_engine_type": "MSD",
-        "propulsion_engine_age": "after_2000",
-        "propulsion_engine_fuel_type": "MDO",
-        "type": "offshore",
-        "size": None,
-        "double_ended": False,
-    }
-
 
 EARTH_RADIUS = 6367.0 * 1000.0
 
@@ -359,7 +453,17 @@ EARTH_RADIUS = 6367.0 * 1000.0
 def _rhumbline(
     latitude_1: float, longitude_1: float, latitude_2: float, longitude_2: float
 ) -> Tuple[float, float]:
-    # Rhumbline distance from (x1,y1) -> (x2,y2) in WGS 84
+    """Rhumbline distance from (latitude_1, longitude_1) -> (latitude_2, longitude_2)
+
+    Args:
+        latitude_1 (float): [deg]
+        longitude_1 (float): [deg]
+        latitude_2 (float): [deg]
+        longitude_2 (float): [deg]
+
+    Returns:
+        Tuple[float, float]: (Bearing [deg], Rhumbline distance [m])
+    """
 
     _lat1 = math.radians(latitude_1)
     _lat2 = math.radians(latitude_2)
@@ -375,14 +479,14 @@ def _rhumbline(
     if abs(dlon) > math.pi:
         dlon = -(2 * math.pi - dlon) if dlon > 0 else (2 * math.pi + dlon)
 
-    bb = math.arctan2(dlon, dPhi)
+    bb = math.atan2(dlon, dPhi)
     if bb < 0:
         bb = 2 * math.pi + bb
 
     brng = bb
     dist = math.sqrt(dlat * dlat + q * q * dlon * dlon) * EARTH_RADIUS
 
-    return brng, dist
+    return math.degrees(brng), dist
 
 
 def guesstimate_voyage_data(
@@ -394,16 +498,34 @@ def guesstimate_voyage_data(
     draft_2: float,
     speed_1: float,
     speed_2: float,
-    time_1: float,
-    time_2: float,
+    time_1: datetime,
+    time_2: datetime,
     design_speed: float,
 ) -> dict:
+    """Guesstimate voyage data input to ceto from parameters readily available in AIS messages
+
+    Args:
+        latitude_1 (float): Latitude at WP1 [deg]
+        longitude_1 (float): Longtude at WP1 [deg]
+        latitude_2 (float): Latitude at WP2 [deg]
+        longitude_2 (float): Longitude at WP2 [deg]
+        draft_1 (float): Draft at WP1 [m]
+        draft_2 (float): Draft at WP2 [m]
+        speed_1 (float): Speed at WP1 [kn]
+        speed_2 (float): Speed at WP2 [kn]
+        time_1 (datetime): Time at WP1 [h]
+        time_2 (datetime): _description_
+        design_speed (float): _description_
+
+    Returns:
+        dict: _description_
+    """
     _, distance = _rhumbline(latitude_1, longitude_1, latitude_2, longitude_2)
-    distance /= 0.5144  # nm
+    distance /= 1852  # To nautical miles (nm)
 
-    delta_time = time_2 - time_1  # hours
+    delta_time = (time_2 - time_1).total_seconds() / 3600  # hours
 
-    avg_speed = 0.5 * (speed_1 + speed_2)  # knots
+    avg_speed = 0.5 * (speed_1 + speed_2)  # knots (nm/h)
 
     if not (0.75 <= (distance / delta_time) / avg_speed <= 1.25):
         avg_speed = distance / delta_time
@@ -417,9 +539,11 @@ def guesstimate_voyage_data(
         "legs_at_sea": [],
     }
 
+    # Less than 3 knots -> at anchor or in port
     if avg_speed < 3.0:
         return {**default_output, **{"time_anchored": delta_time}}
 
+    # Between 3 knots and half the design speed -> manoeuvring
     elif 3.0 <= avg_speed <= design_speed / 2:
         return {
             **default_output,
@@ -427,7 +551,6 @@ def guesstimate_voyage_data(
         }
 
     # else we are at sea
-
     return {
         **default_output,
         **{"legs_at_sea": [(distance, avg_speed, avg_draft)]},
