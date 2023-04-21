@@ -6,12 +6,12 @@ from geopy.distance import geodesic
 
 def knots_to_ms(speed):
     """Transform speed in knots to m/s"""
-    return speed * 1.94384
+    return speed / 1.94384
 
 
 def ms_to_knots(speed):
     """Transform speed in ms to knots"""
-    return speed / 1.94384
+    return speed * 1.94384
 
 
 def verify_range(name, value, lower_limit, upper_limit):
