@@ -1,4 +1,3 @@
 black==23.3.0
-pylint
-pytest
+pytest==7.3.0
 

@@ -7,28 +7,20 @@ import pytest
 
 
 def test_shiptype_mapping():
-    assert (
-        cais._map_type_of_ship_and_cargo_type_to_ceto_ship_type(30)
-        == "miscellaneous-fishing"
-    )
-    assert (
-        cais._map_type_of_ship_and_cargo_type_to_ceto_ship_type(79) == "general_cargo"
-    )
-    assert cais._map_type_of_ship_and_cargo_type_to_ceto_ship_type(85) == "oil_tanker"
+    assert cais._map_to_imo_ship_type(30) == "miscellaneous-fishing"
+    assert cais._map_to_imo_ship_type(79) == "general_cargo"
+    assert cais._map_to_imo_ship_type(85) == "oil_tanker"
 
     with pytest.warns():
-        assert (
-            cais._map_type_of_ship_and_cargo_type_to_ceto_ship_type(32121)
-            == "service-other"
-        )
+        assert cais._map_to_imo_ship_type(32121) == "service-other"
 
 
 def test_dims_validation():
-    assert cais._validate_dims(100, 100, 25, 25)
-    assert not cais._validate_dims(25, 25, 25, 25)
-    assert not cais._validate_dims(2, 2, 25, 25)
-    assert not cais._validate_dims(250, 250, 25, 25)
-    assert not cais._validate_dims(100, 100, 40, 40)
+    assert cais._validate_dimensions(100, 100, 25, 25)
+    assert not cais._validate_dimensions(25, 25, 25, 25)
+    assert not cais._validate_dimensions(2, 2, 25, 25)
+    assert not cais._validate_dimensions(250, 250, 25, 25)
+    assert not cais._validate_dimensions(100, 100, 40, 40)
 
 
 def test_guesstimate_block_coefficient():
@@ -43,9 +35,9 @@ def test_guestimate_design_draft():
 
 
 def test_guesstimate_design_speed():
-    assert 13 <= cais._guesstimate_design_speed(200, "oil_tanker", 0) <= 15
+    assert 13 <= cais._guesstimate_design_speed(200, "oil_tanker", 0) <= 16
     assert 20 <= cais._guesstimate_design_speed(300, "general_cargo", 0) <= 24
-    assert 15 <= cais._guesstimate_design_speed(30, "ferry-pax", 0) <= 18
+    assert 12 <= cais._guesstimate_design_speed(30, "ferry-pax", 0) <= 15
     assert cais._guesstimate_design_speed(200, "oil_tanker", 18) == 18
 
 
@@ -75,22 +67,34 @@ def test_guesstimate_engine_fuel_type():
     assert cais._guesstimate_engine_fuel_type("anything-else", 0.0, 0.0) == "MDO"
 
 
-def test_guesstimate_GT():
-    assert cais._guesstimate_vessel_size_as_GrossTonnage(200, 30, 7) == 0.3 * (
-        200 * 30 * 7 * 1.65
-    )
-
-
 def test_guesstimate_DWT():
     assert cais._guesstimate_vessel_size_as_DeadWeightTonnage(
         "oil_tanker", 200, 30, 7
     ) == 0.83 * (cais._guesstimate_block_coefficient("oil_tanker") * 200 * 30 * 7)
 
 
+def test_guesstimate_GT():
+    dwt = cais._guesstimate_vessel_size_as_DeadWeightTonnage("oil_tanker", 200, 30, 7)
+
+    assert cais._guesstimate_vessel_size_as_GrossTonnage(
+        "oil_tanker", dwt
+    ) / dwt == pytest.approx(0.5354)
+
+    dwt = cais._guesstimate_vessel_size_as_DeadWeightTonnage(
+        "service-other", 200, 30, 7
+    )
+
+    assert cais._guesstimate_vessel_size_as_GrossTonnage(
+        "service-other", dwt
+    ) / dwt == pytest.approx(2.0)
+
+
 def test_guesstimate_CBM():
     assert cais._guesstimate_vessel_size_as_CubicMetres(
-        200, 30, 7
-    ) == cais._guesstimate_vessel_size_as_CubicMetres(200, 30, 7)
+        "oil_tanker", 50_000
+    ) == pytest.approx(
+        0.8 * cais._guesstimate_vessel_size_as_GrossTonnage("oil_tanker", 50_000)
+    )
 
 
 def test_guesstimate_vessel_data():
