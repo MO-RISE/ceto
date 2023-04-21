@@ -121,7 +121,7 @@ def _guesstimate_block_coefficient(ceto_ship_type: str) -> float:
         return 0.45
 
     # else
-    raise ValueError("Invalid ceto shiptype %s was provided as input!", ceto_ship_type)
+    raise ValueError("The ship type %s is currently not supported by this function.", ceto_ship_type)
 
 
 def _guesstimate_design_draft(ais_draft: float, beam: float) -> float:
@@ -146,8 +146,8 @@ def _guesstimate_design_speed(
     """Guesstimate the design speed
 
     Assuming the there is a linear correlation between block coefficient
-    and design froude number. If the inputted actual speedis higher than
-    the estimated design spee it is used directly.
+    and design Froude number. If the inputted actual speed is higher than
+    the estimated design speed, it is used directly.
 
     Args:
         length (float): Length of vessel [m]
