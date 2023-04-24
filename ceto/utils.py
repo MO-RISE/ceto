@@ -5,12 +5,12 @@ Utilities
 
 def knots_to_ms(speed):
     """Transform speed in knots to m/s"""
-    return speed * 1.94384
+    return speed * 1852 / 3600
 
 
 def ms_to_knots(speed):
     """Transform speed in ms to knots"""
-    return speed / 1.94384
+    return speed * 3600 / 1852
 
 
 def verify_range(name, value, lower_limit, upper_limit):
