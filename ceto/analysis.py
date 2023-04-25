@@ -1,5 +1,5 @@
 from typing import List, Tuple
-from sklearn.cluster import DBSCAN, KMeans
+from sklearn.cluster import DBSCAN, KMeans, AgglomerativeClustering
 import numpy as np
 from ceto.utils import ms_to_knots
 from copy import deepcopy
@@ -204,11 +204,11 @@ def get_cluster_colors(labels):
     return [CLUSTER_COLORS[label] if label != -1 else [255.0,255.0,255.0] for label in labels]
 
 
-def generate_representative_path(paths: List[List[Tuple[float, float]]], epsilon: float = 10) -> List[Tuple[float, float]]:
+def generate_representative_path_old(paths: List[List[Tuple[float, float]]], epsilon: float = 10) -> List[Tuple[float, float]]:
     
     # Find the representative waypoints. 
     s_paths = [douglas_peucker(path, epsilon) for path in paths]
-    average_length = int(np.ceil(sum([len(s_path) for s_path in s_paths])/len(s_paths)))
+    average_length = int(np.ceil(sum([len(s_path) for s_path in s_paths])/len(s_paths))+1)
     kmeans = KMeans(n_clusters=average_length, random_state=0, n_init="auto")
     
     # Add the index as a third element in the input points for the KMeans algorithm
@@ -222,10 +222,42 @@ def generate_representative_path(paths: List[List[Tuple[float, float]]], epsilon
     # Remove the index from the final output
     ordered_cluster_centers = [(p[0], p[1]) for p in ordered_cluster_centers]
     
+    return douglas_peucker(ordered_cluster_centers, epsilon)
+
+
+def generate_representative_path(paths: List[List[Tuple[float, float]]], epsilon: float = 10) -> List[Tuple[float, float]]:
+
+    # Find the representative waypoints.
+    s_paths = [douglas_peucker(path, epsilon) for path in paths]
+    average_length = int(np.ceil(sum([len(s_path) for s_path in s_paths]) / len(s_paths))) + 1
+    agglomerative_clustering = AgglomerativeClustering(n_clusters=average_length)
+    
+    # Add the index as a third element in the input points for the Agglomerative Clustering algorithm
+    points = [(point[0], point[1], index) for sublist in s_paths for index, point in enumerate(sublist)]
+    points_np = np.array(points)[:, :2]  # Exclude the index from the numpy array for clustering
+    agglomerative_clustering.fit(points_np)
+    
+    # Calculate cluster centers
+    cluster_centers = []
+    for cluster_id in np.unique(agglomerative_clustering.labels_):
+        cluster_points = points_np[agglomerative_clustering.labels_ == cluster_id]
+        cluster_center = cluster_points.mean(axis=0)
+        # Find the index of the closest point in the cluster to the cluster center
+        closest_point_idx = np.argmin(np.linalg.norm(cluster_points - cluster_center, axis=1))
+        # Get the index of the point in the original list of points
+        original_index = points[closest_point_idx][2]
+        cluster_centers.append((cluster_center[0], cluster_center[1], original_index))
+
+    # Sort the cluster centers based on the third element (the index)
+    ordered_cluster_centers = sorted(cluster_centers, key=lambda x: x[2])
+
+    # Remove the index from the final output
+    ordered_cluster_centers = [(p[0], p[1]) for p in ordered_cluster_centers]
+
     return ordered_cluster_centers
 
 
-def generate_representative_route(trips):
+def generate_representative_route(trips, epsilon: float = 10, old=False):
 
     def _find_index_of_closest_point(path, point):
         index = 0
@@ -238,7 +270,10 @@ def generate_representative_route(trips):
         return index
 
     # Generate a path representative of all the paths
-    r_path = generate_representative_path([trip["path"] for trip in trips])
+    if old:
+        r_path = generate_representative_path_old([trip["path"] for trip in trips], epsilon)
+    else:
+        r_path = generate_representative_path([trip["path"] for trip in trips], epsilon)
 
     
     leg_times_h = [0]*(len(r_path) - 1)
