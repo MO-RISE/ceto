@@ -229,14 +229,12 @@ def generate_representative_path(paths: List[List[Tuple[float, float]]], epsilon
     
     # Calculate cluster centers
     cluster_centers = []
+    ref = np.array([(p[0],p[1]) for p in paths[0]])
     for cluster_id in np.unique(agglomerative_clustering.labels_):
         cluster_points = points[agglomerative_clustering.labels_ == cluster_id]
         cluster_center = cluster_points[:,:2].mean(axis=0)
-        # Find the index of the closest point in the cluster to the cluster center
-        closest_point_idx = np.argmin(np.linalg.norm(cluster_points[:,:2] - cluster_center, axis=1))
-        # Get the index of the point in the original list of points
-        original_index = points[closest_point_idx][2]
-        cluster_centers.append((cluster_center[0], cluster_center[1], original_index))
+        closest_point_idx = np.argmin(np.linalg.norm(ref - cluster_center, axis=1))
+        cluster_centers.append((cluster_center[0], cluster_center[1], closest_point_idx))
 
     # Sort the cluster centers based on the third element (the index)
     ordered_cluster_centers = sorted(cluster_centers, key=lambda x: x[2])
@@ -246,33 +244,7 @@ def generate_representative_path(paths: List[List[Tuple[float, float]]], epsilon
 
     return ordered_cluster_centers
 
-def generate_representative_path_new(paths: List[List[Tuple[float, float]]], epsilon: float = 10) -> List[Tuple[float, float]]:
-
-    # Find the representative waypoints.
-    s_paths = [douglas_peucker(path, epsilon) for path in paths]
-    n_waypoints = int(np.ceil(sum([len(s_path) for s_path in s_paths]) / len(s_paths))) + 1
-    agglomerative_clustering = AgglomerativeClustering(n_clusters=n_waypoints)
-    
-    # Add the index as a third element in the input points for the Agglomerative Clustering algorithm
-    points = np.array([(point[0], point[1], index) for sublist in s_paths for index, point in enumerate(sublist)])
-    agglomerative_clustering.fit(points)
-    
-    # Calculate cluster centers
-    cluster_centers = []
-    for cluster_id in np.unique(agglomerative_clustering.labels_):
-        cluster_points = points[agglomerative_clustering.labels_ == cluster_id]
-        cluster_centers.append(cluster_points.mean(axis=0))
-
-    # Sort the cluster centers based on the third element (the index)
-    ordered_cluster_centers = sorted(cluster_centers, key=lambda x: x[2])
-
-    # Remove the index from the final output
-    ordered_cluster_centers = [(p[0], p[1]) for p in ordered_cluster_centers]
-
-    return ordered_cluster_centers
-
-
-def generate_representative_route(trips, epsilon: float = 10, old=False):
+def generate_representative_route(trips, epsilon: float = 10):
 
     def _find_index_of_closest_point(path, point):
         index = 0
@@ -285,12 +257,8 @@ def generate_representative_route(trips, epsilon: float = 10, old=False):
         return index
 
     # Generate a path representative of all the paths
-    if old:
-        r_path = generate_representative_path_old([trip["path"] for trip in trips], epsilon)
-    else:
-        r_path = generate_representative_path([trip["path"] for trip in trips], epsilon)
+    r_path = generate_representative_path([trip["path"] for trip in trips], epsilon)
 
-    
     leg_times_h = [0]*(len(r_path) - 1)
     for trip in trips:
 
@@ -317,7 +285,7 @@ def generate_representative_route(trips, epsilon: float = 10, old=False):
 
 
 
-def make_voyage_profile(leg_distances, leg_speeds, time_anchored=0.0, time_at_berth=0.0, speed_threshold=5.0):
+def make_voyage_profile(leg_distances, leg_speeds, design_draft, time_anchored=0.0, time_at_berth=0.0, speed_threshold=5.0):
     """Make a voyage profile
 
     Arguments:
@@ -329,6 +297,9 @@ def make_voyage_profile(leg_distances, leg_speeds, time_anchored=0.0, time_at_be
         leg_speeds: list
             List of leg speeds (kn)
 
+        design_draft: float
+            Design draft (m)
+
         time_anchored: float
             Time anchored (h)
         
@@ -337,6 +308,7 @@ def make_voyage_profile(leg_distances, leg_speeds, time_anchored=0.0, time_at_be
 
         speed_threshold: float
             Speed threshold to differentiate between "legs_manouvering" and "legs_at_sea".
+            Default value of 5.0 kn.
 
     Returns:
     --------
@@ -353,7 +325,7 @@ def make_voyage_profile(leg_distances, leg_speeds, time_anchored=0.0, time_at_be
     }
     for speed, distance in zip(leg_speeds, leg_distances):
         key = "legs_manoeuvring" if speed < speed_threshold else "legs_at_sea"
-        voyage_profile[key].append((distance, speed))
+        voyage_profile[key].append((distance, speed, design_draft))
     return voyage_profile
 
 # def trip_to_voyage_profile(trip, design_draft):

@@ -20,8 +20,8 @@ def plot_error_histogram(errors, title, statistic="median", bins=10, width=WIDTH
     if statistic == "median":
         statistic_value = np.median(errors)
     else:
-        statistic = np.mean(errors)
-    statistic_line = Span(location=statistic, dimension='height', line_color='blue', line_width=1)
+        statistic_value = np.mean(errors)
+    statistic_line = Span(location=statistic_value, dimension='height', line_color='blue', line_width=1)
     p.add_layout(statistic_line)
     
     # Add a separate line glyph for the legend
