@@ -192,16 +192,6 @@ def cluster_paths(paths: List[List[Tuple[float, float]]], alpha: float = 0.3, ep
     
     return labels
 
-CLUSTER_COLORS = [
-    (31, 119, 180), (255, 127, 14), (44, 160, 44), (214, 39, 40), (148, 103, 189), (140, 86, 75),
-    (227, 119, 194), (127, 127, 127), (188, 189, 34), (23, 190, 207), (230, 25, 75), (60, 180, 75),
-    (245, 130, 49), (145, 30, 180), (70, 240, 240), (240, 50, 230), (188, 246, 12), (250, 190, 190),
-    (0, 128, 128), (230, 190, 255), (154, 99, 36), (255, 250, 200), (128, 0, 0), (170, 255, 195),
-    (128, 128, 0), (255, 216, 177), (0, 0, 128), (169, 169, 169), (255, 255, 255), (0, 0, 0)
-]
-
-def get_cluster_colors(labels):
-    return [CLUSTER_COLORS[label] if label != -1 else [255.0,255.0,255.0] for label in labels]
 
 
 def generate_representative_path_old(paths: List[List[Tuple[float, float]]], epsilon: float = 10) -> List[Tuple[float, float]]:
@@ -229,24 +219,49 @@ def generate_representative_path(paths: List[List[Tuple[float, float]]], epsilon
 
     # Find the representative waypoints.
     s_paths = [douglas_peucker(path, epsilon) for path in paths]
-    average_length = int(np.ceil(sum([len(s_path) for s_path in s_paths]) / len(s_paths))) + 1
-    agglomerative_clustering = AgglomerativeClustering(n_clusters=average_length)
+    n_waypoints = int(np.ceil(sum([len(s_path) for s_path in s_paths]) / len(s_paths))) + 1
+    agglomerative_clustering = AgglomerativeClustering(n_clusters=n_waypoints)
     
     # Add the index as a third element in the input points for the Agglomerative Clustering algorithm
-    points = [(point[0], point[1], index) for sublist in s_paths for index, point in enumerate(sublist)]
+    points = np.array([(point[0], point[1], index) for sublist in s_paths for index, point in enumerate(sublist)])
     points_np = np.array(points)[:, :2]  # Exclude the index from the numpy array for clustering
     agglomerative_clustering.fit(points_np)
     
     # Calculate cluster centers
     cluster_centers = []
     for cluster_id in np.unique(agglomerative_clustering.labels_):
-        cluster_points = points_np[agglomerative_clustering.labels_ == cluster_id]
-        cluster_center = cluster_points.mean(axis=0)
+        cluster_points = points[agglomerative_clustering.labels_ == cluster_id]
+        cluster_center = cluster_points[:,:2].mean(axis=0)
         # Find the index of the closest point in the cluster to the cluster center
-        closest_point_idx = np.argmin(np.linalg.norm(cluster_points - cluster_center, axis=1))
+        closest_point_idx = np.argmin(np.linalg.norm(cluster_points[:,:2] - cluster_center, axis=1))
         # Get the index of the point in the original list of points
         original_index = points[closest_point_idx][2]
         cluster_centers.append((cluster_center[0], cluster_center[1], original_index))
+
+    # Sort the cluster centers based on the third element (the index)
+    ordered_cluster_centers = sorted(cluster_centers, key=lambda x: x[2])
+
+    # Remove the index from the final output
+    ordered_cluster_centers = [(p[0], p[1]) for p in ordered_cluster_centers]
+
+    return ordered_cluster_centers
+
+def generate_representative_path_new(paths: List[List[Tuple[float, float]]], epsilon: float = 10) -> List[Tuple[float, float]]:
+
+    # Find the representative waypoints.
+    s_paths = [douglas_peucker(path, epsilon) for path in paths]
+    n_waypoints = int(np.ceil(sum([len(s_path) for s_path in s_paths]) / len(s_paths))) + 1
+    agglomerative_clustering = AgglomerativeClustering(n_clusters=n_waypoints)
+    
+    # Add the index as a third element in the input points for the Agglomerative Clustering algorithm
+    points = np.array([(point[0], point[1], index) for sublist in s_paths for index, point in enumerate(sublist)])
+    agglomerative_clustering.fit(points)
+    
+    # Calculate cluster centers
+    cluster_centers = []
+    for cluster_id in np.unique(agglomerative_clustering.labels_):
+        cluster_points = points[agglomerative_clustering.labels_ == cluster_id]
+        cluster_centers.append(cluster_points.mean(axis=0))
 
     # Sort the cluster centers based on the third element (the index)
     ordered_cluster_centers = sorted(cluster_centers, key=lambda x: x[2])
@@ -299,20 +314,92 @@ def generate_representative_route(trips, epsilon: float = 10, old=False):
 
     return {"path": r_path, "speed": avg_leg_speeds_kn, "time": avg_leg_times_h, "distance":leg_distances_nm}
 
-def to_pydeck(trips, start_unix_time=None, colors=None):
-    pdk_trips = deepcopy(trips)
 
-    if colors is None:
-        colors = [[333,33,33]]*len(trips)
 
-    for pdk_trip, color in zip(pdk_trips, colors):
-        # Lat, lon to lon, lat
-        pdk_trip["path"] = [[p[1],p[0]] for p in pdk_trip["path"]]
 
-        # relative_timestamap
-        if "timestamp" in pdk_trip:
-            t0 = start_unix_time if start_unix_time is not None else pdk_trips[0]["timestamp"][0]
-            pdk_trip["relative_timestamp"] = [ts - t0 for ts in pdk_trip["timestamp"]]
+def make_voyage_profile(leg_distances, leg_speeds, time_anchored=0.0, time_at_berth=0.0, speed_threshold=5.0):
+    """Make a voyage profile
 
-        pdk_trip["color"] = color
-    return pdk_trips
+    Arguments:
+    ----------
+
+        leg_distances: list
+            List of leg distances (nm)
+        
+        leg_speeds: list
+            List of leg speeds (kn)
+
+        time_anchored: float
+            Time anchored (h)
+        
+        time_at_berth: float
+            Time at berth (h)
+
+        speed_threshold: float
+            Speed threshold to differentiate between "legs_manouvering" and "legs_at_sea".
+
+    Returns:
+    --------
+
+        dict
+            Dictionary representing a voyage profile.    
+    """
+    
+    voyage_profile = {
+        "time_anchored": time_anchored,
+        "time_at_berth": time_at_berth,
+        "legs_manoeuvring":[],
+        "legs_at_sea": [],
+    }
+    for speed, distance in zip(leg_speeds, leg_distances):
+        key = "legs_manoeuvring" if speed < speed_threshold else "legs_at_sea"
+        voyage_profile[key].append((distance, speed))
+    return voyage_profile
+
+# def trip_to_voyage_profile(trip, design_draft):
+#     vp = {
+#         "time_anchored": 0.0,
+#         "time_at_berth": 0.0,
+#         "legs_manoeuvring":[],
+#         "legs_at_sea": [],
+#     }
+
+#     for i in range(len(trip["path"])):
+#         if i > 0:
+#             segment_distance_nm = haversine(trip["path"][i], trip["path"][i-1]) / 1_852
+#             segment_time_h = (trip["timestamp"][i] - trip["timestamp"][i-1]) / 3_600
+#             segment_speed_kn = segment_distance_nm / segment_time_h
+
+#             key = "legs_manoeuvring" if segment_speed_kn < 5.0 else "legs_at_sea"
+#             vp[key].append((segment_distance_nm, segment_speed_kn, design_draft))
+                
+#     return vp
+
+
+def calculate_total_fuel_consumption(ifc, timestamps):
+    """Calculate the total fuel consumption over a period of time based on instantaneous fuel consumption measurements.
+
+    Parameters
+    ----------
+    ifc : list
+        List of instantaneous fuel consumption measurements in liters per hour (L/h).
+    timestamps : list
+        List of Unix timestamps corresponding to the instantaneous fuel consumption measurements.
+
+    Returns
+    -------
+    float
+        The total fuel consumption over the time period, in liters (L).
+
+    """
+
+    # Calculate the time interval between adjacent measurements
+    dt = np.diff(timestamps) / 3_600
+
+    # Calculate the average fuel consumption between adjacent measurements
+    fc_avg = np.convolve(ifc, np.array([0.5, 0.5]), mode='valid')
+
+    # Calculate the total fuel consumption by summing the product of the average fuel consumption and time interval
+    total_fc = np.sum(fc_avg * dt)
+
+    return total_fc
