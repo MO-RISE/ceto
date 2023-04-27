@@ -145,7 +145,11 @@ def _guesstimate_design_draft(ais_draft: float, beam: float) -> float:
     Returns:
         float: Estimated design draft [m]
     """
-    return ais_draft if 2.25 <= beam / ais_draft <= 3.75 else beam / 3.25
+    return (
+        ais_draft
+        if ais_draft > 0.0 and (2.25 <= beam / ais_draft <= 3.75)
+        else beam / 3.25
+    )
 
 
 def _guesstimate_design_speed(length: float, imo_ship_type: str, speed: float) -> float:
@@ -539,9 +543,12 @@ def guesstimate_voyage_data(
 
     delta_time = (time_2 - time_1).total_seconds() / 3600  # hours
 
+    if delta_time == 0.0:
+        raise ValueError(f"Timestamps ({time_1}, {time_2}) cant be equal!")
+
     avg_speed = 0.5 * (speed_1 + speed_2)  # knots (nm/h)
 
-    if not (0.75 <= (distance / delta_time) / avg_speed <= 1.25):
+    if avg_speed > 0.0 and not (0.75 <= (distance / delta_time) / avg_speed <= 1.25):
         avg_speed = distance / delta_time
 
     avg_draft = 0.5 * (draft_1 + draft_2)
