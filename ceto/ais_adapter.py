@@ -181,7 +181,7 @@ def _guesstimate_design_speed(length: float, imo_ship_type: str, speed: float) -
     design_speed = ms_to_knots(
         (froude_number * math.sqrt(g * length)) / block_coefficient
     )
-    return speed if speed > design_speed else design_speed
+    return speed if 0.5 * design_speed <= speed <= 1.5 * design_speed else design_speed
 
 
 def _guesstimate_number_of_engines(imo_ship_type: str) -> int:
@@ -519,6 +519,7 @@ def guesstimate_voyage_data(
     time_1: datetime,
     time_2: datetime,
     design_speed: float,
+    design_draft: float,
 ) -> dict:
     """Guesstimate voyage data input to ceto from parameters readily available in AIS messages
 
@@ -532,8 +533,9 @@ def guesstimate_voyage_data(
         speed_1 (float): Speed at WP1 [kn]
         speed_2 (float): Speed at WP2 [kn]
         time_1 (datetime): Time at WP1 [h]
-        time_2 (datetime): _description_
-        design_speed (float): _description_
+        time_2 (datetime): Time at WP2 [h]
+        design_speed (float): Design speed of vessel [kn]
+        design_draft (float): Design draft of vessel [m]
 
     Returns:
         dict: _description_
@@ -546,12 +548,18 @@ def guesstimate_voyage_data(
     if delta_time == 0.0:
         raise ValueError(f"Timestamps ({time_1}, {time_2}) cant be equal!")
 
+    # Figure out a reasonable speed to use for this leg
     avg_speed = 0.5 * (speed_1 + speed_2)  # knots (nm/h)
-
     if avg_speed > 0.0 and not (0.75 <= (distance / delta_time) / avg_speed <= 1.25):
         avg_speed = distance / delta_time
 
+    # Figure out a reasonable draft to use for this leg
     avg_draft = 0.5 * (draft_1 + draft_2)
+    avg_draft = (
+        avg_draft
+        if 0.25 * design_draft <= avg_draft <= 1.5 * design_draft
+        else design_draft
+    )
 
     default_output = {
         "time_anchored": 0.0,

@@ -131,6 +131,7 @@ def test_guesstimate_voyage_data():
         datetime.fromtimestamp(0),
         datetime.fromtimestamp(10_000 / 3600),
         23,
+        5,
     )
 
     assert "time_anchored" in vdata.keys()
