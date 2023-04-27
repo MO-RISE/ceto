@@ -409,7 +409,7 @@ def guesstimate_vessel_data(
 
     # Vessel size (DWT)
     vessel_size = _guesstimate_vessel_size_as_DeadWeightTonnage(
-        imo_ship_type, length, beam, draft
+        imo_ship_type, length, beam, design_draft
     )
 
     # Engine parameters
