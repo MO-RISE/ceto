@@ -476,9 +476,9 @@ def estimate_auxiliary_power_demand(vessel_data, operation_mode):
             [1_000, 200, 200, 100, 500, 500, 750, 500],
         ],
         "ferry-pax": [
-            [0, 0, 0, 0, 190, 190, 190],
-            [0, 0, 0, 0, 190, 190, 190],
-            [0, 0, 0, 0, 190, 190, 190],
+            [0, 0, 0, 0, 190, 190, 190, 190],
+            [0, 0, 0, 0, 190, 190, 190, 190],
+            [0, 0, 0, 0, 190, 190, 190, 190],
             [0, 0, 0, 0, 520, 520, 520, 520],
         ],
         "cruise": [
@@ -893,7 +893,7 @@ def estimate_fuel_consumption(
         else:
             total_time = sum([distance / speed for distance, speed, _ in legs])
             
-            # FC of uxiliary systems
+            # FC of auxiliary systems
             ifc_aux_engine, ifc_boiler = estimate_instantanous_fuel_consumption_of_auxiliary_systems(
                 vessel_data, operation_mode)
             fc_aux_engine = ifc_aux_engine*total_time
