@@ -14,7 +14,7 @@ DUMMY_VESSEL_DATA = {
     "size": None,
     "double_ended": False,
     "length": 100,
-    "beam": 20
+    "beam": 20,
 }
 
 DUMMY_VOYAGE_PROFILE = {
@@ -28,7 +28,6 @@ DUMMY_VOYAGE_PROFILE = {
 
 
 def test_estimate_specific_fuel_consumption():
-
     # The sfc changes with engine load for non aux. engines or steam boilers.
     sfc_1 = estimate_specific_fuel_consumption(0.2, "SSD", "HFO", "after_2000")
     sfc_2 = estimate_specific_fuel_consumption(0.8, "SSD", "HFO", "after_2000")
@@ -57,7 +56,6 @@ def test_estimate_specific_fuel_consumption():
 
 
 def test_verify_vessel_data():
-
     vessel_data = DUMMY_VESSEL_DATA.copy()
 
     # Correct data, no error raises
@@ -91,7 +89,6 @@ def test_verify_vessel_data():
 
 
 def test_estimate_auxiliary_power_demand():
-
     # Auxiliary power demand increases size
     vessel_data = DUMMY_VESSEL_DATA.copy()
     vessel_data["type"] = "oil_tanker"
@@ -106,7 +103,6 @@ def test_estimate_auxiliary_power_demand():
 
 
 def test_estimate_propulsion_engine_load():
-
     # Engine load increases with speed
     el_1 = estimate_propulsion_engine_load(5, 7, DUMMY_VESSEL_DATA)
     el_2 = estimate_propulsion_engine_load(10, 7, DUMMY_VESSEL_DATA)
@@ -118,7 +114,6 @@ def test_estimate_propulsion_engine_load():
 
 
 def test_estimate_fuel_consumption_of_auxiliary_systems():
-
     # Offshore vessel should have the same fc regardless of operation mode
     fc_mass_1, fc_volume_1 = estimate_fuel_consumption_of_auxiliary_systems(
         DUMMY_VESSEL_DATA, "at_berth", 30
@@ -131,7 +126,6 @@ def test_estimate_fuel_consumption_of_auxiliary_systems():
 
 
 def test_verify_voyage_profile():
-
     # Raise error if missing key-value pairs
     voyage_profile = DUMMY_VOYAGE_PROFILE.copy()
     del voyage_profile["time_at_berth"]
@@ -142,7 +136,6 @@ def test_verify_voyage_profile():
 
 
 def test_estimate_fuel_consumption():
-
     vp0 = {
         "time_at_berth": 0,
         "time_anchored": 0,

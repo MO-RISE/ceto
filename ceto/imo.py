@@ -66,13 +66,9 @@ def verify_vessel_data(vessel_data):
     """Verify the contents of the 'vessel_data' dictionary"""
 
     try:
-        verify_key_value_range(
-            "vessel_data", "length", vessel_data, 5.0, 250.0
-        )
+        verify_key_value_range("vessel_data", "length", vessel_data, 5.0, 450.0)
 
-        verify_key_value_range(
-            "vessel_data", "beam", vessel_data, 1.5, 30.0
-        )
+        verify_key_value_range("vessel_data", "beam", vessel_data, 1.5, 70.0)
 
         verify_key_value_range(
             "vessel_data", "design_speed", vessel_data, 1.0, MAX_VESSEL_SPEED_KN
@@ -126,9 +122,7 @@ def verify_vessel_data(vessel_data):
         #         )
 
     except KeyError as err:
-        raise KeyError(
-            f"'vessel_data' is missing a value for '{err}'."
-        ) from err
+        raise KeyError(f"'vessel_data' is missing a value for '{err}'.") from err
 
 
 def verify_voyage_profile(voyage_profile):
