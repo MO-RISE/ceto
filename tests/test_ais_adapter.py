@@ -38,7 +38,7 @@ def test_guesstimate_design_speed():
     assert 13 <= cais._guesstimate_design_speed(200, "oil_tanker", 0) <= 16
     assert 20 <= cais._guesstimate_design_speed(300, "general_cargo", 0) <= 24
     assert 12 <= cais._guesstimate_design_speed(30, "ferry-pax", 0) <= 15
-    assert cais._guesstimate_design_speed(200, "oil_tanker", 18) == 18
+    assert cais._guesstimate_design_speed(200, "oil_tanker", 18) < 18
 
 
 def test_guesstimate_number_of_engines():
@@ -68,32 +68,32 @@ def test_guesstimate_engine_fuel_type():
 
 
 def test_guesstimate_DWT():
-    assert cais._guesstimate_vessel_size_as_DeadWeightTonnage(
+    assert cais._guesstimate_vessel_size_as_deadweight_tonnage(
         "oil_tanker", 200, 30, 7
     ) == 0.83 * (cais._guesstimate_block_coefficient("oil_tanker") * 200 * 30 * 7)
 
 
 def test_guesstimate_GT():
-    dwt = cais._guesstimate_vessel_size_as_DeadWeightTonnage("oil_tanker", 200, 30, 7)
+    dwt = cais._guesstimate_vessel_size_as_deadweight_tonnage("oil_tanker", 200, 30, 7)
 
-    assert cais._guesstimate_vessel_size_as_GrossTonnage(
+    assert cais._guesstimate_vessel_size_as_gross_tonnage(
         "oil_tanker", dwt
     ) / dwt == pytest.approx(0.5354)
 
-    dwt = cais._guesstimate_vessel_size_as_DeadWeightTonnage(
+    dwt = cais._guesstimate_vessel_size_as_deadweight_tonnage(
         "service-other", 200, 30, 7
     )
 
-    assert cais._guesstimate_vessel_size_as_GrossTonnage(
+    assert cais._guesstimate_vessel_size_as_gross_tonnage(
         "service-other", dwt
     ) / dwt == pytest.approx(2.0)
 
 
 def test_guesstimate_CBM():
-    assert cais._guesstimate_vessel_size_as_CubicMetres(
+    assert cais._guesstimate_vessel_size_as_cubic_metres(
         "oil_tanker", 50_000
     ) == pytest.approx(
-        0.8 * cais._guesstimate_vessel_size_as_GrossTonnage("oil_tanker", 50_000)
+        0.8 * cais._guesstimate_vessel_size_as_gross_tonnage("oil_tanker", 50_000)
     )
 
 
@@ -131,6 +131,7 @@ def test_guesstimate_voyage_data():
         datetime.fromtimestamp(0),
         datetime.fromtimestamp(10_000 / 3600),
         23,
+        5,
     )
 
     assert "time_anchored" in vdata.keys()

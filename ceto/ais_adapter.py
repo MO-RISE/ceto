@@ -145,7 +145,11 @@ def _guesstimate_design_draft(ais_draft: float, beam: float) -> float:
     Returns:
         float: Estimated design draft [m]
     """
-    return ais_draft if 2.25 <= beam / ais_draft <= 3.75 else beam / 3.25
+    return (
+        ais_draft
+        if ais_draft > 0.0 and (2.25 <= beam / ais_draft <= 3.75)
+        else beam / 3.25
+    )
 
 
 def _guesstimate_design_speed(length: float, imo_ship_type: str, speed: float) -> float:
@@ -177,7 +181,12 @@ def _guesstimate_design_speed(length: float, imo_ship_type: str, speed: float) -
     design_speed = ms_to_knots(
         (froude_number * math.sqrt(g * length)) / block_coefficient
     )
-    return speed if speed > design_speed else design_speed
+    # If speed is lower than design_speed, we assume that the vessel is just not travelling at the
+    # design_speed and thus return design_speed, if speed is higher than 150% of the design_speed, we
+    # assume it is an unreasonable value and override it with the design_speed, if the speed is
+    # within the range 100 - 110% of the design_speed, we assume our guesstimate is a bit off and
+    # revert to using the speed as a proxy for the design_speed.
+    return speed if 1.0 * design_speed <= speed <= 1.1 * design_speed else design_speed
 
 
 def _guesstimate_number_of_engines(imo_ship_type: str) -> int:
@@ -275,7 +284,7 @@ def _guesstimate_engine_fuel_type(
     return "MDO"
 
 
-def _guesstimate_vessel_size_as_DeadWeightTonnage(
+def _guesstimate_vessel_size_as_deadweight_tonnage(
     imo_ship_type: str,
     length: float,
     beam: float,
@@ -314,7 +323,7 @@ def _guesstimate_vessel_size_as_DeadWeightTonnage(
     return displacement * 0.7
 
 
-def _guesstimate_vessel_size_as_GrossTonnage(imo_ship_type: str, dwt: float) -> float:
+def _guesstimate_vessel_size_as_gross_tonnage(imo_ship_type: str, dwt: float) -> float:
     """Guesstimate vessel size as Gross Tonnage
 
     Sources:
@@ -342,7 +351,7 @@ def _guesstimate_vessel_size_as_GrossTonnage(imo_ship_type: str, dwt: float) -> 
     return 2.0 * dwt
 
 
-def _guesstimate_vessel_size_as_CubicMetres(imo_ship_type: str, dwt: float) -> float:
+def _guesstimate_vessel_size_as_cubic_metres(imo_ship_type: str, dwt: float) -> float:
     """Guesstimate the vessel size as CBM (Cubic Metres)
 
     Sources:
@@ -355,7 +364,7 @@ def _guesstimate_vessel_size_as_CubicMetres(imo_ship_type: str, dwt: float) -> f
     Returns:
         float: Estimated size in CBM [m3]
     """
-    return 0.8 * _guesstimate_vessel_size_as_GrossTonnage(imo_ship_type, dwt)
+    return 0.8 * _guesstimate_vessel_size_as_gross_tonnage(imo_ship_type, dwt)
 
 
 def guesstimate_vessel_data(
@@ -404,8 +413,8 @@ def guesstimate_vessel_data(
     design_speed = _guesstimate_design_speed(length, imo_ship_type, speed)
 
     # Vessel size (DWT)
-    vessel_size = _guesstimate_vessel_size_as_DeadWeightTonnage(
-        imo_ship_type, length, beam, draft
+    vessel_size = _guesstimate_vessel_size_as_deadweight_tonnage(
+        imo_ship_type, length, beam, design_draft
     )
 
     # Engine parameters
@@ -426,11 +435,11 @@ def guesstimate_vessel_data(
         "service-other",
         "miscellaneous-other",
     ):
-        vessel_size = _guesstimate_vessel_size_as_GrossTonnage(
+        vessel_size = _guesstimate_vessel_size_as_gross_tonnage(
             imo_ship_type, vessel_size
         )
     elif imo_ship_type == "liquified_gas_tanker":
-        vessel_size = _guesstimate_vessel_size_as_CubicMetres(
+        vessel_size = _guesstimate_vessel_size_as_cubic_metres(
             imo_ship_type, vessel_size
         )
 
@@ -515,6 +524,7 @@ def guesstimate_voyage_data(
     time_1: datetime,
     time_2: datetime,
     design_speed: float,
+    design_draft: float,
 ) -> dict:
     """Guesstimate voyage data input to ceto from parameters readily available in AIS messages
 
@@ -528,8 +538,9 @@ def guesstimate_voyage_data(
         speed_1 (float): Speed at WP1 [kn]
         speed_2 (float): Speed at WP2 [kn]
         time_1 (datetime): Time at WP1 [h]
-        time_2 (datetime): _description_
-        design_speed (float): _description_
+        time_2 (datetime): Time at WP2 [h]
+        design_speed (float): Design speed of vessel [kn]
+        design_draft (float): Design draft of vessel [m]
 
     Returns:
         dict: _description_
@@ -539,12 +550,21 @@ def guesstimate_voyage_data(
 
     delta_time = (time_2 - time_1).total_seconds() / 3600  # hours
 
-    avg_speed = 0.5 * (speed_1 + speed_2)  # knots (nm/h)
+    if delta_time == 0.0:
+        raise ValueError(f"Timestamps ({time_1}, {time_2}) cant be equal!")
 
-    if not (0.75 <= (distance / delta_time) / avg_speed <= 1.25):
+    # Figure out a reasonable speed to use for this leg
+    avg_speed = 0.5 * (speed_1 + speed_2)  # knots (nm/h)
+    if avg_speed > 0.0 and not (0.75 <= (distance / delta_time) / avg_speed <= 1.25):
         avg_speed = distance / delta_time
 
+    # Figure out a reasonable draft to use for this leg
     avg_draft = 0.5 * (draft_1 + draft_2)
+    avg_draft = (
+        avg_draft
+        if 0.25 * design_draft <= avg_draft <= 1.5 * design_draft
+        else design_draft
+    )
 
     default_output = {
         "time_anchored": 0.0,
