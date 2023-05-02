@@ -184,9 +184,9 @@ def _guesstimate_design_speed(length: float, imo_ship_type: str, speed: float) -
     # If speed is lower than design_speed, we assume that the vessel is just not travelling at the
     # design_speed and thus return design_speed, if speed is higher than 150% of the design_speed, we
     # assume it is an unreasonable value and override it with the design_speed, if the speed is
-    # within the range 100 - 150% of the design_speed, we assume our guesstimate is a bit off and
+    # within the range 100 - 110% of the design_speed, we assume our guesstimate is a bit off and
     # revert to using the speed as a proxy for the design_speed.
-    return speed if 1.0 * design_speed <= speed <= 1.5 * design_speed else design_speed
+    return speed if 1.0 * design_speed <= speed <= 1.1 * design_speed else design_speed
 
 
 def _guesstimate_number_of_engines(imo_ship_type: str) -> int:

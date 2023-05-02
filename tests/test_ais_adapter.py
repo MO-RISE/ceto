@@ -38,7 +38,7 @@ def test_guesstimate_design_speed():
     assert 13 <= cais._guesstimate_design_speed(200, "oil_tanker", 0) <= 16
     assert 20 <= cais._guesstimate_design_speed(300, "general_cargo", 0) <= 24
     assert 12 <= cais._guesstimate_design_speed(30, "ferry-pax", 0) <= 15
-    assert cais._guesstimate_design_speed(200, "oil_tanker", 18) == 18
+    assert cais._guesstimate_design_speed(200, "oil_tanker", 18) < 18
 
 
 def test_guesstimate_number_of_engines():
