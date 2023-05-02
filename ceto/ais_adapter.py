@@ -279,7 +279,7 @@ def _guesstimate_engine_fuel_type(
     return "MDO"
 
 
-def _guesstimate_vessel_size_as_DeadWeightTonnage(
+def _guesstimate_vessel_size_as_deadweight_tonnage(
     imo_ship_type: str,
     length: float,
     beam: float,
@@ -318,7 +318,7 @@ def _guesstimate_vessel_size_as_DeadWeightTonnage(
     return displacement * 0.7
 
 
-def _guesstimate_vessel_size_as_GrossTonnage(imo_ship_type: str, dwt: float) -> float:
+def _guesstimate_vessel_size_as_gross_tonnage(imo_ship_type: str, dwt: float) -> float:
     """Guesstimate vessel size as Gross Tonnage
 
     Sources:
@@ -346,7 +346,7 @@ def _guesstimate_vessel_size_as_GrossTonnage(imo_ship_type: str, dwt: float) -> 
     return 2.0 * dwt
 
 
-def _guesstimate_vessel_size_as_CubicMetres(imo_ship_type: str, dwt: float) -> float:
+def _guesstimate_vessel_size_as_cubic_metres(imo_ship_type: str, dwt: float) -> float:
     """Guesstimate the vessel size as CBM (Cubic Metres)
 
     Sources:
@@ -359,7 +359,7 @@ def _guesstimate_vessel_size_as_CubicMetres(imo_ship_type: str, dwt: float) -> f
     Returns:
         float: Estimated size in CBM [m3]
     """
-    return 0.8 * _guesstimate_vessel_size_as_GrossTonnage(imo_ship_type, dwt)
+    return 0.8 * _guesstimate_vessel_size_as_gross_tonnage(imo_ship_type, dwt)
 
 
 def guesstimate_vessel_data(
@@ -408,7 +408,7 @@ def guesstimate_vessel_data(
     design_speed = _guesstimate_design_speed(length, imo_ship_type, speed)
 
     # Vessel size (DWT)
-    vessel_size = _guesstimate_vessel_size_as_DeadWeightTonnage(
+    vessel_size = _guesstimate_vessel_size_as_deadweight_tonnage(
         imo_ship_type, length, beam, design_draft
     )
 
@@ -430,11 +430,11 @@ def guesstimate_vessel_data(
         "service-other",
         "miscellaneous-other",
     ):
-        vessel_size = _guesstimate_vessel_size_as_GrossTonnage(
+        vessel_size = _guesstimate_vessel_size_as_gross_tonnage(
             imo_ship_type, vessel_size
         )
     elif imo_ship_type == "liquified_gas_tanker":
-        vessel_size = _guesstimate_vessel_size_as_CubicMetres(
+        vessel_size = _guesstimate_vessel_size_as_cubic_metres(
             imo_ship_type, vessel_size
         )
 
