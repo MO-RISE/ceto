@@ -1,8 +1,6 @@
 from typing import List, Tuple
 from sklearn.cluster import DBSCAN, KMeans, AgglomerativeClustering
 import numpy as np
-from ceto.utils import ms_to_knots
-from copy import deepcopy
 
 
 import math
