@@ -1,5 +1,9 @@
-from ceto.analysis import *
-from geopy.distance import geodesic
+from ceto.analysis import (
+    cross_track_distance,
+    douglas_peucker,
+    frechet_distance,
+    haversine,
+)
 from pytest import approx, raises
 
 
