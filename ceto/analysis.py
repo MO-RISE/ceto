@@ -5,9 +5,10 @@ from ceto.utils import ms_to_knots
 from copy import deepcopy
 
 
-import math 
+import math
 
-R = 6371000 # Earth's radius in meters
+R = 6371000  # Earth's radius in meters
+
 
 def haversine(point_1, point_2):
     """
@@ -32,7 +33,9 @@ def haversine(point_1, point_2):
     dlat = lat2_rad - lat1_rad
     dlon = lon2_rad - lon1_rad
 
-    a = (math.sin(dlat / 2) ** 2) + math.cos(lat1_rad) * math.cos(lat2_rad) * (math.sin(dlon / 2) ** 2)
+    a = (math.sin(dlat / 2) ** 2) + math.cos(lat1_rad) * math.cos(lat2_rad) * (
+        math.sin(dlon / 2) ** 2
+    )
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
     return R * c
@@ -59,14 +62,17 @@ def bearing(point_1, point_2):
 
     dlon = lon2_rad - lon1_rad
     y = math.sin(dlon) * math.cos(lat2_rad)
-    x = math.cos(lat1_rad) * math.sin(lat2_rad) - math.sin(lat1_rad) * math.cos(lat2_rad) * math.cos(dlon)
+    x = math.cos(lat1_rad) * math.sin(lat2_rad) - math.sin(lat1_rad) * math.cos(
+        lat2_rad
+    ) * math.cos(dlon)
 
     initial_bearing_rad = math.atan2(y, x)
-   
+
     # Convert radians to degrees and normalize the result to the range [0, 360)
     initial_bearing_deg = (math.degrees(initial_bearing_rad) + 360) % 360
 
     return initial_bearing_deg
+
 
 def cross_track_distance(start_point, end_point, point):
     """
@@ -87,6 +93,7 @@ def cross_track_distance(start_point, end_point, point):
 
     return math.asin(math.sin(d13) * math.sin(bearing13 - bearing12)) * R
 
+
 def douglas_peucker(path, epsilon):
     """
     Simplify a path using the Douglas-Peucker algorithm with cross-track distance.
@@ -105,15 +112,15 @@ def douglas_peucker(path, epsilon):
         if dist > dist_max:
             index = i
             dist_max = dist
-    
 
     if dist_max > epsilon:
-        rec_results_1 = douglas_peucker(path[:index+1], epsilon)
+        rec_results_1 = douglas_peucker(path[: index + 1], epsilon)
         rec_results_2 = douglas_peucker(path[index:], epsilon)
         results = rec_results_1[:-1] + rec_results_2
     else:
-        results = [path[0],path[-1]]
+        results = [path[0], path[-1]]
     return results
+
 
 def frechet_distance(path_1, path_2):
     """
@@ -141,28 +148,45 @@ def frechet_distance(path_1, path_2):
         if i == 0 and j == 0:
             memo[i][j] = haversine(path_1[0], path_2[0])
         elif i > 0 and j == 0:
-            memo[i][j] = max(recursive_frechet(i - 1, 0), haversine(path_1[i], path_2[0]))
+            memo[i][j] = max(
+                recursive_frechet(i - 1, 0), haversine(path_1[i], path_2[0])
+            )
         elif i == 0 and j > 0:
-            memo[i][j] = max(recursive_frechet(0, j - 1), haversine(path_1[0], path_2[j]))
+            memo[i][j] = max(
+                recursive_frechet(0, j - 1), haversine(path_1[0], path_2[j])
+            )
         elif i > 0 and j > 0:
-            memo[i][j] = max(min(recursive_frechet(i - 1, j), recursive_frechet(i - 1, j - 1), recursive_frechet(i, j - 1)),
-                            haversine(path_1[i], path_2[j]))
+            memo[i][j] = max(
+                min(
+                    recursive_frechet(i - 1, j),
+                    recursive_frechet(i - 1, j - 1),
+                    recursive_frechet(i, j - 1),
+                ),
+                haversine(path_1[i], path_2[j]),
+            )
         else:
-            memo[i][j] = float('inf')
+            memo[i][j] = float("inf")
         return memo[i][j]
 
     return recursive_frechet(len_path_1 - 1, len_path_2 - 1)
 
-def cluster_paths(paths: List[List[Tuple[float, float]]], alpha: float = 0.3, eps: float = 100, min_samples: int = 2, epsilon: float = 10) -> List[int]:
+
+def cluster_paths(
+    paths: List[List[Tuple[float, float]]],
+    alpha: float = 0.3,
+    eps: float = 100,
+    min_samples: int = 2,
+    epsilon: float = 10,
+) -> List[int]:
     """
     Cluster paths based on their Fréchet distance and direction similarity.
 
     Arguments:
         paths: A list of paths, where each path is a list of (x, y) coordinate tuples.
         alpha: The weight of the angular difference in the distance calculation, ranging from 0 to 1.
-        eps: The maximum distance between two samples for them to be considered as in the same cluster. 
+        eps: The maximum distance between two samples for them to be considered as in the same cluster.
         min_samples: The number of samples in a neighborhood for a point to be considered as a core point.
-        epsilon: The threshold cross-track distance used to determine if a point should be kept in path simplification step (Douglas-Peucker algorithm). 
+        epsilon: The threshold cross-track distance used to determine if a point should be kept in path simplification step (Douglas-Peucker algorithm).
 
     Returns:
         A list of cluster labels for each path. Noise points are given the label -1.
@@ -172,69 +196,92 @@ def cluster_paths(paths: List[List[Tuple[float, float]]], alpha: float = 0.3, ep
     simplified_paths = [douglas_peucker(path, epsilon) for path in paths]
 
     # Compute path directions
-    path_directions = [np.arctan2(path[-1][1] - path[0][1], path[-1][0] - path[0][0]) for path in simplified_paths]
+    path_directions = [
+        np.arctan2(path[-1][1] - path[0][1], path[-1][0] - path[0][0])
+        for path in simplified_paths
+    ]
 
-    
     # Compute pairwise distances between all pairs of trajectories using the Fréchet distance
     distance_matrix = np.zeros([len(simplified_paths), len(simplified_paths)])
     for i, i_path in enumerate(simplified_paths):
         for j, j_path in enumerate(simplified_paths):
             if i == j:
-                distance_matrix[i,j] = 0
+                distance_matrix[i, j] = 0
             else:
                 fr_dist = frechet_distance(i_path, j_path)
-                angular_diff = angular_diff = np.abs(path_directions[i] - path_directions[j])
+                angular_diff = angular_diff = np.abs(
+                    path_directions[i] - path_directions[j]
+                )
                 distance_matrix[i, j] = (1 - alpha) * fr_dist + alpha * angular_diff
-    
+
     # Apply DBSCAN clustering to group similar trajectories together
-    clustering = DBSCAN(eps=eps, min_samples=min_samples, metric='precomputed')
+    clustering = DBSCAN(eps=eps, min_samples=min_samples, metric="precomputed")
     labels = clustering.fit_predict(distance_matrix)
-    
+
     return labels
 
 
-
-def generate_representative_path_old(paths: List[List[Tuple[float, float]]], epsilon: float = 10) -> List[Tuple[float, float]]:
-    
-    # Find the representative waypoints. 
+def generate_representative_path_old(
+    paths: List[List[Tuple[float, float]]], epsilon: float = 10
+) -> List[Tuple[float, float]]:
+    # Find the representative waypoints.
     s_paths = [douglas_peucker(path, epsilon) for path in paths]
-    average_length = int(np.ceil(sum([len(s_path) for s_path in s_paths])/len(s_paths))+1)
+    average_length = int(
+        np.ceil(sum([len(s_path) for s_path in s_paths]) / len(s_paths)) + 1
+    )
     kmeans = KMeans(n_clusters=average_length, random_state=0, n_init="auto")
-    
+
     # Add the index as a third element in the input points for the KMeans algorithm
-    points = [(point[0], point[1], index) for sublist in s_paths for index, point in enumerate(sublist)]
+    points = [
+        (point[0], point[1], index)
+        for sublist in s_paths
+        for index, point in enumerate(sublist)
+    ]
     kmeans.fit_predict(points)
     cluster_centers = [(p[0], p[1], p[2]) for p in kmeans.cluster_centers_]
 
     # Sort the cluster centers based on the third element (the index)
     ordered_cluster_centers = sorted(cluster_centers, key=lambda x: x[2])
-    
+
     # Remove the index from the final output
     ordered_cluster_centers = [(p[0], p[1]) for p in ordered_cluster_centers]
-    
+
     return douglas_peucker(ordered_cluster_centers, epsilon)
 
 
-def generate_representative_path(paths: List[List[Tuple[float, float]]], epsilon: float = 10) -> List[Tuple[float, float]]:
-
+def generate_representative_path(
+    paths: List[List[Tuple[float, float]]], epsilon: float = 10
+) -> List[Tuple[float, float]]:
     # Find the representative waypoints.
     s_paths = [douglas_peucker(path, epsilon) for path in paths]
-    n_waypoints = int(np.ceil(sum([len(s_path) for s_path in s_paths]) / len(s_paths))) + 1
+    n_waypoints = (
+        int(np.ceil(sum([len(s_path) for s_path in s_paths]) / len(s_paths))) + 1
+    )
     agglomerative_clustering = AgglomerativeClustering(n_clusters=n_waypoints)
-    
+
     # Add the index as a third element in the input points for the Agglomerative Clustering algorithm
-    points = np.array([(point[0], point[1], index) for sublist in s_paths for index, point in enumerate(sublist)])
-    points_np = np.array(points)[:, :2]  # Exclude the index from the numpy array for clustering
+    points = np.array(
+        [
+            (point[0], point[1], index)
+            for sublist in s_paths
+            for index, point in enumerate(sublist)
+        ]
+    )
+    points_np = np.array(points)[
+        :, :2
+    ]  # Exclude the index from the numpy array for clustering
     agglomerative_clustering.fit(points_np)
-    
+
     # Calculate cluster centers
     cluster_centers = []
-    ref = np.array([(p[0],p[1]) for p in paths[0]])
+    ref = np.array([(p[0], p[1]) for p in paths[0]])
     for cluster_id in np.unique(agglomerative_clustering.labels_):
         cluster_points = points[agglomerative_clustering.labels_ == cluster_id]
-        cluster_center = cluster_points[:,:2].mean(axis=0)
+        cluster_center = cluster_points[:, :2].mean(axis=0)
         closest_point_idx = np.argmin(np.linalg.norm(ref - cluster_center, axis=1))
-        cluster_centers.append((cluster_center[0], cluster_center[1], closest_point_idx))
+        cluster_centers.append(
+            (cluster_center[0], cluster_center[1], closest_point_idx)
+        )
 
     # Sort the cluster centers based on the third element (the index)
     ordered_cluster_centers = sorted(cluster_centers, key=lambda x: x[2])
@@ -244,14 +291,14 @@ def generate_representative_path(paths: List[List[Tuple[float, float]]], epsilon
 
     return ordered_cluster_centers
 
-def generate_representative_route(trips, epsilon: float = 10):
 
+def generate_representative_route(trips, epsilon: float = 10):
     def _find_index_of_closest_point(path, point):
         index = 0
         max_dist = 1e6
-        for i, p in enumerate(path):   
+        for i, p in enumerate(path):
             dist = haversine(p, point)
-            if dist < max_dist:      
+            if dist < max_dist:
                 max_dist = dist
                 index = i
         return index
@@ -259,33 +306,47 @@ def generate_representative_route(trips, epsilon: float = 10):
     # Generate a path representative of all the paths
     r_path = generate_representative_path([trip["path"] for trip in trips], epsilon)
 
-    leg_times_h = [0]*(len(r_path) - 1)
+    leg_times_h = [0] * (len(r_path) - 1)
     for trip in trips:
-
         # Find the indexes closest to the points in the representative path
         indexes = [_find_index_of_closest_point(trip["path"], rp) for rp in r_path]
 
         for i in range(len(indexes)):
             if i > 0:
-                leg_times_h[i - 1] += (trip["timestamp"][indexes[i]] - trip["timestamp"][indexes[i-1]]) / 3_600
-                
-    avg_leg_times_h = [leg_time/len(trips) for leg_time in leg_times_h]
+                leg_times_h[i - 1] += (
+                    trip["timestamp"][indexes[i]] - trip["timestamp"][indexes[i - 1]]
+                ) / 3_600
+
+    avg_leg_times_h = [leg_time / len(trips) for leg_time in leg_times_h]
 
     # Calculate leg distances
     leg_distances_nm = []
     for i in range(len(r_path)):
         if i > 0:
-            leg_distances_nm.append(haversine(r_path[i], r_path[i-1]) / 1_852)
-            
+            leg_distances_nm.append(haversine(r_path[i], r_path[i - 1]) / 1_852)
+
     # Calculate the average leg speeds
-    avg_leg_speeds_kn = [((leg_distance/ leg_time)) for leg_time, leg_distance in zip(avg_leg_times_h, leg_distances_nm)]
+    avg_leg_speeds_kn = [
+        ((leg_distance / leg_time))
+        for leg_time, leg_distance in zip(avg_leg_times_h, leg_distances_nm)
+    ]
 
-    return {"path": r_path, "speed": avg_leg_speeds_kn, "time": avg_leg_times_h, "distance":leg_distances_nm}
+    return {
+        "path": r_path,
+        "speed": avg_leg_speeds_kn,
+        "time": avg_leg_times_h,
+        "distance": leg_distances_nm,
+    }
 
 
-
-
-def make_voyage_profile(leg_distances, leg_speeds, design_draft, time_anchored=0.0, time_at_berth=0.0, speed_threshold=5.0):
+def make_voyage_profile(
+    leg_distances,
+    leg_speeds,
+    design_draft,
+    time_anchored=0.0,
+    time_at_berth=0.0,
+    speed_threshold=5.0,
+):
     """Make a voyage profile
 
     Arguments:
@@ -293,7 +354,7 @@ def make_voyage_profile(leg_distances, leg_speeds, design_draft, time_anchored=0
 
         leg_distances: list
             List of leg distances (nm)
-        
+
         leg_speeds: list
             List of leg speeds (kn)
 
@@ -302,7 +363,7 @@ def make_voyage_profile(leg_distances, leg_speeds, design_draft, time_anchored=0
 
         time_anchored: float
             Time anchored (h)
-        
+
         time_at_berth: float
             Time at berth (h)
 
@@ -314,19 +375,20 @@ def make_voyage_profile(leg_distances, leg_speeds, design_draft, time_anchored=0
     --------
 
         dict
-            Dictionary representing a voyage profile.    
+            Dictionary representing a voyage profile.
     """
-    
+
     voyage_profile = {
         "time_anchored": time_anchored,
         "time_at_berth": time_at_berth,
-        "legs_manoeuvring":[],
+        "legs_manoeuvring": [],
         "legs_at_sea": [],
     }
     for speed, distance in zip(leg_speeds, leg_distances):
         key = "legs_manoeuvring" if speed < speed_threshold else "legs_at_sea"
         voyage_profile[key].append((distance, speed, design_draft))
     return voyage_profile
+
 
 # def trip_to_voyage_profile(trip, design_draft):
 #     vp = {
@@ -344,7 +406,7 @@ def make_voyage_profile(leg_distances, leg_speeds, design_draft, time_anchored=0
 
 #             key = "legs_manoeuvring" if segment_speed_kn < 5.0 else "legs_at_sea"
 #             vp[key].append((segment_distance_nm, segment_speed_kn, design_draft))
-                
+
 #     return vp
 
 
@@ -369,7 +431,7 @@ def calculate_total_fuel_consumption(ifc, timestamps):
     dt = np.diff(timestamps) / 3_600
 
     # Calculate the average fuel consumption between adjacent measurements
-    fc_avg = np.convolve(ifc, np.array([0.5, 0.5]), mode='valid')
+    fc_avg = np.convolve(ifc, np.array([0.5, 0.5]), mode="valid")
 
     # Calculate the total fuel consumption by summing the product of the average fuel consumption and time interval
     total_fc = np.sum(fc_avg * dt)

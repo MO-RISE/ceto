@@ -1,5 +1,13 @@
 from pytest import raises, approx
-from ceto.imo import *
+from ceto.imo import (
+    estimate_instantaneous_fuel_consumption_of_auxiliary_systems,
+    estimate_specific_fuel_consumption,
+    verify_vessel_data,
+    estimate_auxiliary_power_demand,
+    verify_voyage_profile,
+    estimate_propulsion_engine_load,
+    estimate_fuel_consumption,
+)
 
 
 DUMMY_VESSEL_DATA = {
@@ -113,16 +121,22 @@ def test_estimate_propulsion_engine_load():
     assert el_1 < el_2
 
 
-def test_estimate_fuel_consumption_of_auxiliary_systems():
+def test_estimate_instantaneous_fuel_consumption_of_auxiliary_systems():
     # Offshore vessel should have the same fc regardless of operation mode
-    fc_mass_1, fc_volume_1 = estimate_fuel_consumption_of_auxiliary_systems(
-        DUMMY_VESSEL_DATA, "at_berth", 30
+    (
+        ifc_aux_1,
+        ifc_boiler_1,
+    ) = estimate_instantaneous_fuel_consumption_of_auxiliary_systems(
+        DUMMY_VESSEL_DATA, "at_berth"
     )
-    fc_mass_2, fc_volume_2 = estimate_fuel_consumption_of_auxiliary_systems(
-        DUMMY_VESSEL_DATA, "at_sea", 30
+    (
+        ifc_aux_2,
+        ifc_boiler_2,
+    ) = estimate_instantaneous_fuel_consumption_of_auxiliary_systems(
+        DUMMY_VESSEL_DATA, "at_sea"
     )
-    assert fc_mass_2 == fc_mass_1
-    assert fc_volume_2 == fc_volume_1
+    assert ifc_aux_2 == ifc_aux_1
+    assert ifc_boiler_2 == ifc_boiler_1
 
 
 def test_verify_voyage_profile():
