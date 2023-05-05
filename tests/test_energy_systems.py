@@ -45,7 +45,7 @@ def test_estimate_vessel_battery_system():
         **REFERENCE_VALUES,
     )
     assert system["details"]["battery_packs"]["capacity_kwh"] == required_energy_kwh / (
-        REFERENCE_VALUES["battery_depth_of_discharge_per"] / 100
+        REFERENCE_VALUES["battery_depth_of_discharge_pct"] / 100
     )
     assert system["total_weight_kg"] > system["details"]["battery_packs"]["weight_kg"]
     assert (
@@ -67,8 +67,8 @@ def test_estimate_vessel_gas_hydrogen_system():
     assert (
         system["details"]["hydrogen"]["weight_kg"]
         == required_energy_kwh
-        / (REFERENCE_VALUES["fuel_cell_efficiency_per"] / 100)
-        / REFERENCE_VALUES["hydrogen_gravimetric_energy_density_kwh_p_kg"]
+        / (REFERENCE_VALUES["fuel_cell_efficiency_pct"] / 100)
+        / REFERENCE_VALUES["hydrogen_gravimetric_energy_density_kwhpkg"]
     )
     assert system["total_weight_kg"] > system["details"]["gas_tanks"]["weight_kg"]
     assert (
@@ -124,15 +124,21 @@ def test_suggest_alternative_energy_systems():
 
 
 def test_suggest_alternative_energy_systems_simple():
-    vs_simple = {
-        "average_fuel_consumption_lpnm": 10,
-        "propulsion_engine_fuel_type": "MDO",
-        "propulsion_engine_power": 330,
-        "number_of_propulsion_engines": 4,
-        "double_ended": False,
-    }
+    average_fuel_consumption_lpnm = 10
+    propulsion_engine_fuel_type = "MDO"
+    propulsion_engine_power_kw = 330
+    number_of_propulsion_engines = 4
+    double_ended = False
+    total_voyage_length_nm = 60
+
     gas, battery = suggest_alternative_energy_systems_simple(
-        vs_simple, 10.0, REFERENCE_VALUES
+        average_fuel_consumption_lpnm,
+        propulsion_engine_fuel_type,
+        number_of_propulsion_engines,
+        propulsion_engine_power_kw,
+        double_ended,
+        total_voyage_length_nm,
+        REFERENCE_VALUES,
     )
 
     assert gas["total_weight_kg"] != 0.0

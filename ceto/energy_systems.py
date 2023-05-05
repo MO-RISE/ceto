@@ -17,14 +17,14 @@ from ceto.imo import (
 # Sources
 # https://www.statista.com/statistics/1312286/europe-green-hydrogen-production-and-import-costs-2030/
 # COST_ESTIMATES = {
-#     "marine_diesel_sek_per_liter": 25,
-#     "green_hydrogen_sek_per_kg": 40,
-#     "green_hydrogen_2030_sek_per_kg": 20,
-#     "fuel_cell_system_sek_per_kW": 6_000,
-#     "hydrogen_gas_tank_sek_per_stored_kg": 15_000,
-#     "electrical_engine_sek_per_kW": 2_000,
-#     "electricity_cost_sek_per_kWh": 0.3,
-#     "battery_cost_sek_per_kWh": 5_000,
+#     "marine_diesel_sek_pct_liter": 25,
+#     "green_hydrogen_sek_pct_kg": 40,
+#     "green_hydrogen_2030_sek_pct_kg": 20,
+#     "fuel_cell_system_sek_pct_kW": 6_000,
+#     "hydrogen_gas_tank_sek_pct_stored_kg": 15_000,
+#     "electrical_engine_sek_pct_kW": 2_000,
+#     "electricity_cost_sek_pct_kWh": 0.3,
+#     "battery_cost_sek_pct_kWh": 5_000,
 # }
 
 # REFERENCE VALUES
@@ -40,17 +40,17 @@ DENSITY_SEAWATER = 1025  # kg/m3
 #            Sandia National Lab.(SNL-NM), Albuquerque, NM (United States)
 
 REFERENCE_VALUES = {
-    "electrical_engine_volumetric_power_density_kw_p_m3": 1 / 0.0006,
-    "electrical_engine_gravimetric_power_density_kw_p_kg": 1 / 1.1183,
-    "fuel_cell_system_volumetric_power_density_kw_p_m3": 139,
-    "fuel_cell_system_gravimetric_power_density_kw_p_kg": 0.2,
-    "fuel_cell_efficiency_per": 45,
-    "battery_packs_volumetric_energy_density_kwh_p_m3": 88000,
-    "battery_packs_gravimetric_energy_density_kwh_p_kg": 0.077,
-    "battery_depth_of_discharge_per": 80,
-    "hydrogen_gravimetric_energy_density_kwh_p_kg": 119.96 / 3.6,
-    "hydrogen_gas_tank_container_weight_to_content_weight_ratio_kg_p_kg": 17.92,
-    "hydrogen_gas_tank_container_volume_to_content_weight_ratio_l_p_kg": 93.7,
+    "electrical_engine_volumetric_power_density_kwpm3": 1 / 0.0006,
+    "electrical_engine_gravimetric_power_density_kwpkg": 1 / 1.1183,
+    "fuel_cell_system_volumetric_power_density_kwpm3": 139,
+    "fuel_cell_system_gravimetric_power_density_kwpkg": 0.2,
+    "fuel_cell_efficiency_pct": 45,
+    "battery_packs_volumetric_energy_density_kwhpm3": 88000,
+    "battery_packs_gravimetric_energy_density_kwhpkg": 0.077,
+    "battery_depth_of_discharge_pct": 80,
+    "hydrogen_gravimetric_energy_density_kwhpkg": 119.96 / 3.6,
+    "hydrogen_gas_tank_container_weight_to_content_weight_ratio_kgpkg": 17.92,
+    "hydrogen_gas_tank_container_volume_to_content_weight_ratio_lpkg": 93.7,
 }
 
 FUEL_ENERGY_DENSITY_KWH_P_L = {
@@ -63,17 +63,15 @@ FUEL_ENERGY_DENSITY_KWH_P_L = {
 
 def _verify_reference_values(reference_values):
     keys = [
-        "electrical_engine_volumetric_power_density_kw_p_m3",
-        "electrical_engine_gravimetric_power_density_kw_p_kg",
-        "fuel_cell_system_volumetric_power_density_kw_p_m3",
-        "fuel_cell_system_gravimetric_power_density_kw_p_kg",
-        "fuel_cell_efficiency_per",
-        "battery_packs_volumetric_energy_density_kwh_p_m3",
-        "battery_packs_gravimetric_energy_density_kwh_p_kg",
-        "battery_depth_of_discharge_per",
-        "hydrogen_gravimetric_energy_density_kwh_p_kg",
-        "hydrogen_gas_tank_container_weight_to_content_weight_ratio_kg_p_kg",
-        "hydrogen_gas_tank_container_volume_to_content_weight_ratio_l_p_kg",
+        "fuel_cell_system_volumetric_power_density_kwpm3",
+        "fuel_cell_system_gravimetric_power_density_kwpkg",
+        "fuel_cell_efficiency_pct",
+        "battery_packs_volumetric_energy_density_kwhpm3",
+        "battery_packs_gravimetric_energy_density_kwhpkg",
+        "battery_depth_of_discharge_pct",
+        "hydrogen_gravimetric_energy_density_kwhpkg",
+        "hydrogen_gas_tank_container_weight_to_content_weight_ratio_kgpkg",
+        "hydrogen_gas_tank_container_volume_to_content_weight_ratio_lpkg",
     ]
     if not all([key in reference_values for key in keys]):
         raise Exception("Missing refrence values.")
@@ -244,20 +242,20 @@ def estimate_internal_combustion_system(vessel_data, voyage_profile):
         "fuel_consumption": fuel_consumption,
         "weight_breakdown": {
             "propulsion_engines": {
-                "weight_per_engine_kg": prop_engines["weight"]
+                "weight_pct_engine_kg": prop_engines["weight"]
                 / vessel_data["number_of_propulsion_engines"],
-                "volume_per_engine_m3": prop_engines["volume"]
+                "volume_pct_engine_m3": prop_engines["volume"]
                 / vessel_data["number_of_propulsion_engines"],
             },
             "gearboxes": {
-                "weight_per_gearbox_kg": gearboxes_weight
+                "weight_pct_gearbox_kg": gearboxes_weight
                 / vessel_data["number_of_propulsion_engines"],
-                "volume_per_gearbox_m3": gearboxes_volume
+                "volume_pct_gearbox_m3": gearboxes_volume
                 / vessel_data["number_of_propulsion_engines"],
             },
             "auxiliary_engines": {
-                "weight_per_engine_kg": aux_engines["weight"] / 2,
-                "volume_per_engine_m3": aux_engines["volume"] / 2,
+                "weight_pct_engine_kg": aux_engines["weight"] / 2,
+                "volume_pct_engine_m3": aux_engines["volume"] / 2,
             },
             "fuel": {"weight_kg": fuel, "volume_m3": fuel_volume},
         },
@@ -269,11 +267,11 @@ def estimate_vessel_battery_system(
     required_power_kw,
     number_of_propulsion_engines,
     double_ended,
-    battery_packs_volumetric_energy_density_kwh_p_m3,
-    battery_packs_gravimetric_energy_density_kwh_p_kg,
-    battery_depth_of_discharge_per,
-    electrical_engine_volumetric_power_density_kw_p_m3,
-    electrical_engine_gravimetric_power_density_kw_p_kg,
+    battery_packs_volumetric_energy_density_kwhpm3,
+    battery_packs_gravimetric_energy_density_kwhpkg,
+    battery_depth_of_discharge_pct,
+    electrical_engine_volumetric_power_density_kwpm3,
+    electrical_engine_gravimetric_power_density_kwpkg,
     **kwargs,
 ):
     """Estimate the key details of a battery propulsion system
@@ -285,15 +283,15 @@ def estimate_vessel_battery_system(
 
         required_power_kw: float
 
-        battery_packs_volumetric_energy_density_kwh_p_m3: float
+        battery_packs_volumetric_energy_density_kwhpm3: float
 
-        battery_packs_gravimetric_energy_density_kwh_p_kg: float
+        battery_packs_gravimetric_energy_density_kwhpkg: float
 
-        battery_depth_of_discharge_per: float
+        battery_depth_of_discharge_pct: float
 
-        electrical_engine_volumetric_power_density_kw_p_m3: float
+        electrical_engine_volumetric_power_density_kwpm3: float
 
-        electrical_engine_gravimetric_power_density_kw_p_kg: float
+        electrical_engine_gravimetric_power_density_kwpkg: float
 
         number_of_propulsion_engines: int
 
@@ -311,13 +309,13 @@ def estimate_vessel_battery_system(
 
     # Battery packs
     battery_packs_capacity_kwh = required_energy_kwh / (
-        battery_depth_of_discharge_per / 100
+        battery_depth_of_discharge_pct / 100
     )
     battery_packs_weight_kg = (
-        battery_packs_capacity_kwh * battery_packs_gravimetric_energy_density_kwh_p_kg
+        battery_packs_capacity_kwh * battery_packs_gravimetric_energy_density_kwhpkg
     )
     battery_packs_volume_m3 = (
-        battery_packs_capacity_kwh * battery_packs_volumetric_energy_density_kwh_p_m3
+        battery_packs_capacity_kwh * battery_packs_volumetric_energy_density_kwhpm3
     )
 
     # Electrical engine/s
@@ -329,10 +327,10 @@ def estimate_vessel_battery_system(
         electrical_engine_power_kw = required_power_kw / number_of_propulsion_engines
     electrical_engine_power_kw = math.ceil(electrical_engine_power_kw / 10) * 10
     electrical_engine_weight_kg = (
-        electrical_engine_power_kw / electrical_engine_gravimetric_power_density_kw_p_kg
+        electrical_engine_power_kw / electrical_engine_gravimetric_power_density_kwpkg
     )
     electrical_engine_volume_m3 = (
-        electrical_engine_power_kw / electrical_engine_volumetric_power_density_kw_p_m3
+        electrical_engine_power_kw / electrical_engine_volumetric_power_density_kwpm3
     )
 
     # Total weight and volume
@@ -355,8 +353,8 @@ def estimate_vessel_battery_system(
                 "capacity_kwh": battery_packs_capacity_kwh,
             },
             "electrical_engines": {
-                "weight_per_engine_kg": electrical_engine_weight_kg,
-                "volume_per_engine_m3": electrical_engine_volume_m3,
+                "weight_pct_engine_kg": electrical_engine_weight_kg,
+                "volume_pct_engine_m3": electrical_engine_volume_m3,
                 "power_per_engine_kw": electrical_engine_power_kw,
                 "number_of_engines": number_of_propulsion_engines,
             },
@@ -369,14 +367,14 @@ def estimate_vessel_gas_hydrogen_system(
     required_power_kw,
     number_of_propulsion_engines,
     double_ended,
-    fuel_cell_system_volumetric_power_density_kw_p_m3,
-    fuel_cell_system_gravimetric_power_density_kw_p_kg,
-    electrical_engine_volumetric_power_density_kw_p_m3,
-    electrical_engine_gravimetric_power_density_kw_p_kg,
-    fuel_cell_efficiency_per,
-    hydrogen_gravimetric_energy_density_kwh_p_kg,
-    hydrogen_gas_tank_container_weight_to_content_weight_ratio_kg_p_kg,
-    hydrogen_gas_tank_container_volume_to_content_weight_ratio_l_p_kg,
+    fuel_cell_system_volumetric_power_density_kwpm3,
+    fuel_cell_system_gravimetric_power_density_kwpkg,
+    electrical_engine_volumetric_power_density_kwpm3,
+    electrical_engine_gravimetric_power_density_kwpkg,
+    fuel_cell_efficiency_pct,
+    hydrogen_gravimetric_energy_density_kwhpkg,
+    hydrogen_gas_tank_container_weight_to_content_weight_ratio_kgpkg,
+    hydrogen_gas_tank_container_volume_to_content_weight_ratio_lpkg,
     **kwargs,
 ):
     """Estimate the weight and volume of a gas hydrogen system
@@ -388,17 +386,17 @@ def estimate_vessel_gas_hydrogen_system(
 
         required_power_kw: float
 
-        fuel_cell_system_volumetric_power_density_kw_p_m3: float
+        fuel_cell_system_volumetric_power_density_kwpm3: float
 
-        fuel_cell_system_gravimetric_power_density_kw_p_kg: float
+        fuel_cell_system_gravimetric_power_density_kwpkg: float
 
-        electrical_engine_volumetric_power_density_kw_p_m3: float
+        electrical_engine_volumetric_power_density_kwpm3: float
 
-        electrical_engine_gravimetric_power_density_kw_p_kg: float
+        electrical_engine_gravimetric_power_density_kwpkg: float
 
-        fuel_cell_efficiency_per: float
+        fuel_cell_efficiency_pct: float
 
-        hydrogen_gravimetric_energy_density_kwh_p_kg: float
+        hydrogen_gravimetric_energy_density_kwhpkg: float
 
         number_of_propulsion_engines: int
 
@@ -416,15 +414,15 @@ def estimate_vessel_gas_hydrogen_system(
 
     # Hydrogen
     hydrogen_weight_kg = (
-        required_energy_kwh / (fuel_cell_efficiency_per / 100)
-    ) / hydrogen_gravimetric_energy_density_kwh_p_kg
+        required_energy_kwh / (fuel_cell_efficiency_pct / 100)
+    ) / hydrogen_gravimetric_energy_density_kwhpkg
 
     # Fuel cell system
     fuel_cell_system_weight = (
-        required_power_kw / fuel_cell_system_gravimetric_power_density_kw_p_kg
+        required_power_kw / fuel_cell_system_gravimetric_power_density_kwpkg
     )
     fuel_cell_system_volume = (
-        required_power_kw / fuel_cell_system_volumetric_power_density_kw_p_m3
+        required_power_kw / fuel_cell_system_volumetric_power_density_kwpm3
     )
 
     # Electrical engine/s
@@ -436,19 +434,19 @@ def estimate_vessel_gas_hydrogen_system(
         electrical_engine_power_kw = required_power_kw / number_of_propulsion_engines
     electrical_engine_power_kw = math.ceil(electrical_engine_power_kw / 10) * 10
     electrical_engine_weight_kg = (
-        electrical_engine_power_kw / electrical_engine_gravimetric_power_density_kw_p_kg
+        electrical_engine_power_kw / electrical_engine_gravimetric_power_density_kwpkg
     )
     electrical_engine_volume_m3 = (
-        electrical_engine_power_kw / electrical_engine_volumetric_power_density_kw_p_m3
+        electrical_engine_power_kw / electrical_engine_volumetric_power_density_kwpm3
     )
 
     hydrogen_gas_tank_weight = (
         hydrogen_weight_kg
-        * hydrogen_gas_tank_container_weight_to_content_weight_ratio_kg_p_kg
+        * hydrogen_gas_tank_container_weight_to_content_weight_ratio_kgpkg
     )
     volume_gas_tank = (
         hydrogen_weight_kg
-        * hydrogen_gas_tank_container_volume_to_content_weight_ratio_l_p_kg
+        * hydrogen_gas_tank_container_volume_to_content_weight_ratio_lpkg
         * 0.001
     )  # to m3
 
@@ -475,8 +473,8 @@ def estimate_vessel_gas_hydrogen_system(
                 "power_kw": required_power_kw,
             },
             "electrical_engines": {
-                "weight_per_engine_kg": electrical_engine_weight_kg,
-                "volume_per_engine_m3": electrical_engine_volume_m3,
+                "weight_pct_engine_kg": electrical_engine_weight_kg,
+                "volume_pct_engine_m3": electrical_engine_volume_m3,
                 "power_per_engine_kw": electrical_engine_power_kw,
                 "number_of_engines": number_of_propulsion_engines,
             },
@@ -512,7 +510,13 @@ def suggest_alternative_energy_systems(vessel_data, voyage_profile, reference_va
 
 
 def suggest_alternative_energy_systems_simple(
-    vessel_data_simple, total_voyage_length_nm, reference_values
+    average_fuel_consumption_lpnm,
+    propulsion_engine_fuel_type,
+    number_of_propulsion_engines,
+    propulsion_engine_power_kw,
+    double_ended,
+    total_voyage_length_nm,
+    reference_values,
 ):
     """Suggest alternative energy systems SIMPLE
 
@@ -524,39 +528,32 @@ def suggest_alternative_energy_systems_simple(
                 "average_fuel_consumption_lpnm": 10.0
                 "propulsion_engine_fuel_type": "MDO",
                 "number_of_propulsion_engines": 4,
-                "propulsion_engine_power": 330,
+                "propulsion_engine_power_kw": 330,
                 "double_ended": False
             }
     """
 
-    total_fc_l = (
-        vessel_data_simple["average_fuel_consumption_lpnm"] * total_voyage_length_nm
-    )
+    total_fc_l = average_fuel_consumption_lpnm * total_voyage_length_nm
 
-    fuel_type = vessel_data_simple["propulsion_engine_fuel_type"]
-    print(FUEL_ENERGY_DENSITY_KWH_P_L[fuel_type])
-    print(total_fc_l)
+    fuel_type = propulsion_engine_fuel_type
     required_energy_kwh = FUEL_ENERGY_DENSITY_KWH_P_L[fuel_type] * total_fc_l
 
-    required_power_kw = (
-        vessel_data_simple["propulsion_engine_power"]
-        + vessel_data_simple["number_of_propulsion_engines"]
-    )
-    if vessel_data_simple["double_ended"]:
+    required_power_kw = propulsion_engine_power_kw + number_of_propulsion_engines
+    if double_ended:
         required_power_kw /= 2
 
     battery = estimate_vessel_battery_system(
         required_energy_kwh,
         required_power_kw,
-        vessel_data_simple["number_of_propulsion_engines"],
-        vessel_data_simple["double_ended"],
+        number_of_propulsion_engines,
+        double_ended,
         **reference_values,
     )
     gas = estimate_vessel_gas_hydrogen_system(
         required_energy_kwh,
         required_power_kw,
-        vessel_data_simple["number_of_propulsion_engines"],
-        vessel_data_simple["double_ended"],
+        number_of_propulsion_engines,
+        double_ended,
         **reference_values,
     )
 
