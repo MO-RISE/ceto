@@ -6,9 +6,6 @@ __pycache__/
 # VSCODE
 .vscode
 
-# Jupyter
-jupyter/mathias/
-
 # C extensions
 *.so
 

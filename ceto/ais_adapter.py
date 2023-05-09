@@ -203,7 +203,7 @@ def _guesstimate_number_of_engines(imo_ship_type: str) -> int:
     return 2 if imo_ship_type in ("ferry-pax", "ferry-ropax") else 1
 
 
-def _guesstimate_engine_MCR(
+def _guesstimate_engine_mcr(
     imo_ship_type: str, dwt: float, design_speed: float
 ) -> float:
     """Guesstimate the engine MCR based on deadweight and design speed
@@ -419,7 +419,7 @@ def guesstimate_vessel_data(
 
     # Engine parameters
     number_of_engines = _guesstimate_number_of_engines(imo_ship_type)
-    engine_power = _guesstimate_engine_MCR(imo_ship_type, vessel_size, design_speed)
+    engine_power = _guesstimate_engine_mcr(imo_ship_type, vessel_size, design_speed)
     engine_type = _guesstimate_engine_type(imo_ship_type)
     engine_fuel_type = _guesstimate_engine_fuel_type(imo_ship_type, latitude, longitude)
 

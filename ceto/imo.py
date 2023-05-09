@@ -63,9 +63,9 @@ def verify_vessel_data(vessel_data):
     """Verify the contents of the 'vessel_data' dictionary"""
 
     try:
-        verify_key_value_range("vessel_data", "length", vessel_data, 5.0, 250.0)
+        verify_key_value_range("vessel_data", "length", vessel_data, 5.0, 450.0)
 
-        verify_key_value_range("vessel_data", "beam", vessel_data, 1.5, 30.0)
+        verify_key_value_range("vessel_data", "beam", vessel_data, 1.5, 70.0)
 
         verify_key_value_range(
             "vessel_data", "design_speed", vessel_data, 1.0, MAX_VESSEL_SPEED_KN
@@ -666,13 +666,13 @@ def calculate_installed_propulsion_power(vessel_data):
         float
             Installed propulsion power (kW)
     """
-    if vessel_data["double_ended"]:
-        return vessel_data["propulsion_engine_power"]
-
-    return (
+    installed_propulsion_power = (
         vessel_data["number_of_propulsion_engines"]
         * vessel_data["propulsion_engine_power"]
     )
+    if vessel_data["double_ended"]:
+        installed_propulsion_power /= 2
+    return installed_propulsion_power
 
 
 def estimate_instantaneous_fuel_consumption_of_auxiliary_systems(
@@ -825,6 +825,46 @@ def estimate_instantanous_fuel_consumption_of_propulsion_engines(
             load, engine_type, fuel_type, engine_age
         )
     return installed_propulsion_power * load * sfc
+
+
+def estimate_fuel_consumption_of_propulsion_engines(
+    vessel_data, voyage_profile, limit_7_percent=True, delta_w=None
+):
+    """
+    Arguments:
+    ----------
+
+        vessel_data: dict
+
+        voyage_profile: dict
+
+    Returns:
+    --------
+        (float, float)
+            Fuel consumption (kg) and averege fuel consumption (L/nm).
+
+    """
+    total_fc_kg = 0.0
+    total_distance_nm = 0.0
+    legs = voyage_profile["at_sea"] + voyage_profile["manoeuvring"]
+    for distance, speed, draft in legs:
+        ifc = estimate_instantanous_fuel_consumption_of_propulsion_engines(
+            vessel_data,
+            speed,
+            draft,
+            limit_7_percent=limit_7_percent,
+            delta_w=delta_w,
+        )
+        time_h = distance / speed
+        total_distance_nm += distance
+        total_fc_kg += ifc * time_h
+
+    avg_fc_lpnm = (
+        calculate_fuel_volume(total_fc_kg, vessel_data["propulsion_engine_fuel_type"])
+        * 1_000
+        / total_distance_nm
+    )
+    return total_fc_kg, avg_fc_lpnm
 
 
 def estimate_fuel_consumption(

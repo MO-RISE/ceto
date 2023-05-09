@@ -219,37 +219,35 @@ def cluster_paths(
     return labels
 
 
-def generate_representative_path_old(
-    paths: List[List[Tuple[float, float]]], epsilon: float = 10
-) -> List[Tuple[float, float]]:
-    # Find the representative waypoints.
-    s_paths = [douglas_peucker(path, epsilon) for path in paths]
-    average_length = int(
-        np.ceil(sum([len(s_path) for s_path in s_paths]) / len(s_paths)) + 1
-    )
-    kmeans = KMeans(n_clusters=average_length, random_state=0, n_init="auto")
-
-    # Add the index as a third element in the input points for the KMeans algorithm
-    points = [
-        (point[0], point[1], index)
-        for sublist in s_paths
-        for index, point in enumerate(sublist)
-    ]
-    kmeans.fit_predict(points)
-    cluster_centers = [(p[0], p[1], p[2]) for p in kmeans.cluster_centers_]
-
-    # Sort the cluster centers based on the third element (the index)
-    ordered_cluster_centers = sorted(cluster_centers, key=lambda x: x[2])
-
-    # Remove the index from the final output
-    ordered_cluster_centers = [(p[0], p[1]) for p in ordered_cluster_centers]
-
-    return douglas_peucker(ordered_cluster_centers, epsilon)
-
-
 def generate_representative_path(
     paths: List[List[Tuple[float, float]]], epsilon: float = 10
 ) -> List[Tuple[float, float]]:
+    """Generate representative path
+
+    Generates a path representative of a group of similar paths by
+    simplyfing each of the given paths then clustering the points
+    of the simplified paths. The simplification is done with the
+    Douglas-Peucker algorithm and the clustering with Agglomerative
+    Clustering.
+
+    Arguments:
+    ----------
+
+        paths: list
+            List of similar paths where a path is list of (lat, lon) tuples.
+
+        epsilon: float
+            The threshold cross-track distance used to determine if
+            a point should be kept in path simplification step
+            (Douglas-Peucker algorithm).
+
+    Returns:
+    --------
+
+        list
+            The representative path as a list of (lat, lon) tuples.
+
+    """
     # Find the representative waypoints.
     s_paths = [douglas_peucker(path, epsilon) for path in paths]
     n_waypoints = (
@@ -290,7 +288,43 @@ def generate_representative_path(
     return ordered_cluster_centers
 
 
-def generate_representative_route(trips, epsilon: float = 10):
+def generate_representative_route(trajectories, epsilon: float = 10):
+    """Generate a represenative route
+
+    Generates a route represenative of a group of trajectories by:
+    1) Generating a path representive of the paths of all the trajectories by
+       simplyfing the paths and clustering their points.
+    2) Approximating the time at each leg of the representativ path.
+    3) Calculating the speed at each leg from the time at each leg and the
+       leg distances.
+
+    Arguments:
+    ----------
+
+        trajectories: list
+            List of trajectories, where a trajectory is a dict containing the following
+            key-value pairs:
+                - 'path': List of (lat, lon) tuples.
+                - 'timestamp': List of Unix timestamps in seconds.
+
+        epsilon: float
+            The threshold cross-track distance used to determine if
+            a point should be kept in path simplification step
+            (Douglas-Peucker algorithm).
+
+    Returns:
+    --------
+
+        dict
+            Dictionary representing a route and containing the following key-value
+            pairs:
+                - 'path': List of (lat, lon) tuples.
+                - 'speed': List of speeds for each leg (kn).
+                - 'time': List of time spent at each leg (h).
+                - 'distance': List of distances for each leg (nm).
+
+    """
+
     def _find_index_of_closest_point(path, point):
         index = 0
         max_dist = 1e6
@@ -302,20 +336,25 @@ def generate_representative_route(trips, epsilon: float = 10):
         return index
 
     # Generate a path representative of all the paths
-    r_path = generate_representative_path([trip["path"] for trip in trips], epsilon)
+    r_path = generate_representative_path(
+        [trajectory["path"] for trajectory in trajectories], epsilon
+    )
 
     leg_times_h = [0] * (len(r_path) - 1)
-    for trip in trips:
+    for trajectory in trajectories:
         # Find the indexes closest to the points in the representative path
-        indexes = [_find_index_of_closest_point(trip["path"], rp) for rp in r_path]
+        indexes = [
+            _find_index_of_closest_point(trajectory["path"], rp) for rp in r_path
+        ]
 
         for i in range(len(indexes)):
             if i > 0:
                 leg_times_h[i - 1] += (
-                    trip["timestamp"][indexes[i]] - trip["timestamp"][indexes[i - 1]]
+                    trajectory["timestamp"][indexes[i]]
+                    - trajectory["timestamp"][indexes[i - 1]]
                 ) / 3_600
 
-    avg_leg_times_h = [leg_time / len(trips) for leg_time in leg_times_h]
+    avg_leg_times_h = [leg_time / len(trajectories) for leg_time in leg_times_h]
 
     # Calculate leg distances
     leg_distances_nm = []
@@ -386,26 +425,6 @@ def make_voyage_profile(
         key = "legs_manoeuvring" if speed < speed_threshold else "legs_at_sea"
         voyage_profile[key].append((distance, speed, design_draft))
     return voyage_profile
-
-
-# def trip_to_voyage_profile(trip, design_draft):
-#     vp = {
-#         "time_anchored": 0.0,
-#         "time_at_berth": 0.0,
-#         "legs_manoeuvring":[],
-#         "legs_at_sea": [],
-#     }
-
-#     for i in range(len(trip["path"])):
-#         if i > 0:
-#             segment_distance_nm = haversine(trip["path"][i], trip["path"][i-1]) / 1_852
-#             segment_time_h = (trip["timestamp"][i] - trip["timestamp"][i-1]) / 3_600
-#             segment_speed_kn = segment_distance_nm / segment_time_h
-
-#             key = "legs_manoeuvring" if segment_speed_kn < 5.0 else "legs_at_sea"
-#             vp[key].append((segment_distance_nm, segment_speed_kn, design_draft))
-
-#     return vp
 
 
 def calculate_total_fuel_consumption(ifc, timestamps):
