@@ -4,6 +4,7 @@ from ceto.energy_systems import (
     estimate_vessel_battery_system,
     estimate_vessel_gas_hydrogen_system,
     REFERENCE_VALUES,
+    HYDROGEN_ENERGY_DENSITY_KWHPKG,
     estimate_internal_combustion_system,
     suggest_alternative_energy_systems,
     suggest_alternative_energy_systems_simple,
@@ -40,18 +41,13 @@ def test_estimate_vessel_battery_system():
     system = estimate_vessel_battery_system(
         required_energy_kwh,
         required_power_kw,
-        1,
-        False,
         **REFERENCE_VALUES,
     )
     assert system["details"]["battery_packs"]["capacity_kwh"] == required_energy_kwh / (
-        REFERENCE_VALUES["battery_depth_of_discharge_pct"] / 100
+        REFERENCE_VALUES["reference_battery_pack_depth_of_discharge_pct"] / 100
     )
     assert system["total_weight_kg"] > system["details"]["battery_packs"]["weight_kg"]
-    assert (
-        system["details"]["electrical_engines"]["power_per_engine_kw"]
-        == required_power_kw
-    )
+    assert system["details"]["electrical_engines"]["power_kw"] == required_power_kw
 
 
 def test_estimate_vessel_gas_hydrogen_system():
@@ -60,21 +56,16 @@ def test_estimate_vessel_gas_hydrogen_system():
     system = estimate_vessel_gas_hydrogen_system(
         required_energy_kwh,
         required_power_kw,
-        1,
-        False,
         **REFERENCE_VALUES,
     )
     assert (
         system["details"]["hydrogen"]["weight_kg"]
         == required_energy_kwh
-        / (REFERENCE_VALUES["fuel_cell_efficiency_pct"] / 100)
-        / REFERENCE_VALUES["hydrogen_gravimetric_energy_density_kwhpkg"]
+        / (REFERENCE_VALUES["reference_fuel_cell_efficiency_pct"] / 100)
+        / HYDROGEN_ENERGY_DENSITY_KWHPKG
     )
     assert system["total_weight_kg"] > system["details"]["gas_tanks"]["weight_kg"]
-    assert (
-        system["details"]["electrical_engines"]["power_per_engine_kw"]
-        == required_power_kw
-    )
+    assert system["details"]["electrical_engines"]["power_kw"] == required_power_kw
 
 
 def test_suggest_alternative_energy_systems():
@@ -91,15 +82,11 @@ def test_suggest_alternative_energy_systems():
     battery_o = estimate_vessel_battery_system(
         energy["total_kwh"],
         energy["maximum_required_total_power_kw"],
-        DUMMY_VESSEL_DATA["number_of_propulsion_engines"],
-        DUMMY_VESSEL_DATA["double_ended"],
         **REFERENCE_VALUES,
     )
     gas_o = estimate_vessel_gas_hydrogen_system(
         energy["total_kwh"],
         energy["maximum_required_total_power_kw"],
-        DUMMY_VESSEL_DATA["number_of_propulsion_engines"],
-        DUMMY_VESSEL_DATA["double_ended"],
         **REFERENCE_VALUES,
     )
 

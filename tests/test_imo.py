@@ -7,6 +7,7 @@ from ceto.imo import (
     verify_voyage_profile,
     estimate_propulsion_engine_load,
     estimate_fuel_consumption,
+    estimate_fuel_consumption_of_propulsion_engines,
 )
 
 
@@ -29,9 +30,9 @@ DUMMY_VOYAGE_PROFILE = {
     "time_anchored": 10.0,  # time
     "time_at_berth": 10.0,  # time
     "legs_manoeuvring": [
-        (10, 10),  # distance (nm), speed (kn), draft (m)
+        (10, 10, 7),  # distance (nm), speed (kn), draft (m)
     ],
-    "legs_at_sea": [(10, 10), (20, 10)],  # distance (nm), speed (kn), draft (m)
+    "legs_at_sea": [(10, 10, 7), (20, 10, 6)],  # distance (nm), speed (kn), draft (m)
 }
 
 
@@ -186,3 +187,17 @@ def test_estimate_fuel_consumption():
 
     assert fc_["manoeuvring"]["propulsion_engines_kg"] != approx(0.0)
     assert fc_["at_sea"]["propulsion_engines_kg"] != approx(0.0)
+
+
+def test_estimate_fuel_consumption_of_propulsion_engines():
+    fc, fc_avg = estimate_fuel_consumption_of_propulsion_engines(
+        DUMMY_VESSEL_DATA, DUMMY_VOYAGE_PROFILE
+    )
+
+    fc_all = estimate_fuel_consumption(DUMMY_VESSEL_DATA, DUMMY_VOYAGE_PROFILE)
+
+    assert fc != 0.0
+    assert fc == approx(
+        fc_all["manoeuvring"]["propulsion_engines_kg"]
+        + fc_all["at_sea"]["propulsion_engines_kg"]
+    )
