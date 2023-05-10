@@ -87,7 +87,7 @@ def estimate_internal_combustion_engine(power):
     return details
 
 
-def estimate_change_in_draft(vessel_data, load_change):
+def _estimate_change_in_draft(vessel_data, load_change):
     """Estimate the change in draft of a vessel due to a change in load.
 
     Arguments:
@@ -131,9 +131,7 @@ def estimate_change_in_draft(vessel_data, load_change):
     return draft_change
 
 
-def estimate_internal_combustion_system(
-    vessel_data, voyage_profile, include_auxiliary=True
-):
+def estimate_internal_combustion_system(vessel_data, voyage_profile):
     """Estimate the key details of an internal combustion system for a vessel
     and voyage profile
 
@@ -412,6 +410,8 @@ def estimate_vessel_gas_hydrogen_system(
 def suggest_alternative_energy_systems(vessel_data, voyage_profile, reference_values):
     """Suggest alternative energy systems"""
     _verify_reference_values(reference_values)
+    verify_vessel_data(vessel_data)
+    verify_voyage_profile(voyage_profile)
 
     gas = _iterate_energy_system(
         vessel_data,
@@ -430,22 +430,19 @@ def suggest_alternative_energy_systems(vessel_data, voyage_profile, reference_va
 def suggest_alternative_energy_systems_simple(
     average_fuel_consumption_lpnm,
     propulsion_engine_fuel_type,
-    number_of_propulsion_engines,
-    propulsion_engine_power_kw,
-    double_ended,
+    propulsion_power_kw,
     total_voyage_length_nm,
     reference_values,
 ):
     """Suggest alternative energy systems SIMPLE"""
+    _verify_reference_values(reference_values)
 
     total_fc_l = average_fuel_consumption_lpnm * total_voyage_length_nm
 
     fuel_type = propulsion_engine_fuel_type
     required_energy_kwh = FUEL_ENERGY_DENSITY_KWHPL[fuel_type] * total_fc_l
 
-    required_power_kw = propulsion_engine_power_kw + number_of_propulsion_engines
-    if double_ended:
-        required_power_kw /= 2
+    required_power_kw = propulsion_power_kw
 
     battery = estimate_vessel_battery_system(
         required_energy_kwh,
@@ -490,7 +487,7 @@ def _iterate_energy_system(
             **reference_values,
         )
 
-        change_draft = estimate_change_in_draft(
+        change_draft = _estimate_change_in_draft(
             vessel_data, new_system["total_weight_kg"] - weight
         )
 
@@ -508,7 +505,7 @@ def _iterate_energy_system(
         weight = new_system["total_weight_kg"]
         iteration += 1
 
-    new_system["change_in_draft_m"] = estimate_change_in_draft(
+    new_system["change_in_draft_m"] = _estimate_change_in_draft(
         vessel_data, new_system["total_weight_kg"] - ice["total_weight_kg"]
     )
     return new_system

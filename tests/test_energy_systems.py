@@ -113,17 +113,13 @@ def test_suggest_alternative_energy_systems():
 def test_suggest_alternative_energy_systems_simple():
     average_fuel_consumption_lpnm = 10
     propulsion_engine_fuel_type = "MDO"
-    propulsion_engine_power_kw = 330
-    number_of_propulsion_engines = 4
-    double_ended = False
+    propulsion_power_kw = 330
     total_voyage_length_nm = 60
 
     gas, battery = suggest_alternative_energy_systems_simple(
         average_fuel_consumption_lpnm,
         propulsion_engine_fuel_type,
-        number_of_propulsion_engines,
-        propulsion_engine_power_kw,
-        double_ended,
+        propulsion_power_kw,
         total_voyage_length_nm,
         REFERENCE_VALUES,
     )
