@@ -6,7 +6,6 @@ from ceto.utils import verify_range, knots_to_ms
 from ceto.imo import (
     estimate_energy_consumption,
     calculate_fuel_volume,
-    calculate_fuel_mass,
     verify_vessel_data,
     verify_voyage_profile,
     estimate_fuel_consumption_of_propulsion_engines,
@@ -46,6 +45,8 @@ FUEL_ENERGY_DENSITY_KWHPL = {
 
 
 def _verify_reference_values(reference_values):
+    """Verify the reference values dict."""
+
     keys = [
         "reference_fuel_cell_volume_m3",
         "reference_fuel_cell_weight_kg",
@@ -59,11 +60,16 @@ def _verify_reference_values(reference_values):
         "reference_hydrogen_gas_tank_capacity_kg",
         "reference_hydrogen_gas_tank_weight_kg",
     ]
-    if not all([key in reference_values for key in keys]):
-        raise Exception("Missing reference values.")
+    missing = []
+    for key in keys:
+        if key not in reference_values:
+            missing.append(key)
+
+    if len(missing) != 0:
+        raise Exception(f"Missing reference values: {missing}")
 
 
-def estimate_internal_combustion_engine(power):
+def estimate_internal_combustion_engine(power_kw):
     """Estimate the key details of an internal combustion engine
 
     Arguments:
@@ -80,10 +86,10 @@ def estimate_internal_combustion_engine(power):
             Weight (kg) and volume (m3) of the engine.
     """
 
-    verify_range("power", power, 50, 2000)
+    verify_range("power", power_kw, 50, 2000)
     details = {}
-    details["volume"] = 0.0353 * power**0.6409
-    details["weight"] = 38.946 * power**0.5865
+    details["volume_m3"] = 0.0353 * power_kw**0.6409
+    details["weight_kg"] = 38.946 * power_kw**0.5865
     return details
 
 
@@ -161,18 +167,18 @@ def estimate_internal_combustion_system(vessel_data, voyage_profile):
     prop_engines = estimate_internal_combustion_engine(
         vessel_data["propulsion_engine_power"]
     )
-    prop_engines["weight"] *= vessel_data["number_of_propulsion_engines"]
-    prop_engines["volume"] *= vessel_data["number_of_propulsion_engines"]
+    prop_engines["weight_kg"] *= vessel_data["number_of_propulsion_engines"]
+    prop_engines["volume_m3"] *= vessel_data["number_of_propulsion_engines"]
 
     # Gearboxes
     # Slow-Speed Diesel engines are assumed to not have a gearbox.
     # Gearboxes are assumed to have 1/5 of the weight and volumeof the engine.
     if vessel_data["propulsion_engine_type"] != "SSD":
-        gearboxes_weight = prop_engines["weight"] / 5.0
-        gearboxes_volume = prop_engines["volume"] / 5.0
+        gearboxes_weight_kg = prop_engines["weight_kg"] / 5.0
+        gearboxes_volume_m3 = prop_engines["volume_m3"] / 5.0
     else:
-        gearboxes_weight = 0.0
-        gearboxes_volume = 0.0
+        gearboxes_weight_kg = 0.0
+        gearboxes_volume_m3 = 0.0
 
     # Fuel
     fc_kg, _ = estimate_fuel_consumption_of_propulsion_engines(
@@ -185,23 +191,23 @@ def estimate_internal_combustion_system(vessel_data, voyage_profile):
     fc_m3 = calculate_fuel_volume(fc_kg, vessel_data["propulsion_engine_fuel_type"])
 
     # Totals
-    total_weight = prop_engines["weight"] + gearboxes_weight + fc_kg
-    total_volume = prop_engines["volume"] + gearboxes_volume + fc_m3
+    total_weight = prop_engines["weight_kg"] + gearboxes_weight_kg + fc_kg
+    total_volume = prop_engines["volume_m3"] + gearboxes_volume_m3 + fc_m3
 
     return {
         "total_weight_kg": total_weight,
         "total_volume_m3": total_volume,
         "weight_breakdown": {
             "propulsion_engines": {
-                "weight_per_engine_kg": prop_engines["weight"]
+                "weight_per_engine_kg": prop_engines["weight_kg"]
                 / vessel_data["number_of_propulsion_engines"],
-                "volume_per_engine_m3": prop_engines["volume"]
+                "volume_per_engine_m3": prop_engines["volume_m3"]
                 / vessel_data["number_of_propulsion_engines"],
             },
             "gearboxes": {
-                "weight_per_gearbox_kg": gearboxes_weight
+                "weight_per_gearbox_kg": gearboxes_weight_kg
                 / vessel_data["number_of_propulsion_engines"],
-                "volume_per_gearbox_m3": gearboxes_volume
+                "volume_per_gearbox_m3": gearboxes_volume_m3
                 / vessel_data["number_of_propulsion_engines"],
             },
             "fuel": {"weight_kg": fc_kg, "volume_m3": fc_m3},
