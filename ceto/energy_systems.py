@@ -105,7 +105,8 @@ def _estimate_change_in_draft(vessel_data, load_change):
         load_change
             Change in load (kg)
 
-    Returns
+    Returns:
+    --------
 
         float
             Change in draft (m)
