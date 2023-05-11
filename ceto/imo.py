@@ -847,7 +847,6 @@ def estimate_fuel_consumption_of_propulsion_engines(
     total_fc_kg = 0.0
     total_distance_nm = 0.0
     legs = voyage_profile["legs_at_sea"] + voyage_profile["legs_manoeuvring"]
-    print(legs)
     for distance, speed, draft in legs:
         ifc = estimate_instantanous_fuel_consumption_of_propulsion_engines(
             vessel_data,
