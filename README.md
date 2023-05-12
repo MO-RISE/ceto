@@ -127,5 +127,5 @@ Whether a vessel is "at sea" or "manoeuvring" can be determined through the crit
 
 ## References
 
- [1] IMO. Fourth IMO GHG Study 2020. IMO. (Table 10, page 294)
+ [1] IMO. Fourth IMO GHG Study 2020. IMO.
 
