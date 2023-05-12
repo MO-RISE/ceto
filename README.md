@@ -12,24 +12,38 @@ $ pip install -e .
 
 ## Usage
 
-### Energy systems module
+### General
+
+For better or for worse, `ceto` uses two specific dictionaries as arguments of many of its functions: `vessel_data` and `voyage_profile`. Here are some examples of these dictionaries:
 
 ```python
+vessel_data = {
+    "length": 39.8,  # meters
+    "beam": 10.46,  # meteres
+    "design_speed": 13.5,  # knots
+    "design_draft": 2.84,  # meters
+    "double_ended": False,  # True or False
+    "number_of_propulsion_engines": 4,
+    "propulsion_engine_power": 330,  # per engine kW
+    "propulsion_engine_type": "MSD",
+    "propulsion_engine_age": "after_2000",
+    "propulsion_engine_fuel_type": "MDO",
+    "type": "ferry-pax",
+    "size": 686,  # GT
+}
 
-import ceto.energy_systems as ces
+voyage_profile = {
+    "time_anchored": 10.0,  # hours
+    "time_at_berth": 10.0,  # hours
+    "legs_manoeuvring": [
+        (10, 10, 6),  # distance (nm), speed (kn), draft (m)
+    ],
+    "legs_at_sea": [(30, 10, 6), (30, 10, 6)],  # distance (nm), speed (kn), draft (m)
+}
 
 ```
 
-"SSD",
-"MSD",
-"HSD",
-"LNG-Otto-MS",
-"LBSI",
-"gas_turbine",
-"steam_turbine",
-
-Describe the vessel with a `dict` containing the following key-value pairs:
-
+The `vessel_data` dictionary must have the following key-value pairs:
 - `length`: Length overall of the vessel in meters (m).
 - `beam`: Beam or breadth of the vessel in meters (m).
 - `design_speed`: Design speed of the vessel in knots (kn).
@@ -97,25 +111,21 @@ Describe the vessel with a `dict` containing the following key-value pairs:
   - `service-other` -> Gross Tonnes (GT)
   - `miscellaneous-other` -> Gross Tonnes (GT)
 
-```python
+The `voyage_profile` dictionary must have the following key-value pairs:
 
-# Describe the vessel with a "vessel data" dictionary.
+  - `time_anchored`: Time spent anchored (h).
+  - `time_at_berth`: Time spent at berth (h).
+  - `legs_manoeuvring`: List of (distance (nm), speed (kn), draft (m)) tuples summarizing the conditions and distance the vessel spent manoeuvring. 
+  - `legs_at_sea`': List of (distance (nm), speed (kn), draft (m)) tuples summarizing the conditions and distance the vessel at sea.
 
-vessel_data = {
-    "length": 24.5, # meters
-    "beam": 8, # meteres
-    "design_speed": 30,  # knots
-    "design_draft": 1.5,  # meters
-    "number_of_propulsion_engines": 2,
-    "propulsion_engine_power": 1069, # per engine kW
-    "propulsion_engine_type": "MSD",
-    "propulsion_engine_age": "after_2001",
-    "propulsion_engine_fuel_type": "MDO",
-    "type": "service-other",
-    "size": 63,
-}
+Whether a vessel is "at sea" or "manoeuvring" can be determined through the criteria presented in [1].
 
+## Module
 
-# Estimate the internal combustion system
+- `imo`: This module includes functions for estimating the fuel consumption of vessels. Based on [1].
+- `energy_systems`: This module includes functions for estimating the details of vessel energy systems (i.e. internal combustion systems, battery systems, and hydrogen systems).
 
-```
+## References
+
+ [1] IMO. Fourth IMO GHG Study 2020. IMO.
+

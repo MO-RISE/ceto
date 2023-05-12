@@ -1,5 +1,14 @@
 from pytest import raises, approx
-from ceto.imo import *
+from ceto.imo import (
+    estimate_instantaneous_fuel_consumption_of_auxiliary_systems,
+    estimate_specific_fuel_consumption,
+    verify_vessel_data,
+    estimate_auxiliary_power_demand,
+    verify_voyage_profile,
+    estimate_propulsion_engine_load,
+    estimate_fuel_consumption,
+    estimate_fuel_consumption_of_propulsion_engines,
+)
 
 
 DUMMY_VESSEL_DATA = {
@@ -21,9 +30,9 @@ DUMMY_VOYAGE_PROFILE = {
     "time_anchored": 10.0,  # time
     "time_at_berth": 10.0,  # time
     "legs_manoeuvring": [
-        (10, 10),  # distance (nm), speed (kn), draft (m)
+        (10, 10, 7),  # distance (nm), speed (kn), draft (m)
     ],
-    "legs_at_sea": [(10, 10), (20, 10)],  # distance (nm), speed (kn), draft (m)
+    "legs_at_sea": [(10, 10, 7), (20, 10, 6)],  # distance (nm), speed (kn), draft (m)
 }
 
 
@@ -104,25 +113,54 @@ def test_estimate_auxiliary_power_demand():
 
 def test_estimate_propulsion_engine_load():
     # Engine load increases with speed
-    el_1 = estimate_propulsion_engine_load(5, 7, DUMMY_VESSEL_DATA)
-    el_2 = estimate_propulsion_engine_load(10, 7, DUMMY_VESSEL_DATA)
+    el_1 = estimate_propulsion_engine_load(0, 7, DUMMY_VESSEL_DATA, delta_w=0.8)
+    el_2 = estimate_propulsion_engine_load(10, 7, DUMMY_VESSEL_DATA, delta_w=0.8)
     assert el_1 < el_2
+
     # Engine load increases with draft
-    el_1 = estimate_propulsion_engine_load(10, 6, DUMMY_VESSEL_DATA)
-    el_2 = estimate_propulsion_engine_load(10, 8, DUMMY_VESSEL_DATA)
+    el_1 = estimate_propulsion_engine_load(10, 6, DUMMY_VESSEL_DATA, delta_w=0.8)
+    el_2 = estimate_propulsion_engine_load(10, 8, DUMMY_VESSEL_DATA, delta_w=0.8)
     assert el_1 < el_2
 
+    # Speed must be between 0 kn and 110% the design speed
+    with raises(ValueError) as info:
+        estimate_propulsion_engine_load(
+            DUMMY_VESSEL_DATA["design_speed"] * 1.1 + 0.1, 7, DUMMY_VESSEL_DATA
+        )
+    assert "speed" in str(info)
+    with raises(ValueError) as info:
+        estimate_propulsion_engine_load(-0.01, 7, DUMMY_VESSEL_DATA)
+    assert "speed" in str(info)
 
-def test_estimate_fuel_consumption_of_auxiliary_systems():
+    # Draft must be between 30% and 150% the design draft
+    with raises(ValueError) as info:
+        estimate_propulsion_engine_load(
+            6, 0.29 * DUMMY_VESSEL_DATA["design_draft"], DUMMY_VESSEL_DATA
+        )
+    assert "draft" in str(info)
+    with raises(ValueError) as info:
+        estimate_propulsion_engine_load(
+            6, 1.51 * DUMMY_VESSEL_DATA["design_draft"], DUMMY_VESSEL_DATA
+        )
+    assert "draft" in str(info)
+
+
+def test_estimate_instantaneous_fuel_consumption_of_auxiliary_systems():
     # Offshore vessel should have the same fc regardless of operation mode
-    fc_mass_1, fc_volume_1 = estimate_fuel_consumption_of_auxiliary_systems(
-        DUMMY_VESSEL_DATA, "at_berth", 30
+    (
+        ifc_aux_1,
+        ifc_boiler_1,
+    ) = estimate_instantaneous_fuel_consumption_of_auxiliary_systems(
+        DUMMY_VESSEL_DATA, "at_berth"
     )
-    fc_mass_2, fc_volume_2 = estimate_fuel_consumption_of_auxiliary_systems(
-        DUMMY_VESSEL_DATA, "at_sea", 30
+    (
+        ifc_aux_2,
+        ifc_boiler_2,
+    ) = estimate_instantaneous_fuel_consumption_of_auxiliary_systems(
+        DUMMY_VESSEL_DATA, "at_sea"
     )
-    assert fc_mass_2 == fc_mass_1
-    assert fc_volume_2 == fc_volume_1
+    assert ifc_aux_2 == ifc_aux_1
+    assert ifc_boiler_2 == ifc_boiler_1
 
 
 def test_verify_voyage_profile():
@@ -172,3 +210,17 @@ def test_estimate_fuel_consumption():
 
     assert fc_["manoeuvring"]["propulsion_engines_kg"] != approx(0.0)
     assert fc_["at_sea"]["propulsion_engines_kg"] != approx(0.0)
+
+
+def test_estimate_fuel_consumption_of_propulsion_engines():
+    fc, fc_avg = estimate_fuel_consumption_of_propulsion_engines(
+        DUMMY_VESSEL_DATA, DUMMY_VOYAGE_PROFILE
+    )
+
+    fc_all = estimate_fuel_consumption(DUMMY_VESSEL_DATA, DUMMY_VOYAGE_PROFILE)
+
+    assert fc != 0.0
+    assert fc == approx(
+        fc_all["manoeuvring"]["propulsion_engines_kg"]
+        + fc_all["at_sea"]["propulsion_engines_kg"]
+    )

@@ -1,10 +1,6 @@
 """
-
-
-
-
+Estimates of fuel and energy consumption for vessels. 
 """
-import math
 
 # pylint: disable=too-many-locals
 
@@ -82,7 +78,7 @@ def verify_vessel_data(vessel_data):
             MAX_VESSEL_DRAFT_M,
         )
         verify_key_value_set(
-            "vessel_data", "number_of_propulsion_engines", vessel_data, [1, 2]
+            "vessel_data", "number_of_propulsion_engines", vessel_data, [1, 2, 3, 4]
         )
         verify_key_value_range(
             "vessel_data",
@@ -119,7 +115,8 @@ def verify_vessel_data(vessel_data):
         #     ]
         #     if vessel_data["type"] not in none_vessel_types:
         #         raise ValueError(
-        #             f"The value for the key 'size', in the variable 'vessel_data', can ONLYs be 'None' for the vessel types: {none_vessel_types}."
+        #             f"The value for the key 'size', in the variable 'vessel_data',
+        #               can ONLYs be 'None' for the vessel types: {none_vessel_types}."
         #         )
 
     except KeyError as err:
@@ -180,12 +177,11 @@ def calculate_fuel_volume(mass, fuel_type):
     verify_set("fuel_type", fuel_type, FUEL_TYPES)
     if fuel_type == "HFO":
         return mass / 1001
-    elif fuel_type == "MDO":
+    if fuel_type == "MDO":
         return mass / 895
-    elif fuel_type == "LNG":
+    if fuel_type == "LNG":
         return mass / 450
-    else:
-        return mass / 790
+    return mass / 790
 
 
 def calculate_fuel_mass(volume, fuel_type):
@@ -219,12 +215,11 @@ def calculate_fuel_mass(volume, fuel_type):
     verify_set("fuel_type", fuel_type, FUEL_TYPES)
     if fuel_type == "HFO":
         return volume * 1001
-    elif fuel_type == "MDO":
+    if fuel_type == "MDO":
         return volume * 895
-    elif fuel_type == "LNG":
+    if fuel_type == "LNG":
         return volume * 450
-    else:
-        return volume * 790
+    return volume * 790
 
 
 def estimate_specific_fuel_consumption(engine_load, engine_type, fuel_type, engine_age):
@@ -242,13 +237,17 @@ def estimate_specific_fuel_consumption(engine_load, engine_type, fuel_type, engi
 
         engine_type: string
             Type of engine. The possible types/values are:
-                - 'SSD': Slow-Speed Diesel. An oil engine with a speed equal or lower than 300 RPM.
-                - 'MSD': Medium-Speed Diesel. An oil engine with a speed ranging from 300 to 900 RPM.
+                - 'SSD': Slow-Speed Diesel. An oil engine with a speed equal or lower
+                         than 300 RPM.
+                - 'MSD': Medium-Speed Diesel. An oil engine with a speed ranging from
+                         300 to 900 RPM.
                 - 'HSD': High-Speed Diesel. An oil engine with a speed above 900 RPM.
-                - 'LNG-Otto-MS': Four-stroke, medium-speed (300 > RPM > 900), dual-fuel engines (LNG and oils) that operate on the Otto cycle.
+                - 'LNG-Otto-MS': Four-stroke, medium-speed (300 > RPM > 900), dual-fuel
+                                 engines (LNG and oils) that operate on the Otto cycle.
                 - 'LBSI': LNG engines built by Rolls-Royce/Bergen.
                 - 'gas_turbine': Gas turbine engine.
-                - 'steam_turbine': Steam turbine engine. Includes oil-based fuels, LNG, and boil-off gas.
+                - 'steam_turbine': Steam turbine engine. Includes oil-based fuels, LNG,
+                                   and boil-off gas.
 
         fuel_type: string
             Type of fuel used by the engine. The possible types/values are:
@@ -326,13 +325,14 @@ def estimate_specific_fuel_consumption(engine_load, engine_type, fuel_type, engi
     )
     verify_set("fuel_type", fuel_type, FUEL_TYPES)
     verify_set("engine_age", engine_age, ENGINE_AGES)
-    verify_range("engine_load", engine_load, 0, 1.5)
+    verify_range("engine_load", engine_load, 0, 1.0)
 
     try:
         sfc_baseline = sfc_baselines[engine_type][fuel_type][engine_age]
     except KeyError as err:
         raise ValueError(
-            f"No specific fuel consumption baseline found for {engine_type}, {fuel_type}, {engine_age}"
+            f"""No specific fuel consumption baseline found for {engine_type},
+              {fuel_type}, {engine_age}"""
         ) from err
 
     # For gas turbines, steam turbines, auxiliary engines, and steam boilers the SFC
@@ -356,7 +356,7 @@ def estimate_specific_fuel_consumption(engine_load, engine_type, fuel_type, engi
 
 def estimate_auxiliary_power_demand(vessel_data, operation_mode):
     """
-    Calculate auxiliary power demand according to IMO's 4th green house gas emission study.
+    Estimate the auxiliary power demand.
 
     NOTE: Unsure about the appropriate size units for vessel of type 'vehicle'.
 
@@ -376,7 +376,12 @@ def estimate_auxiliary_power_demand(vessel_data, operation_mode):
     Returns
     -------
 
-        Tuple( ux_engine_power, boiler_power) in kW.
+        Tuple( aux_engine_power, boiler_power) in kW.
+
+    Source:
+    -------
+
+        [1] IMO. Fourth IMO GHG Study 2020. IMO.
 
     """
 
@@ -545,8 +550,6 @@ def estimate_auxiliary_power_demand(vessel_data, operation_mode):
 def estimate_propulsion_engine_load(speed, draft, vessel_data, delta_w=None):
     """Estimate the propulsion engine load of a vessel
 
-    Uses the IMO's 4th GHG study methodology.
-
     Arguments:
     ----------
 
@@ -579,8 +582,13 @@ def estimate_propulsion_engine_load(speed, draft, vessel_data, delta_w=None):
 
     """
     # Verify arguments
-    verify_range("speed", speed, 0, MAX_VESSEL_SPEED_KN)
-    verify_range("draft", draft, MIN_VESSEL_DRAFT, MAX_VESSEL_DRAFT_M)
+    verify_range("speed", speed, 0, vessel_data["design_speed"] * 1.1)
+    verify_range(
+        "draft",
+        draft,
+        vessel_data["design_draft"] * 0.3,
+        vessel_data["design_draft"] * 1.5,
+    )
     verify_vessel_data(vessel_data)
     if delta_w is not None:
         verify_range("delta_w", delta_w, 0, 1)
@@ -641,26 +649,69 @@ def estimate_propulsion_engine_load(speed, draft, vessel_data, delta_w=None):
             delta_w = 1
 
     # Engine load: a part of equation 8 in page 64 of [1]
-    return (
+    load = (
         delta_w
         * ((draft / design_draft) ** (2 / 3) * (speed / design_speed) ** 3)
         / (eta_f * eta_w)
     )
 
+    # Load cannot exceed 100%
+    return min(1.0, load)
 
-def estimate_fuel_consumption_of_auxiliary_systems(vessel_data, operation_mode, time):
-    """Estimate the fuel consumption of the auxiliary systems:
-    auxiliary engines and steam boilers
 
-    Assumption: The fuel type and age of the steam boilers and auxiliary engines
-    is assumed to be the same as the one of the propulsion engine(s).
+def calculate_installed_propulsion_power(vessel_data):
+    """Calculate the installed propulsion power of a vessel
 
+    Arguments:
+    ----------
+
+        vessel_data: dict
+            Dictionary describing the vessel.
 
     Returns:
     --------
 
-        Dict
-            Fuel consumption of the auxiliary systems (kg).
+        float
+            Installed propulsion power (kW)
+    """
+    installed_propulsion_power = (
+        vessel_data["number_of_propulsion_engines"]
+        * vessel_data["propulsion_engine_power"]
+    )
+    if vessel_data["double_ended"]:
+        installed_propulsion_power /= 2
+    return installed_propulsion_power
+
+
+def estimate_instantaneous_fuel_consumption_of_auxiliary_systems(
+    vessel_data, operation_mode
+):
+    """Estimate the instantanous fuel consumption of the auxiliary systems:
+    auxiliary engines and steam boilers.
+
+    Assumption: The fuel type and age of the steam boilers and auxiliary engines
+    is assumed to be the same as the one of the propulsion engine(s)
+
+    Arguments:
+    ----------
+
+    vessel_data: dict
+        Dictionary containing the vessel data.
+
+    operation_mode: string
+        One of the following operation modes:
+            - 'at_berth'
+            - 'anchored'
+            - 'manoeuvring'
+            - 'at_sea
+
+    Returns:
+    --------
+
+        Tuple
+            (Instantanous fuel consumption of the auxiliary engines (kg/h),
+             Instantanous fuel consumption of the steam boilers (kg/h))
+
 
     """
 
@@ -677,36 +728,151 @@ def estimate_fuel_consumption_of_auxiliary_systems(vessel_data, operation_mode, 
         1.0, "steam_boiler", fuel_type, engine_age
     )
 
-    fc_aux_engine = aux_engine_power * aux_engine_sfc * time
-    fc_boiler = boiler_power * boiler_sfc * time
+    ifc_aux_engine = aux_engine_power * aux_engine_sfc
+    ifc_boiler = boiler_power * boiler_sfc
 
-    return {
-        "auxiliary_engines": fc_aux_engine,
-        "steam_boilers": fc_boiler,
-    }
+    return ifc_aux_engine, ifc_boiler
 
 
-def calculate_installed_propulsion_power(vessel_data):
-    """Calculate the installed propulsion power of a vessel
+def estimate_propulsion_power_demand(vessel_data, speed, draft, delta_w):
+    """Estimate the propulsion power demand
 
     Arguments:
     ----------
 
         vessel_data: dict
+            Dictionary describing the vessel.
+
+        speed: float
+            Speed over ground (m/s).
+
+        draft: float
+            Dynamic draft (m).
+
+        delta_w (optional): float
+            Speed-power correction factor: percentage of the Maximum Continous Rating
+            (MCR) of the installed propulsion power at which the design speed is reached
+            in calm water. Defaults to the considerations in [1] to be equal to 0.75 for
+            container ships over 14,500 TEU, 0.7 for cruise ships, and 1.0 for all other
+            vessels (i.e. 75%, 70%, and 100% MCR, respectively). If given a value, the
+            value will override these defaults. Defaults to None.
+
+        Returns:
+        --------
+
+            float
+                Instantanous power of the propulsion engines (kW).
+
+    Source:
+    -------
+
+        [1] IMO. Fourth IMO GHG Study 2020. IMO.
+
+    """
+
+    installed_propulsion_power = calculate_installed_propulsion_power(vessel_data)
+
+    load = estimate_propulsion_engine_load(speed, draft, vessel_data, delta_w=delta_w)
+
+    return installed_propulsion_power * load
+
+
+def estimate_instantanous_fuel_consumption_of_propulsion_engines(
+    vessel_data, speed, draft, limit_7_percent=True, delta_w=None
+):
+    """Estimate the instantanous fuel consumption of the propulsion engines
+
+    Arguments:
+    ----------
+
+        vessel_data: dict
+            Dictionary describing the vessel.
+
+        speed: float
+            Speed over ground (m/s).
+
+        draft: float
+            Dynamic draft (m).
+
+        limit_7_percent (optional): boolean
+            If True, when the engine load is less than 7% the fuel consumption is
+            neglected (i.e. 0.0). Defaults to True.
+
+        delta_w (optional): float
+            Speed-power correction factor: percentage of the Maximum Continous Rating
+            (MCR) of the installed propulsion power at which the design speed is reached
+            in calm water. Defaults to the considerations in [1] to be equal to 0.75 for
+            container ships over 14,500 TEU, 0.7 for cruise ships, and 1.0 for all other
+            vessels (i.e. 75%, 70%, and 100% MCR, respectively). If given a value,
+            the value will override these defaults. Defaults to None.
+
+        Returns:
+        --------
+
+            float
+                Instantanous fuel consumption (kg/h).
+
+    Source:
+    -------
+
+        [1] IMO. Fourth IMO GHG Study 2020. IMO.
+
+    """
+
+    installed_propulsion_power = calculate_installed_propulsion_power(vessel_data)
+
+    fuel_type = vessel_data["propulsion_engine_fuel_type"]
+    engine_age = vessel_data["propulsion_engine_age"]
+    engine_type = vessel_data["propulsion_engine_type"]
+
+    load = estimate_propulsion_engine_load(speed, draft, vessel_data, delta_w=delta_w)
+    if load < 0.07 and limit_7_percent:
+        sfc = 0.0
+    else:
+        sfc = estimate_specific_fuel_consumption(
+            load, engine_type, fuel_type, engine_age
+        )
+    return installed_propulsion_power * load * sfc
+
+
+def estimate_fuel_consumption_of_propulsion_engines(
+    vessel_data, voyage_profile, limit_7_percent=True, delta_w=None
+):
+    """
+    Arguments:
+    ----------
+
+        vessel_data: dict
+
+        voyage_profile: dict
 
     Returns:
     --------
+        (float, float)
+            Fuel consumption (kg) and averege fuel consumption (L/nm).
 
-        float
-            Installed propulsion power (kW)
     """
-    if vessel_data["double_ended"]:
-        return vessel_data["propulsion_engine_power"]
-    else:
-        return (
-            vessel_data["number_of_propulsion_engines"]
-            * vessel_data["propulsion_engine_power"]
+    total_fc_kg = 0.0
+    total_distance_nm = 0.0
+    legs = voyage_profile["legs_at_sea"] + voyage_profile["legs_manoeuvring"]
+    for distance, speed, draft in legs:
+        ifc = estimate_instantanous_fuel_consumption_of_propulsion_engines(
+            vessel_data,
+            speed,
+            draft,
+            limit_7_percent=limit_7_percent,
+            delta_w=delta_w,
         )
+        time_h = distance / speed
+        total_distance_nm += distance
+        total_fc_kg += ifc * time_h
+
+    avg_fc_lpnm = (
+        calculate_fuel_volume(total_fc_kg, vessel_data["propulsion_engine_fuel_type"])
+        * 1_000
+        / total_distance_nm
+    )
+    return total_fc_kg, avg_fc_lpnm
 
 
 def estimate_fuel_consumption(
@@ -728,19 +894,20 @@ def estimate_fuel_consumption(
             Dictionary describing the voyage profile.
 
         include_steam_boilers (optional): boolean
-            If True, the fuel consumption of the steam boilers is included in the calculation.
-            Defaults to True.
+            If True, the fuel consumption of the steam boilers is included in the
+            calculation. Defaults to True.
 
         limit_7_percent (optional): boolean
-            If True, when the engine load is less than 7% the fuel consumption is neglected (i.e. 0.0).
-            Defaults to True.
+            If True, when the engine load is less than 7% the fuel consumption is
+            neglected (i.e. 0.0). Defaults to True.
 
         delta_w (optional): float
-            Speed-power correction factor: percentage of the Maximum Continous Rating (MCR) of the
-            installed propulsion power at which the design speed is reached in calm water. Defaults
-            to the considerations in [1] to be equal to 0.75 for container ships over 14,500 TEU,
-            0.7 for cruise ships, and 1.0 for all other vessels (i.e. 75%, 70%, and 100% MCR,
-            respectively). If given a value, the value will override these defaults. Defaults to None.
+            Speed-power correction factor: percentage of the Maximum Continous Rating
+            (MCR) of the installed propulsion power at which the design speed is reached
+            in calm water. Defaults to the considerations in [1] to be equal to 0.75 for
+            container ships over 14,500 TEU, 0.7 for cruise ships, and 1.0 for all other
+            vessels (i.e. 75%, 70%, and 100% MCR, respectively). If given a value,
+            the value will override these defaults. Defaults to None.
 
     Returns:
     --------
@@ -755,13 +922,7 @@ def estimate_fuel_consumption(
 
     """
 
-    installed_propulsion_power = calculate_installed_propulsion_power(vessel_data)
-
-    fuel_type = vessel_data["propulsion_engine_fuel_type"]
-    engine_age = vessel_data["propulsion_engine_age"]
-    engine_type = vessel_data["propulsion_engine_type"]
-
-    def estimate_sailing_fuel_consumption(legs, operation_mode):
+    def _estimate_sailing_fuel_consumption(legs, operation_mode):
         if len(legs) == 0:
             fc_ = {
                 "subtotal_kg": 0.0,
@@ -772,96 +933,104 @@ def estimate_fuel_consumption(
             if include_steam_boilers:
                 fc_["steam_boilers_kg"] = 0.0
             return fc_
-        else:
-            total_time = sum([distance / speed for distance, speed, _ in legs])
-            fc_aux = estimate_fuel_consumption_of_auxiliary_systems(
-                vessel_data, operation_mode, total_time
-            )
-            fc_prop = 0.0
-            total_dist = 0.0
-            for distance, speed, draft in legs:
-                load = estimate_propulsion_engine_load(
-                    speed, draft, vessel_data, delta_w=delta_w
-                )
-                total_dist += distance
-                if load < 0.07 and limit_7_percent:
-                    sfc = 0.0
-                else:
-                    sfc = estimate_specific_fuel_consumption(
-                        load, engine_type, fuel_type, engine_age
-                    )
-                time = distance / speed
-                fc_prop += installed_propulsion_power * load * sfc * time
 
-            if include_steam_boilers:
-                fc_subtotal = (
-                    fc_aux["auxiliary_engines"] + fc_aux["steam_boilers"] + fc_prop
+        total_time = sum([distance / speed for distance, speed, _ in legs])
+
+        # FC of auxiliary systems
+        (
+            ifc_aux_engine,
+            ifc_boiler,
+        ) = estimate_instantaneous_fuel_consumption_of_auxiliary_systems(
+            vessel_data, operation_mode
+        )
+        fc_aux_engine = ifc_aux_engine * total_time
+        fc_boiler = ifc_boiler * total_time
+
+        # FC of propulsion engines
+        fc_prop = 0.0
+        total_dist = 0.0
+        for distance, speed, draft in legs:
+            ifc_prop = estimate_instantanous_fuel_consumption_of_propulsion_engines(
+                vessel_data,
+                speed,
+                draft,
+                limit_7_percent=limit_7_percent,
+                delta_w=delta_w,
+            )
+            time = distance / speed
+            total_dist += distance
+            fc_prop += ifc_prop * time
+
+        if include_steam_boilers:
+            fc_subtotal = fc_aux_engine + fc_boiler + fc_prop
+            return {
+                "subtotal_kg": fc_subtotal,
+                "auxiliary_engines_kg": fc_aux_engine,
+                "steam_boilers_kg": fc_boiler,
+                "propulsion_engines_kg": fc_prop,
+                "average_fuel_consumption_l_per_nm": calculate_fuel_volume(
+                    fc_subtotal, vessel_data["propulsion_engine_fuel_type"]
                 )
-                return {
-                    "subtotal_kg": fc_subtotal,
-                    "auxiliary_engines_kg": fc_aux["auxiliary_engines"],
-                    "steam_boilers_kg": fc_aux["steam_boilers"],
-                    "propulsion_engines_kg": fc_prop,
-                    "average_fuel_consumption_l_per_nm": calculate_fuel_volume(
-                        fc_subtotal, vessel_data["propulsion_engine_fuel_type"]
-                    )
-                    * 1_000
-                    / total_dist,
-                }
-            else:
-                fc_subtotal = fc_aux["auxiliary_engines"] + fc_prop
-                return {
-                    "subtotal_kg": fc_subtotal,
-                    "auxiliary_engines_kg": fc_aux["auxiliary_engines"],
-                    "propulsion_engines_kg": fc_prop,
-                    "average_fuel_consumption_l_per_nm": calculate_fuel_volume(
-                        fc_subtotal, vessel_data["propulsion_engine_fuel_type"]
-                    )
-                    * 1_000
-                    / total_dist,
-                }
+                * 1_000
+                / total_dist,
+            }
+
+        fc_subtotal = fc_aux_engine + fc_prop
+        return {
+            "subtotal_kg": fc_subtotal,
+            "auxiliary_engines_kg": fc_aux_engine,
+            "propulsion_engines_kg": fc_prop,
+            "average_fuel_consumption_l_per_nm": calculate_fuel_volume(
+                fc_subtotal, vessel_data["propulsion_engine_fuel_type"]
+            )
+            * 1_000
+            / total_dist,
+        }
 
     # At berth
-    fc_aux_at_berth = estimate_fuel_consumption_of_auxiliary_systems(
-        vessel_data, "at_berth", voyage_profile["time_at_berth"]
+    ifc_aux, ifc_boiler = estimate_instantaneous_fuel_consumption_of_auxiliary_systems(
+        vessel_data, "at_berth"
     )
+    fc_aux_at_berth = ifc_aux * voyage_profile["time_at_berth"]
+    fc_boiler_at_berth = ifc_boiler * voyage_profile["time_at_berth"]
+
     if include_steam_boilers:
         fc_at_berth = {
-            "subtotal_kg": fc_aux_at_berth["auxiliary_engines"]
-            + fc_aux_at_berth["steam_boilers"],
-            "auxiliary_engines_kg": fc_aux_at_berth["auxiliary_engines"],
-            "steam_boilers_kg": fc_aux_at_berth["steam_boilers"],
+            "subtotal_kg": fc_aux_at_berth + fc_boiler_at_berth,
+            "auxiliary_engines_kg": fc_aux_at_berth,
+            "steam_boilers_kg": fc_boiler_at_berth,
         }
     else:
         fc_at_berth = {
-            "subtotal_kg": fc_aux_at_berth["auxiliary_engines"],
-            "auxiliary_engines_kg": fc_aux_at_berth["auxiliary_engines"],
+            "subtotal_kg": fc_aux_at_berth,
+            "auxiliary_engines_kg": fc_aux_at_berth,
         }
 
     # Anchored
-    fc_aux_anchored = estimate_fuel_consumption_of_auxiliary_systems(
-        vessel_data, "anchored", voyage_profile["time_anchored"]
+    ifc_aux, ifc_boiler = estimate_instantaneous_fuel_consumption_of_auxiliary_systems(
+        vessel_data, "anchored"
     )
+    fc_aux_anchored = ifc_aux * voyage_profile["time_anchored"]
+    fc_boiler_anchored = ifc_boiler * voyage_profile["time_anchored"]
     if include_steam_boilers:
         fc_anchored = {
-            "subtotal_kg": fc_aux_anchored["auxiliary_engines"]
-            + fc_aux_anchored["steam_boilers"],
-            "auxiliary_engines_kg": fc_aux_anchored["auxiliary_engines"],
-            "steam_boilers_kg": fc_aux_anchored["steam_boilers"],
+            "subtotal_kg": fc_aux_anchored + fc_boiler_anchored,
+            "auxiliary_engines_kg": fc_aux_anchored,
+            "steam_boilers_kg": fc_boiler_anchored,
         }
     else:
         fc_anchored = {
-            "subtotal_kg": fc_aux_anchored["auxiliary_engines"],
-            "auxiliary_engines_kg": fc_aux_anchored["auxiliary_engines"],
+            "subtotal_kg": fc_aux_anchored,
+            "auxiliary_engines_kg": fc_aux_anchored,
         }
 
     # Manoeuvring
-    fc_manoeuvring = estimate_sailing_fuel_consumption(
+    fc_manoeuvring = _estimate_sailing_fuel_consumption(
         voyage_profile["legs_manoeuvring"], "manoeuvring"
     )
 
     # At sea
-    fc_at_sea = estimate_sailing_fuel_consumption(
+    fc_at_sea = _estimate_sailing_fuel_consumption(
         voyage_profile["legs_at_sea"], "at_sea"
     )
 
@@ -900,74 +1069,70 @@ def estimate_energy_consumption(
     """
     installed_propulsion_power = calculate_installed_propulsion_power(vessel_data)
 
-    def estimate_sailing_energy(legs, operation_mode):
+    def _estimate_sailing_energy(legs, operation_mode):
         if len(legs) == 0:
             en_ = {
-                "subtotal_kWh": 0.0,
-                "auxiliary_engines_kWh": 0.0,
-                "propulsion_engines_kWh": 0.0,
-                "average_energy_consumption_kWh_per_nm": 0.0,
-                "maximum_required_total_power_kW": 0.0,
-                "maximum_required_propulsion_power_kW": 0.0,
+                "subtotal_kwh": 0.0,
+                "auxiliary_engines_kwh": 0.0,
+                "propulsion_engines_kwh": 0.0,
+                "average_energy_consumption_kwh_per_nm": 0.0,
+                "maximum_required_total_power_kw": 0.0,
+                "maximum_required_propulsion_power_kw": 0.0,
             }
             if include_steam_boilers:
-                en_["steam_boilers_kWh"] = 0.0
+                en_["steam_boilers_kwh"] = 0.0
             return en_
-        else:
-            total_time = sum([distance / speed for distance, speed, _ in legs])
-            (
-                power_auxiliary_engines,
-                power_steam_boilers,
-            ) = estimate_auxiliary_power_demand(vessel_data, operation_mode)
-            energy_auxiliary_engines = power_auxiliary_engines * total_time
-            energy_steam_boilers = power_steam_boilers * total_time
-            energy_prop = []
-            power_prop = []
-            load_prop = []
-            total_dist = 0.0
-            for distance, speed, draft in legs:
-                total_dist += distance
-                load = estimate_propulsion_engine_load(
-                    speed, draft, vessel_data, delta_w=delta_w
-                )
-                load_prop.append(load)
-                if load < 0.07 and limit_7_percent:
-                    energy_prop.append(0.0)
-                    power_prop.append(0.0)
-                else:
-                    time = distance / speed
-                    energy_prop.append(installed_propulsion_power * load * time)
-                    power_prop.append(installed_propulsion_power * load)
 
-            if include_steam_boilers:
-                energy_subtotal = (
-                    energy_auxiliary_engines + energy_steam_boilers + sum(energy_prop)
-                )
-                power_max = (
-                    power_auxiliary_engines + power_steam_boilers + max(power_prop)
-                )
-                return {
-                    "subtotal_kWh": energy_subtotal,
-                    "auxiliary_engines_kWh": energy_auxiliary_engines,
-                    "steam_boilers_kWh": energy_steam_boilers,
-                    "average_energy_consumption_kWh_per_nm": energy_subtotal
-                    / total_dist,
-                    "maximum_required_total_power_kW": power_max,
-                    "maxium_engine_load_percent": max(load_prop) * 100,
-                    "maximum_required_propulsion_power_kW": max(power_prop),
-                }
+        total_time = sum([distance / speed for distance, speed, _ in legs])
+        (
+            power_auxiliary_engines,
+            power_steam_boilers,
+        ) = estimate_auxiliary_power_demand(vessel_data, operation_mode)
+        energy_auxiliary_engines = power_auxiliary_engines * total_time
+        energy_steam_boilers = power_steam_boilers * total_time
+        energy_prop = []
+        power_prop = []
+        load_prop = []
+        total_dist = 0.0
+        for distance, speed, draft in legs:
+            total_dist += distance
+            load = estimate_propulsion_engine_load(
+                speed, draft, vessel_data, delta_w=delta_w
+            )
+            load_prop.append(load)
+            if load < 0.07 and limit_7_percent:
+                energy_prop.append(0.0)
+                power_prop.append(0.0)
             else:
-                energy_subtotal = energy_auxiliary_engines + sum(energy_prop)
-                power_max = power_auxiliary_engines + max(power_prop)
-                return {
-                    "subtotal_kWh": energy_subtotal,
-                    "auxiliary_engines_kWh": energy_auxiliary_engines,
-                    "average_energy_consumption_kWh_per_nm": energy_subtotal
-                    / total_dist,
-                    "maximum_required_total_power_kW": power_max,
-                    "maxium_engine_load_percent": max(load_prop) * 100,
-                    "maximum_required_propulsion_power_kW": max(power_prop),
-                }
+                time = distance / speed
+                energy_prop.append(installed_propulsion_power * load * time)
+                power_prop.append(installed_propulsion_power * load)
+
+        if include_steam_boilers:
+            energy_subtotal = (
+                energy_auxiliary_engines + energy_steam_boilers + sum(energy_prop)
+            )
+            power_max = power_auxiliary_engines + power_steam_boilers + max(power_prop)
+            return {
+                "subtotal_kwh": energy_subtotal,
+                "auxiliary_engines_kwh": energy_auxiliary_engines,
+                "steam_boilers_kwh": energy_steam_boilers,
+                "average_energy_consumption_kwh_per_nm": energy_subtotal / total_dist,
+                "maximum_required_total_power_kw": power_max,
+                "maxium_engine_load_percent": max(load_prop) * 100,
+                "maximum_required_propulsion_power_kw": max(power_prop),
+            }
+
+        energy_subtotal = energy_auxiliary_engines + sum(energy_prop)
+        power_max = power_auxiliary_engines + max(power_prop)
+        return {
+            "subtotal_kwh": energy_subtotal,
+            "auxiliary_engines_kwh": energy_auxiliary_engines,
+            "average_energy_consumption_kwh_per_nm": energy_subtotal / total_dist,
+            "maximum_required_total_power_kw": power_max,
+            "maxium_engine_load_percent": max(load_prop) * 100,
+            "maximum_required_propulsion_power_kw": max(power_prop),
+        }
 
     # At berth
     (
@@ -982,19 +1147,19 @@ def estimate_energy_consumption(
     )
     if include_steam_boilers:
         energy_at_berth = {
-            "subtotal_kWh": energy_auxiliary_engines_at_berth
+            "subtotal_kwh": energy_auxiliary_engines_at_berth
             + energy_steam_boilers_at_berth,
-            "auxiliary_engines_kWh": energy_auxiliary_engines_at_berth,
-            "steam_boilers_kWh": energy_steam_boilers_at_berth,
-            "maximum_required_total_power_kW": 0.0
+            "auxiliary_engines_kwh": energy_auxiliary_engines_at_berth,
+            "steam_boilers_kwh": energy_steam_boilers_at_berth,
+            "maximum_required_total_power_kw": 0.0
             if voyage_profile["time_at_berth"] == 0
             else power_auxiliary_engines_at_berth + power_steam_boilers_at_berth,
         }
     else:
         energy_at_berth = {
-            "subtotal_kWh": energy_auxiliary_engines_at_berth,
-            "auxiliary_engines_kWh": energy_auxiliary_engines_at_berth,
-            "maximum_required_total_power_kW": 0.0
+            "subtotal_kwh": energy_auxiliary_engines_at_berth,
+            "auxiliary_engines_kwh": energy_auxiliary_engines_at_berth,
+            "maximum_required_total_power_kw": 0.0
             if voyage_profile["time_at_berth"] == 0
             else power_auxiliary_engines_at_berth,
         }
@@ -1012,48 +1177,48 @@ def estimate_energy_consumption(
     )
     if include_steam_boilers:
         energy_anchored = {
-            "subtotal_kWh": energy_auxiliary_engines_anchored
+            "subtotal_kwh": energy_auxiliary_engines_anchored
             + energy_steam_boilers_anchored,
-            "auxiliary_engines_kWh": energy_auxiliary_engines_anchored,
-            "steam_boilers_kWh": energy_steam_boilers_anchored,
-            "maximum_required_total_power_kW": 0.0
+            "auxiliary_engines_kwh": energy_auxiliary_engines_anchored,
+            "steam_boilers_kwh": energy_steam_boilers_anchored,
+            "maximum_required_total_power_kw": 0.0
             if voyage_profile["time_anchored"] == 0
             else power_auxiliary_engines_anchored + power_steam_boilers_anchored,
         }
     else:
         energy_anchored = {
-            "subtotal_kWh": energy_auxiliary_engines_anchored,
-            "auxiliary_engines_kWh": energy_auxiliary_engines_anchored,
-            "maximum_required_total_power_kW": 0.0
+            "subtotal_kwh": energy_auxiliary_engines_anchored,
+            "auxiliary_engines_kwh": energy_auxiliary_engines_anchored,
+            "maximum_required_total_power_kw": 0.0
             if voyage_profile["time_anchored"] == 0
             else power_auxiliary_engines_anchored,
         }
 
     # Manoeuvring
-    energy_manoeuvring = estimate_sailing_energy(
+    energy_manoeuvring = _estimate_sailing_energy(
         voyage_profile["legs_manoeuvring"], "manoeuvring"
     )
 
     # At sea
-    energy_at_sea = estimate_sailing_energy(voyage_profile["legs_at_sea"], "at_sea")
+    energy_at_sea = _estimate_sailing_energy(voyage_profile["legs_at_sea"], "at_sea")
 
     return {
-        "total_kWh": energy_at_berth["subtotal_kWh"]
-        + energy_anchored["subtotal_kWh"]
-        + energy_manoeuvring["subtotal_kWh"]
-        + energy_at_sea["subtotal_kWh"],
-        "maximum_required_total_power_kW": max(
+        "total_kwh": energy_at_berth["subtotal_kwh"]
+        + energy_anchored["subtotal_kwh"]
+        + energy_manoeuvring["subtotal_kwh"]
+        + energy_at_sea["subtotal_kwh"],
+        "maximum_required_total_power_kw": max(
             [
-                energy_at_berth["maximum_required_total_power_kW"],
-                energy_anchored["maximum_required_total_power_kW"],
-                energy_manoeuvring["maximum_required_total_power_kW"],
-                energy_at_sea["maximum_required_total_power_kW"],
+                energy_at_berth["maximum_required_total_power_kw"],
+                energy_anchored["maximum_required_total_power_kw"],
+                energy_manoeuvring["maximum_required_total_power_kw"],
+                energy_at_sea["maximum_required_total_power_kw"],
             ]
         ),
-        "maximum_required_propulsion_power_kW": max(
+        "maximum_required_propulsion_power_kw": max(
             [
-                energy_manoeuvring["maximum_required_propulsion_power_kW"],
-                energy_at_sea["maximum_required_propulsion_power_kW"],
+                energy_manoeuvring["maximum_required_propulsion_power_kw"],
+                energy_at_sea["maximum_required_propulsion_power_kw"],
             ]
         ),
         "at_berth": energy_at_berth,
