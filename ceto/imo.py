@@ -582,11 +582,11 @@ def estimate_propulsion_engine_load(speed, draft, vessel_data, delta_w=None):
 
     """
     # Verify arguments
-    verify_range("speed", speed, 0, vessel_data["design_speed"] * 1.5)
+    verify_range("speed", speed, 0, vessel_data["design_speed"] * 1.1)
     verify_range(
         "draft",
         draft,
-        vessel_data["design_draft"] * 0.5,
+        vessel_data["design_draft"] * 0.3,
         vessel_data["design_draft"] * 1.5,
     )
     verify_vessel_data(vessel_data)

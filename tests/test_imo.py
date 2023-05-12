@@ -122,20 +122,20 @@ def test_estimate_propulsion_engine_load():
     el_2 = estimate_propulsion_engine_load(10, 8, DUMMY_VESSEL_DATA, delta_w=0.8)
     assert el_1 < el_2
 
-    # Speed must be between 0 kn and 150% the design speed
+    # Speed must be between 0 kn and 110% the design speed
     with raises(ValueError) as info:
         estimate_propulsion_engine_load(
-            DUMMY_VESSEL_DATA["design_speed"] * 1.5 + 0.1, 7, DUMMY_VESSEL_DATA
+            DUMMY_VESSEL_DATA["design_speed"] * 1.1 + 0.1, 7, DUMMY_VESSEL_DATA
         )
     assert "speed" in str(info)
     with raises(ValueError) as info:
         estimate_propulsion_engine_load(-0.01, 7, DUMMY_VESSEL_DATA)
     assert "speed" in str(info)
 
-    # Draft must be between 50% and 150% the design draft
+    # Draft must be between 30% and 150% the design draft
     with raises(ValueError) as info:
         estimate_propulsion_engine_load(
-            6, 0.4 * DUMMY_VESSEL_DATA["design_draft"], DUMMY_VESSEL_DATA
+            6, 0.29 * DUMMY_VESSEL_DATA["design_draft"], DUMMY_VESSEL_DATA
         )
     assert "draft" in str(info)
     with raises(ValueError) as info:
