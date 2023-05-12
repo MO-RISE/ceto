@@ -398,8 +398,8 @@ def estimate_vessel_gas_hydrogen_system(
                 "power_kw": required_power_kw,
             },
             "electrical_engines": {
-                "weight_pct_engine_kg": electrical_engine_weight_kg,
-                "volume_pct_engine_m3": electrical_engine_volume_m3,
+                "weight_kg": electrical_engine_weight_kg,
+                "volume_m3": electrical_engine_volume_m3,
                 "power_kw": electrical_engine_power_kw,
             },
             "gas_tanks": {

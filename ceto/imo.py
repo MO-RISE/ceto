@@ -325,7 +325,7 @@ def estimate_specific_fuel_consumption(engine_load, engine_type, fuel_type, engi
     )
     verify_set("fuel_type", fuel_type, FUEL_TYPES)
     verify_set("engine_age", engine_age, ENGINE_AGES)
-    verify_range("engine_load", engine_load, 0, 1.5)
+    verify_range("engine_load", engine_load, 0, 1.0)
 
     try:
         sfc_baseline = sfc_baselines[engine_type][fuel_type][engine_age]
@@ -582,8 +582,13 @@ def estimate_propulsion_engine_load(speed, draft, vessel_data, delta_w=None):
 
     """
     # Verify arguments
-    verify_range("speed", speed, 0, MAX_VESSEL_SPEED_KN)
-    verify_range("draft", draft, MIN_VESSEL_DRAFT, MAX_VESSEL_DRAFT_M)
+    verify_range("speed", speed, 0, vessel_data["design_speed"] * 1.5)
+    verify_range(
+        "draft",
+        draft,
+        vessel_data["design_draft"] * 0.5,
+        vessel_data["design_draft"] * 1.5,
+    )
     verify_vessel_data(vessel_data)
     if delta_w is not None:
         verify_range("delta_w", delta_w, 0, 1)
@@ -644,11 +649,14 @@ def estimate_propulsion_engine_load(speed, draft, vessel_data, delta_w=None):
             delta_w = 1
 
     # Engine load: a part of equation 8 in page 64 of [1]
-    return (
+    load = (
         delta_w
         * ((draft / design_draft) ** (2 / 3) * (speed / design_speed) ** 3)
         / (eta_f * eta_w)
     )
+
+    # Load cannot exceed 100%
+    return min(1.0, load)
 
 
 def calculate_installed_propulsion_power(vessel_data):

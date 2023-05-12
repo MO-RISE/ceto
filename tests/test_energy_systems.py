@@ -1,4 +1,3 @@
-from pytest import raises
 from ceto.imo import estimate_energy_consumption
 from ceto.energy_systems import (
     estimate_vessel_battery_system,
@@ -29,9 +28,9 @@ DUMMY_VOYAGE_PROFILE = {
     "time_anchored": 10.0,  # time
     "time_at_berth": 10.0,  # time
     "legs_manoeuvring": [
-        (10, 10, 6),  # distance (nm), speed (kn), draft (m)
+        (10, 10, 3),  # distance (nm), speed (kn), draft (m)
     ],
-    "legs_at_sea": [(30, 10, 6), (30, 10, 6)],  # distance (nm), speed (kn), draft (m)
+    "legs_at_sea": [(30, 10, 3), (30, 10, 3)],  # distance (nm), speed (kn), draft (m)
 }
 
 

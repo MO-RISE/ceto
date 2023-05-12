@@ -413,6 +413,8 @@ def make_voyage_profile(
 
         dict
             Dictionary representing a voyage profile.
+
+    TODO: Implement criteria for 'manoeuvring' and 'at sea' in [1].
     """
 
     voyage_profile = {
