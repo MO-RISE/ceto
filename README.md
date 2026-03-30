@@ -17,7 +17,7 @@ cetos provides tools for analyzing vessel performance, estimating fuel consumpti
 - **GHG Emissions**: CO2, CH4, N2O with CO2-equivalent (IMO MEPC.308, FuelEU Maritime Annex II)
 - **Well-to-Wake Analysis**: Full lifecycle GHG intensity for FuelEU Maritime compliance
 - **Air Pollutant Emissions**: NOx, SOx, PM (IMO NOx Technical Code, MARPOL Annex VI)
-- **CII Rating**: Carbon Intensity Indicator A-E rating per IMO MEPC.339/338/354
+- **CII Rating**: Carbon Intensity Indicator A-E rating per IMO MEPC.353/338/354
 - **Energy System Analysis**: Analyze batteries, hydrogen systems, and hybrid propulsion
 - **AIS Data Processing**: Convert AIS data to voyage profiles
 - **Multiple Vessel Types**: Support for 19 vessel types (ferries, container ships, tankers, etc.)
@@ -130,7 +130,7 @@ print(f"Required CII: {cii['required_cii']:.2f} gCO2/(DWT·nm)")
 | NOx | IMO NOx Technical Code | Engine-age dependent (Tier 0/I/II) |
 | SOx | IMO MARPOL Annex VI | Based on fuel sulfur content (0.5% global cap) |
 | PM | IMO 4th GHG Study, EMEP/EEA Guidebook | Post-2020 values |
-| CII reference lines | IMO MEPC.339(76) | Per vessel type |
+| CII reference lines | IMO MEPC.353(76) | Per vessel type |
 | CII reduction factors | IMO MEPC.338(76) | Tighten annually; beyond 2026 TBD |
 | CII rating boundaries | IMO MEPC.354(78) | Per vessel type |
 | GWP (AR5) | IPCC AR5 | CH4=28, N2O=265 |
@@ -144,7 +144,7 @@ Functions for estimating vessel fuel and energy consumption based on IMO Fourth 
 GHG emissions (CO2, CH4, N2O), well-to-wake analysis, and air pollutant emissions (NOx, SOx, PM). Covers FuelEU Maritime and EU ETS requirements.
 
 ### CII (`cetos.cii`)
-Carbon Intensity Indicator calculation with A-E rating per IMO MEPC.339/338/354. Supports 12 vessel categories with annual reduction factors.
+Carbon Intensity Indicator calculation with A-E rating per IMO MEPC.353/338/354. Supports 12 vessel categories with annual reduction factors.
 
 ### Energy Systems (`cetos.energy_systems`)
 Tools for analyzing vessel energy systems including batteries, hydrogen, and internal combustion engines.
