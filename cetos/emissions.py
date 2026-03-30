@@ -61,6 +61,26 @@ for _et in ENGINE_TYPES:
             N2O_FACTORS[(_et, _ft)] = _N2O_OIL
 
 
+# Lower Calorific Values (MJ/kg)
+# Source: IMO MEPC.308(73) / MEPC.364(79)
+LCV = {
+    "HFO": 40.2,
+    "MDO": 42.7,
+    "LNG": 48.0,
+    "MeOH": 19.9,
+}
+
+# Well-to-Tank emission factors (gCO2eq/MJ)
+# Source: FuelEU Maritime Annex II — default values for fossil fuels
+# These are fixed for regulatory compliance; renewable fuels may use certified values.
+WTT_FACTORS = {
+    "HFO": 13.5,
+    "MDO": 14.4,
+    "LNG": 18.5,
+    "MeOH": 31.3,  # Fossil methanol (from natural gas)
+}
+
+
 def estimate_co2_emissions_from_fuel_consumption(fuel_mass_kg, fuel_type):
     """Estimate CO2 emissions from a given mass of fuel.
 
@@ -260,5 +280,124 @@ def estimate_ghg_emissions(
     result["total_fuel_kg"] = fc["total_kg"]
     result["fuel_type"] = fuel_type
     result["engine_type"] = engine_type
+
+    return result
+
+
+def estimate_well_to_wake_emissions(
+    vessel_data: VesselData,
+    voyage_profile: VoyageProfile,
+    include_steam_boilers=True,
+    limit_7_percent=True,
+    delta_w=None,
+    wtt_override_gco2eq_per_mj=None,
+):
+    """Estimate well-to-wake GHG emissions for a vessel voyage.
+
+    Combines Tank-to-Wake (TtW) emissions from combustion with Well-to-Tank
+    (WtT) upstream emissions from fuel production. Returns the GHG intensity
+    in gCO2eq/MJ as required by FuelEU Maritime.
+
+    Arguments:
+    ----------
+
+        vessel_data: VesselData
+            VesselData instance describing the vessel.
+
+        voyage_profile: VoyageProfile
+            VoyageProfile instance describing the voyage profile.
+
+        include_steam_boilers (optional): boolean
+            Defaults to True.
+
+        limit_7_percent (optional): boolean
+            Defaults to True.
+
+        delta_w (optional): float
+            Speed-power correction factor. Defaults to None.
+
+        wtt_override_gco2eq_per_mj (optional): float
+            Override the default WtT factor (gCO2eq/MJ). Use for renewable
+            fuels with certified WtT values that differ from fossil defaults.
+            Defaults to None (uses FuelEU Maritime Annex II defaults).
+
+    Returns:
+    --------
+
+        Dict
+            Well-to-wake emissions breakdown including WtT, TtW, total WtW,
+            GHG intensity (gCO2eq/MJ), and per-mode breakdown.
+
+    Source:
+    -------
+
+        [1] FuelEU Maritime Annex II — WtT default emission factors.
+        [2] IMO MEPC.308(73) — CO2 emission factors and LCV values.
+        [3] FuelEU Maritime Annex II — CH4 and N2O factors.
+    """
+    fuel_type = vessel_data.propulsion_engine_fuel_type
+    lcv = LCV[fuel_type]
+
+    # WtT factor: use override if provided, otherwise use default
+    if wtt_override_gco2eq_per_mj is not None:
+        wtt_gco2eq_per_mj = wtt_override_gco2eq_per_mj
+    else:
+        wtt_gco2eq_per_mj = WTT_FACTORS[fuel_type]
+
+    # WtT factor in kg CO2eq per kg fuel = gCO2eq/MJ * MJ/kg / 1000
+    wtt_kg_co2eq_per_kg_fuel = wtt_gco2eq_per_mj * lcv / 1000.0
+
+    # Get TtW emissions (CO2 + CH4 + N2O as CO2eq)
+    ghg = estimate_ghg_emissions(
+        vessel_data,
+        voyage_profile,
+        include_steam_boilers=include_steam_boilers,
+        limit_7_percent=limit_7_percent,
+        delta_w=delta_w,
+    )
+
+    total_fuel_kg = ghg["total_fuel_kg"]
+    total_energy_mj = total_fuel_kg * lcv
+
+    # WtT total
+    wtt_total = total_fuel_kg * wtt_kg_co2eq_per_kg_fuel
+
+    # TtW total (from GHG calculation — CO2eq including CH4 and N2O)
+    ttw_total = ghg["total_kg_co2eq"]
+
+    # WtW total
+    wtw_total = wtt_total + ttw_total
+
+    # GHG intensity in gCO2eq/MJ (the FuelEU Maritime metric)
+    if total_energy_mj > 0:
+        ghg_intensity = (wtw_total * 1000.0) / total_energy_mj
+    else:
+        ghg_intensity = 0.0
+
+    result = {
+        "wtt_kg_co2eq": wtt_total,
+        "ttw_kg_co2eq": ttw_total,
+        "wtw_kg_co2eq": wtw_total,
+        "ghg_intensity_gco2eq_per_mj": ghg_intensity,
+        "total_fuel_kg": total_fuel_kg,
+        "total_energy_mj": total_energy_mj,
+        "fuel_type": fuel_type,
+        "wtt_factor_gco2eq_per_mj": wtt_gco2eq_per_mj,
+        "ttw_kg_co2": ghg["total_kg_co2"],
+        "ttw_kg_ch4": ghg["total_kg_ch4"],
+        "ttw_kg_n2o": ghg["total_kg_n2o"],
+    }
+
+    # Per-mode breakdown
+    for mode in ["at_berth", "anchored", "manoeuvring", "at_sea"]:
+        fuel_kg = ghg[mode]["fuel_kg"]
+        wtt_mode = fuel_kg * wtt_kg_co2eq_per_kg_fuel
+        ttw_mode = ghg[mode]["co2eq_kg"]
+        result[mode] = {
+            "wtt_co2eq_kg": wtt_mode,
+            "ttw_co2eq_kg": ttw_mode,
+            "wtw_co2eq_kg": wtt_mode + ttw_mode,
+            "fuel_kg": fuel_kg,
+        }
 
     return result

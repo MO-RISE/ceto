@@ -5,10 +5,13 @@ from cetos.emissions import (
     CO2_FACTORS,
     GWP_CH4,
     GWP_N2O,
+    LCV,
     N2O_FACTORS,
+    WTT_FACTORS,
     estimate_co2_emissions,
     estimate_co2_emissions_from_fuel_consumption,
     estimate_ghg_emissions,
+    estimate_well_to_wake_emissions,
 )
 from cetos.models import VesselData, VoyageLeg, VoyageProfile
 
@@ -276,3 +279,91 @@ def test_estimate_ghg_emissions_total_equals_sum_of_modes():
         )
         total_key = f"total_kg_{gas.replace('_kg', '')}"
         assert result[total_key] == approx(total_from_modes)
+
+
+# =============================================================================
+# Phase 3: Well-to-Tank and Well-to-Wake emissions
+# =============================================================================
+
+
+def test_lcv_values_defined_for_all_fuel_types():
+    for ft in ["HFO", "MDO", "LNG", "MeOH"]:
+        assert ft in LCV
+        assert LCV[ft] > 0
+
+
+def test_lcv_values_match_imo():
+    assert LCV["HFO"] == approx(40.2)
+    assert LCV["MDO"] == approx(42.7)
+    assert LCV["LNG"] == approx(48.0)
+    assert LCV["MeOH"] == approx(19.9)
+
+
+def test_wtt_factors_defined_for_all_fuel_types():
+    for ft in ["HFO", "MDO", "LNG", "MeOH"]:
+        assert ft in WTT_FACTORS
+        assert WTT_FACTORS[ft] > 0
+
+
+def test_wtt_factors_match_fueleu_annex_ii():
+    # gCO2eq/MJ from FuelEU Maritime Annex II (fossil defaults)
+    assert WTT_FACTORS["HFO"] == approx(13.5)
+    assert WTT_FACTORS["MDO"] == approx(14.4)
+    assert WTT_FACTORS["LNG"] == approx(18.5)
+    assert WTT_FACTORS["MeOH"] == approx(31.3)
+
+
+def test_estimate_well_to_wake_returns_wtt_and_ttw():
+    result = estimate_well_to_wake_emissions(DUMMY_VESSEL_DATA, DUMMY_VOYAGE_PROFILE)
+    assert "wtt_kg_co2eq" in result
+    assert "ttw_kg_co2eq" in result
+    assert "wtw_kg_co2eq" in result
+    assert result["wtt_kg_co2eq"] > 0
+    assert result["ttw_kg_co2eq"] > 0
+
+
+def test_estimate_well_to_wake_wtw_equals_wtt_plus_ttw():
+    result = estimate_well_to_wake_emissions(DUMMY_VESSEL_DATA, DUMMY_VOYAGE_PROFILE)
+    assert result["wtw_kg_co2eq"] == approx(
+        result["wtt_kg_co2eq"] + result["ttw_kg_co2eq"]
+    )
+
+
+def test_estimate_well_to_wake_wtt_is_significant_fraction():
+    result = estimate_well_to_wake_emissions(DUMMY_VESSEL_DATA, DUMMY_VOYAGE_PROFILE)
+    # WtT is typically 10-20% of total WtW for fossil fuels
+    wtt_fraction = result["wtt_kg_co2eq"] / result["wtw_kg_co2eq"]
+    assert 0.05 < wtt_fraction < 0.30
+
+
+def test_estimate_well_to_wake_ghg_intensity():
+    result = estimate_well_to_wake_emissions(DUMMY_VESSEL_DATA, DUMMY_VOYAGE_PROFILE)
+    # GHG intensity in gCO2eq/MJ is the FuelEU Maritime metric
+    assert "ghg_intensity_gco2eq_per_mj" in result
+    assert result["ghg_intensity_gco2eq_per_mj"] > 0
+
+
+def test_estimate_well_to_wake_ghg_intensity_reasonable_range():
+    # For MDO, WtW intensity should be roughly 90-100 gCO2eq/MJ
+    result = estimate_well_to_wake_emissions(DUMMY_VESSEL_DATA, DUMMY_VOYAGE_PROFILE)
+    assert 80 < result["ghg_intensity_gco2eq_per_mj"] < 110
+
+
+def test_estimate_well_to_wake_custom_wtt_factor():
+    # Allow users to override WtT factor (for renewable fuels with certified values)
+    result = estimate_well_to_wake_emissions(
+        DUMMY_VESSEL_DATA, DUMMY_VOYAGE_PROFILE, wtt_override_gco2eq_per_mj=5.0
+    )
+    result_default = estimate_well_to_wake_emissions(
+        DUMMY_VESSEL_DATA, DUMMY_VOYAGE_PROFILE
+    )
+    # Override should produce lower WtT emissions
+    assert result["wtt_kg_co2eq"] < result_default["wtt_kg_co2eq"]
+
+
+def test_estimate_well_to_wake_breakdown_by_mode():
+    result = estimate_well_to_wake_emissions(DUMMY_VESSEL_DATA, DUMMY_VOYAGE_PROFILE)
+    for mode in ["at_berth", "anchored", "manoeuvring", "at_sea"]:
+        assert "wtt_co2eq_kg" in result[mode]
+        assert "ttw_co2eq_kg" in result[mode]
+        assert "wtw_co2eq_kg" in result[mode]
