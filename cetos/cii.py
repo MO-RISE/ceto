@@ -5,31 +5,31 @@ Calculates the attained CII for a vessel voyage, the required CII for the
 vessel type, size, and year, and assigns a rating from A (best) to E (worst).
 
 References:
-    [1] IMO MEPC.339(76) — CII reference line parameters.
+    [1] IMO MEPC.353(78) — CII reference line parameters (supersedes MEPC.337(76)).
     [2] IMO MEPC.338(76) — Annual CII reduction factors.
-    [3] IMO MEPC.354(78) — CII rating boundaries (dd vectors).
+    [3] IMO MEPC.354(78) — CII rating boundaries.
 """
-
-import math
 
 from cetos.emissions import CO2_FACTORS
 from cetos.imo import estimate_fuel_consumption
 from cetos.models import VesselData, VoyageProfile
 
 # CII reference line parameters: CII_ref = a × capacity^(-c)
-# Source: IMO MEPC.339(76), Table 1
+# Source: IMO MEPC.353(78), Table 1 (supersedes MEPC.337(76))
+# Note: Some vessel types have size-dependent parameters; values below are for
+# the most common size ranges. See MEPC.353(78) for full size-dependent tables.
 CII_PARAMS = {
     "bulk_carrier": (4745, 0.622),
-    "gas_carrier": (144050000, 2.071),
+    "gas_carrier": (14405e7, 2.071),  # 1.4405 × 10^11
     "tanker": (5247, 0.610),
     "container": (1984, 0.489),
-    "general_cargo": (31948, 0.792),
+    "general_cargo": (31948, 0.792),  # For ≥20,000 DWT
     "refrigerated_cargo": (4600, 0.557),
     "combination_carrier": (5119, 0.622),
-    "lng_carrier": (9.827, 0.000),
-    "vehicle_carrier": (5686, 0.714),
-    "roro_cargo": (10952, 0.637),
-    "roro_passenger": (7540, 0.587),
+    "lng_carrier": (9.827, 0.000),  # For ≥100,000 DWT (flat reference)
+    "vehicle_carrier": (3672, 0.590),  # MEPC.353(78), for ≥57,700 GT
+    "roro_cargo": (1967, 0.485),  # MEPC.353(78)
+    "roro_passenger": (2023, 0.460),  # MEPC.353(78)
     "cruise_passenger": (930, 0.383),
 }
 
@@ -46,22 +46,24 @@ REDUCTION_FACTORS = {
     2026: 11,
 }
 
-# Rating boundary vectors (d1, d2, d3, d4)
-# Source: IMO MEPC.354(78)
-# A: CII ≤ req × exp(d1), B: ≤ exp(d2), C: ≤ exp(d3), D: ≤ exp(d4), E: > exp(d4)
+# Rating boundary vectors (exp_d1, exp_d2, exp_d3, exp_d4)
+# Source: IMO MEPC.354(78), Table 1
+# A: CII ≤ req × exp_d1, B: ≤ req × exp_d2, C: ≤ req × exp_d3,
+# D: ≤ req × exp_d4, E: > req × exp_d4
+# These are the exp(d) multiplier values directly from MEPC.354(78).
 CII_RATING_BOUNDARIES = {
-    "bulk_carrier": (-0.86, -0.69, -0.32, 0.00),
-    "gas_carrier": (-0.78, -0.57, -0.28, 0.00),
-    "tanker": (-0.85, -0.69, -0.32, 0.00),
-    "container": (-0.84, -0.56, -0.27, 0.00),
-    "general_cargo": (-0.80, -0.56, -0.27, 0.00),
-    "refrigerated_cargo": (-0.78, -0.57, -0.20, 0.00),
-    "combination_carrier": (-0.86, -0.69, -0.32, 0.00),
-    "lng_carrier": (-0.78, -0.57, -0.28, 0.00),
-    "vehicle_carrier": (-0.86, -0.69, -0.32, 0.00),
-    "roro_cargo": (-0.78, -0.57, -0.28, 0.00),
-    "roro_passenger": (-0.78, -0.57, -0.28, 0.00),
-    "cruise_passenger": (-0.78, -0.57, -0.28, 0.00),
+    "bulk_carrier": (0.86, 0.94, 1.06, 1.18),
+    "gas_carrier": (0.81, 0.91, 1.12, 1.44),
+    "tanker": (0.82, 0.93, 1.08, 1.28),
+    "container": (0.83, 0.94, 1.07, 1.19),
+    "general_cargo": (0.83, 0.94, 1.06, 1.19),
+    "refrigerated_cargo": (0.78, 0.91, 1.07, 1.20),
+    "combination_carrier": (0.87, 0.96, 1.06, 1.14),
+    "lng_carrier": (0.89, 0.98, 1.06, 1.13),
+    "vehicle_carrier": (0.86, 0.94, 1.06, 1.16),
+    "roro_cargo": (0.76, 0.89, 1.08, 1.27),
+    "roro_passenger": (0.76, 0.92, 1.14, 1.30),
+    "cruise_passenger": (0.87, 0.95, 1.06, 1.16),
 }
 
 # Mapping from CETOS vessel types to CII categories
@@ -82,7 +84,8 @@ _CETOS_TO_CII = {
 }
 
 # Vessel types that use GT instead of DWT for capacity
-_GT_CAPACITY_TYPES = {"roro_passenger", "cruise_passenger"}
+# Source: MEPC.353(78) / MEPC.354(78)
+_GT_CAPACITY_TYPES = {"roro_passenger", "cruise_passenger", "vehicle_carrier", "roro_cargo"}
 
 
 def _get_cii_type(cetos_vessel_type):
@@ -176,15 +179,15 @@ def calculate_cii_rating(attained_cii, required_cii, cii_type):
         string
             Rating: 'A', 'B', 'C', 'D', or 'E'.
     """
-    d1, d2, d3, d4 = CII_RATING_BOUNDARIES[cii_type]
+    exp_d1, exp_d2, exp_d3, exp_d4 = CII_RATING_BOUNDARIES[cii_type]
 
-    if attained_cii <= required_cii * math.exp(d1):
+    if attained_cii <= required_cii * exp_d1:
         return "A"
-    elif attained_cii <= required_cii * math.exp(d2):
+    elif attained_cii <= required_cii * exp_d2:
         return "B"
-    elif attained_cii <= required_cii * math.exp(d3):
+    elif attained_cii <= required_cii * exp_d3:
         return "C"
-    elif attained_cii <= required_cii * math.exp(d4):
+    elif attained_cii <= required_cii * exp_d4:
         return "D"
     else:
         return "E"

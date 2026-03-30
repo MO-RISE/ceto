@@ -1,5 +1,3 @@
-import math
-
 from pytest import approx, raises
 
 from cetos.cii import (
@@ -76,7 +74,9 @@ def test_rating_boundaries_defined_for_tanker():
     d = CII_RATING_BOUNDARIES["tanker"]
     assert len(d) == 4
     assert d[0] < d[1] < d[2] < d[3]
-    assert d[3] == approx(0.0)
+    # exp(d) values: A boundary < 1.0, D/E boundary > 1.0
+    assert d[0] < 1.0
+    assert d[3] > 1.0
 
 
 # =============================================================================
@@ -116,8 +116,8 @@ def test_calculate_attained_cii_zero_distance_raises():
 def test_calculate_cii_rating_a():
     # Give a very low attained CII — should be A
     required = calculate_required_cii("tanker", 50_000, 2023)
-    d1 = CII_RATING_BOUNDARIES["tanker"][0]
-    very_low = required * math.exp(d1) * 0.5
+    exp_d1 = CII_RATING_BOUNDARIES["tanker"][0]  # 0.82
+    very_low = required * exp_d1 * 0.5
     assert calculate_cii_rating(very_low, required, "tanker") == "A"
 
 
@@ -129,12 +129,13 @@ def test_calculate_cii_rating_e():
 
 
 def test_calculate_cii_rating_d_boundary():
-    # Exactly at required CII (d4=0, exp(0)=1) is the D/E boundary
+    # The D/E boundary is at required * exp_d4 (1.28 for tanker)
     required = calculate_required_cii("tanker", 50_000, 2023)
-    # Just below required should be D
-    assert calculate_cii_rating(required * 0.99, required, "tanker") == "D"
-    # Just above required should be E
-    assert calculate_cii_rating(required * 1.01, required, "tanker") == "E"
+    exp_d4 = CII_RATING_BOUNDARIES["tanker"][3]  # 1.28
+    # Just below D/E boundary should be D
+    assert calculate_cii_rating(required * exp_d4 * 0.99, required, "tanker") == "D"
+    # Just above D/E boundary should be E
+    assert calculate_cii_rating(required * exp_d4 * 1.01, required, "tanker") == "E"
 
 
 # =============================================================================

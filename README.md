@@ -224,9 +224,9 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 ## References
 
 [1] IMO. Fourth IMO GHG Study 2020. International Maritime Organization.
-[2] IMO MEPC.308(73) — 2024 Guidelines on the method of calculation of the attained EEXI. CO2 emission factors.
+[2] IMO MEPC.308(73) — 2018 Guidelines on the method of calculation of the attained EEDI. CO2 emission factors.
 [3] FuelEU Maritime Regulation (EU) 2023/1805 — Annex II: Default emission factors (WtT, TtW, CH4, N2O).
-[4] IMO MEPC.339(76) — CII reference line parameters.
+[4] IMO MEPC.353(78) — 2022 CII reference line parameters (supersedes MEPC.337(76)).
 [5] IMO MEPC.338(76) — Annual CII reduction factors.
 [6] IMO MEPC.354(78) — CII rating boundaries.
 [7] IMO NOx Technical Code — NOx emission factors by engine type and tier.
