@@ -7,7 +7,11 @@ from cetos.emissions import (
     GWP_N2O,
     LCV,
     N2O_FACTORS,
+    NOX_FACTORS,
+    PM_FACTORS,
+    SOX_FACTORS,
     WTT_FACTORS,
+    estimate_air_pollutant_emissions,
     estimate_co2_emissions,
     estimate_co2_emissions_from_fuel_consumption,
     estimate_ghg_emissions,
@@ -367,3 +371,80 @@ def test_estimate_well_to_wake_breakdown_by_mode():
         assert "wtt_co2eq_kg" in result[mode]
         assert "ttw_co2eq_kg" in result[mode]
         assert "wtw_co2eq_kg" in result[mode]
+
+
+# =============================================================================
+# Phase 4: NOx, SOx, PM air pollutant emissions
+# =============================================================================
+
+
+def test_nox_factors_defined():
+    # NOx factors are in g/kWh, keyed by (engine_type, engine_age)
+    assert NOX_FACTORS[("SSD", "after_2000")] > 0
+    assert NOX_FACTORS[("MSD", "after_2000")] > 0
+    assert NOX_FACTORS[("HSD", "after_2000")] > 0
+
+
+def test_nox_factors_decrease_with_newer_engines():
+    # IMO Tier progression: newer engines have lower NOx
+    assert NOX_FACTORS[("SSD", "before_1984")] > NOX_FACTORS[("SSD", "after_2000")]
+    assert NOX_FACTORS[("MSD", "before_1984")] > NOX_FACTORS[("MSD", "after_2000")]
+
+
+def test_nox_ssd_values_match_imo():
+    # SSD Tier 0/I/II from IMO NOx Technical Code
+    assert NOX_FACTORS[("SSD", "before_1984")] == approx(18.1)
+    assert NOX_FACTORS[("SSD", "1984-2000")] == approx(17.0)
+    assert NOX_FACTORS[("SSD", "after_2000")] == approx(14.4)
+
+
+def test_sox_factors_defined():
+    # SOx depends on fuel sulfur content
+    for ft in ["HFO", "MDO", "LNG", "MeOH"]:
+        assert ft in SOX_FACTORS
+
+
+def test_sox_zero_for_lng_and_methanol():
+    # LNG and MeOH contain no sulfur
+    assert SOX_FACTORS["LNG"] == approx(0.0)
+    assert SOX_FACTORS["MeOH"] == approx(0.0)
+
+
+def test_sox_higher_for_hfo_than_mdo():
+    assert SOX_FACTORS["HFO"] > SOX_FACTORS["MDO"]
+
+
+def test_pm_factors_defined():
+    for ft in ["HFO", "MDO", "LNG", "MeOH"]:
+        assert ft in PM_FACTORS
+
+
+def test_pm_very_low_for_lng():
+    assert PM_FACTORS["LNG"] < PM_FACTORS["MDO"]
+
+
+def test_estimate_air_pollutant_emissions_returns_all_pollutants():
+    result = estimate_air_pollutant_emissions(DUMMY_VESSEL_DATA, DUMMY_VOYAGE_PROFILE)
+    assert "total_kg_nox" in result
+    assert "total_kg_sox" in result
+    assert "total_kg_pm" in result
+    assert result["total_kg_nox"] > 0
+
+
+def test_estimate_air_pollutant_emissions_breakdown_by_mode():
+    result = estimate_air_pollutant_emissions(DUMMY_VESSEL_DATA, DUMMY_VOYAGE_PROFILE)
+    for mode in ["at_berth", "anchored", "manoeuvring", "at_sea"]:
+        assert "nox_kg" in result[mode]
+        assert "sox_kg" in result[mode]
+        assert "pm_kg" in result[mode]
+
+
+def test_estimate_air_pollutant_emissions_total_equals_sum():
+    result = estimate_air_pollutant_emissions(DUMMY_VESSEL_DATA, DUMMY_VOYAGE_PROFILE)
+    for pollutant in ["nox_kg", "sox_kg", "pm_kg"]:
+        total_from_modes = sum(
+            result[mode][pollutant]
+            for mode in ["at_berth", "anchored", "manoeuvring", "at_sea"]
+        )
+        total_key = f"total_kg_{pollutant.replace('_kg', '')}"
+        assert result[total_key] == approx(total_from_modes)

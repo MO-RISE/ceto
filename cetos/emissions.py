@@ -6,7 +6,7 @@ CH4 and N2O factors are based on FuelEU Maritime Annex II and the IMO Fourth
 GHG Study 2020. GWP values follow IPCC AR5.
 """
 
-from cetos.imo import estimate_fuel_consumption
+from cetos.imo import estimate_energy_consumption, estimate_fuel_consumption
 from cetos.models import ENGINE_TYPES, FUEL_TYPES, VesselData, VoyageProfile
 from cetos.utils import verify_set
 
@@ -78,6 +78,54 @@ WTT_FACTORS = {
     "MDO": 14.4,
     "LNG": 18.5,
     "MeOH": 31.3,  # Fossil methanol (from natural gas)
+}
+
+
+# NOx emission factors (g/kWh) by (engine_type, engine_age)
+# Source: IMO NOx Technical Code, IMO Fourth GHG Study Table 54
+# Tier 0 ~ before_1984, Tier I ~ 1984-2000, Tier II ~ after_2000
+NOX_FACTORS = {
+    ("SSD", "before_1984"): 18.1,  # Tier 0
+    ("SSD", "1984-2000"): 17.0,  # Tier I
+    ("SSD", "after_2000"): 14.4,  # Tier II
+    ("MSD", "before_1984"): 14.0,
+    ("MSD", "1984-2000"): 12.0,
+    ("MSD", "after_2000"): 10.5,
+    ("HSD", "before_1984"): 12.0,
+    ("HSD", "1984-2000"): 10.0,
+    ("HSD", "after_2000"): 8.0,
+    ("LNG-Otto-MS", "before_1984"): 6.0,
+    ("LNG-Otto-MS", "1984-2000"): 6.0,
+    ("LNG-Otto-MS", "after_2000"): 5.0,
+    ("LBSI", "before_1984"): 6.0,
+    ("LBSI", "1984-2000"): 6.0,
+    ("LBSI", "after_2000"): 5.0,
+    ("gas_turbine", "before_1984"): 6.0,
+    ("gas_turbine", "1984-2000"): 5.0,
+    ("gas_turbine", "after_2000"): 4.0,
+    ("steam_turbine", "before_1984"): 2.0,
+    ("steam_turbine", "1984-2000"): 2.0,
+    ("steam_turbine", "after_2000"): 2.0,
+}
+
+# SOx emission factor (g SOx per kg fuel)
+# SOx = 20 × S (sulfur fraction). Post-2020 global cap: 0.50% S.
+# Source: IMO MARPOL Annex VI, IMO Fourth GHG Study
+SOX_FACTORS = {
+    "HFO": 10.0,  # 0.50% S (VLSFO compliant) → 20 × 0.50 = 10.0
+    "MDO": 2.0,  # ~0.10% S (typical low-sulfur distillate) → 20 × 0.10 = 2.0
+    "LNG": 0.0,  # No sulfur
+    "MeOH": 0.0,  # No sulfur
+}
+
+# PM emission factors (g PM per kg fuel)
+# Source: IMO Fourth GHG Study, EMEP/EEA Guidebook
+# Post-2020 values (low-sulfur fuels)
+PM_FACTORS = {
+    "HFO": 0.6,  # VLSFO, post-2020
+    "MDO": 0.3,  # Low-sulfur distillate
+    "LNG": 0.02,  # Negligible
+    "MeOH": 0.03,  # Negligible
 }
 
 
@@ -399,5 +447,110 @@ def estimate_well_to_wake_emissions(
             "wtw_co2eq_kg": wtt_mode + ttw_mode,
             "fuel_kg": fuel_kg,
         }
+
+    return result
+
+
+def estimate_air_pollutant_emissions(
+    vessel_data: VesselData,
+    voyage_profile: VoyageProfile,
+    include_steam_boilers=True,
+    limit_7_percent=True,
+    delta_w=None,
+):
+    """Estimate air pollutant emissions (NOx, SOx, PM) for a vessel voyage.
+
+    NOx is energy-based (g/kWh) and depends on engine type and age (IMO Tier).
+    SOx is fuel-mass-based and depends on fuel sulfur content.
+    PM is fuel-mass-based and depends on fuel type.
+
+    Arguments:
+    ----------
+
+        vessel_data: VesselData
+            VesselData instance describing the vessel.
+
+        voyage_profile: VoyageProfile
+            VoyageProfile instance describing the voyage profile.
+
+        include_steam_boilers (optional): boolean
+            Defaults to True.
+
+        limit_7_percent (optional): boolean
+            Defaults to True.
+
+        delta_w (optional): float
+            Speed-power correction factor. Defaults to None.
+
+    Returns:
+    --------
+
+        Dict
+            Total NOx, SOx, and PM emissions (kg) with breakdown by mode.
+
+    Source:
+    -------
+
+        [1] IMO NOx Technical Code — NOx emission factors.
+        [2] IMO MARPOL Annex VI — SOx / sulfur limits.
+        [3] IMO Fourth GHG Study 2020 — PM emission factors.
+        [4] EMEP/EEA Air Pollutant Emission Inventory Guidebook.
+    """
+    fuel_type = vessel_data.propulsion_engine_fuel_type
+    engine_type = vessel_data.propulsion_engine_type
+    engine_age = vessel_data.propulsion_engine_age
+
+    nox_g_per_kwh = NOX_FACTORS[(engine_type, engine_age)]
+    sox_g_per_kg_fuel = SOX_FACTORS[fuel_type]
+    pm_g_per_kg_fuel = PM_FACTORS[fuel_type]
+
+    # Get fuel consumption (for SOx and PM)
+    fc = estimate_fuel_consumption(
+        vessel_data,
+        voyage_profile,
+        include_steam_boilers=include_steam_boilers,
+        limit_7_percent=limit_7_percent,
+        delta_w=delta_w,
+    )
+
+    # Get energy consumption (for NOx)
+    ec = estimate_energy_consumption(
+        vessel_data,
+        voyage_profile,
+        include_steam_boilers=include_steam_boilers,
+        limit_7_percent=limit_7_percent,
+        delta_w=delta_w,
+    )
+
+    result = {}
+    total_nox = 0.0
+    total_sox = 0.0
+    total_pm = 0.0
+
+    for mode in ["at_berth", "anchored", "manoeuvring", "at_sea"]:
+        fuel_kg = fc[mode]["subtotal_kg"]
+        energy_kwh = ec[mode]["subtotal_kwh"]
+
+        nox_kg = nox_g_per_kwh * energy_kwh / 1000.0
+        sox_kg = sox_g_per_kg_fuel * fuel_kg / 1000.0
+        pm_kg = pm_g_per_kg_fuel * fuel_kg / 1000.0
+
+        result[mode] = {
+            "nox_kg": nox_kg,
+            "sox_kg": sox_kg,
+            "pm_kg": pm_kg,
+            "fuel_kg": fuel_kg,
+            "energy_kwh": energy_kwh,
+        }
+        total_nox += nox_kg
+        total_sox += sox_kg
+        total_pm += pm_kg
+
+    result["total_kg_nox"] = total_nox
+    result["total_kg_sox"] = total_sox
+    result["total_kg_pm"] = total_pm
+    result["total_fuel_kg"] = fc["total_kg"]
+    result["fuel_type"] = fuel_type
+    result["engine_type"] = engine_type
 
     return result
