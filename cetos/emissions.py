@@ -1,37 +1,32 @@
 """
 Estimates of GHG emissions (CO2, CH4, N2O) from vessel fuel consumption.
 
-CO2 factors are based on IMO MEPC.308(73) — stoichiometric conversion factors.
-CH4 and N2O factors are based on FuelEU Maritime Annex II and the IMO Fourth
-GHG Study 2020. GWP values follow IPCC AR5.
+All emission factors are loaded from YAML data files in cetos/data/ which
+include full provenance metadata (source documents, dates, URLs, pages).
+See cetos/data/emissions_factors.yaml for factor values and their sources.
 """
 
+from cetos.factors import (
+    CO2_FACTORS,
+    GWP_CH4,
+    GWP_N2O,
+    LCV,
+    NOX_FACTORS,
+    PM_FACTORS,
+    SOX_FACTORS,
+    WTT_FACTORS,
+    _CH4_LBSI,
+    _CH4_LNG_NEGLIGIBLE,
+    _CH4_LNG_OTTO_MS,
+    _CH4_OIL,
+    _N2O_LNG,
+    _N2O_OIL,
+)
 from cetos.imo import estimate_energy_consumption, estimate_fuel_consumption
 from cetos.models import ENGINE_TYPES, FUEL_TYPES, VesselData, VoyageProfile
 from cetos.utils import verify_set
 
-# Global Warming Potentials (100-year, IPCC AR5)
-GWP_CH4 = 28
-GWP_N2O = 265
-
-# CO2 emission factors (kg CO2 per kg fuel)
-# Source: IMO MEPC.308(73), Table 1
-CO2_FACTORS = {
-    "HFO": 3.114,  # Heavy Fuel Oil
-    "MDO": 3.206,  # Marine Diesel Oil
-    "LNG": 2.750,  # Liquefied Natural Gas
-    "MeOH": 1.375,  # Methanol
-}
-
-# CH4 emission factors (kg CH4 per kg fuel) by (engine_type, fuel_type)
-# Source: FuelEU Maritime Annex II, IMO Fourth GHG Study Table 63
-# For oil-fueled engines, CH4 slip is negligible (~0.005%)
-# For LNG engines, methane slip varies significantly by engine design
-_CH4_OIL = 0.00005  # 0.005% — negligible for oil fuels
-_CH4_LNG_OTTO_MS = 0.031  # 3.1% — dual-fuel medium-speed Otto cycle
-_CH4_LBSI = 0.026  # 2.6% — lean-burn spark ignition
-_CH4_LNG_NEGLIGIBLE = 0.0002  # ~0.02% — gas turbine/steam turbine on LNG
-
+# Build CH4 factors as (engine_type, fuel_type) lookup
 CH4_FACTORS = {}
 for _et in ENGINE_TYPES:
     for _ft in FUEL_TYPES:
@@ -47,11 +42,7 @@ for _et in ENGINE_TYPES:
         else:
             CH4_FACTORS[(_et, _ft)] = _CH4_OIL
 
-# N2O emission factors (kg N2O per kg fuel) by (engine_type, fuel_type)
-# Source: FuelEU Maritime Annex II
-_N2O_OIL = 0.00018  # Oil-fueled engines
-_N2O_LNG = 0.00011  # LNG engines (slightly lower)
-
+# Build N2O factors as (engine_type, fuel_type) lookup
 N2O_FACTORS = {}
 for _et in ENGINE_TYPES:
     for _ft in FUEL_TYPES:
@@ -59,74 +50,6 @@ for _et in ENGINE_TYPES:
             N2O_FACTORS[(_et, _ft)] = _N2O_LNG
         else:
             N2O_FACTORS[(_et, _ft)] = _N2O_OIL
-
-
-# Lower Calorific Values (MJ/kg)
-# Source: IMO MEPC.308(73) / MEPC.364(79)
-LCV = {
-    "HFO": 40.2,
-    "MDO": 42.7,
-    "LNG": 48.0,
-    "MeOH": 19.9,
-}
-
-# Well-to-Tank emission factors (gCO2eq/MJ)
-# Source: FuelEU Maritime Annex II — default values for fossil fuels
-# These are fixed for regulatory compliance; renewable fuels may use certified values.
-WTT_FACTORS = {
-    "HFO": 13.5,
-    "MDO": 14.4,
-    "LNG": 18.5,
-    "MeOH": 31.3,  # Fossil methanol (from natural gas)
-}
-
-
-# NOx emission factors (g/kWh) by (engine_type, engine_age)
-# Source: IMO NOx Technical Code, IMO Fourth GHG Study Table 54
-# Tier 0 ~ before_1984, Tier I ~ 1984-2000, Tier II ~ after_2000
-NOX_FACTORS = {
-    ("SSD", "before_1984"): 18.1,  # Tier 0
-    ("SSD", "1984-2000"): 17.0,  # Tier I
-    ("SSD", "after_2000"): 14.4,  # Tier II
-    ("MSD", "before_1984"): 14.0,
-    ("MSD", "1984-2000"): 12.0,
-    ("MSD", "after_2000"): 10.5,
-    ("HSD", "before_1984"): 12.0,
-    ("HSD", "1984-2000"): 10.0,
-    ("HSD", "after_2000"): 8.0,
-    ("LNG-Otto-MS", "before_1984"): 6.0,
-    ("LNG-Otto-MS", "1984-2000"): 6.0,
-    ("LNG-Otto-MS", "after_2000"): 5.0,
-    ("LBSI", "before_1984"): 6.0,
-    ("LBSI", "1984-2000"): 6.0,
-    ("LBSI", "after_2000"): 5.0,
-    ("gas_turbine", "before_1984"): 6.0,
-    ("gas_turbine", "1984-2000"): 5.0,
-    ("gas_turbine", "after_2000"): 4.0,
-    ("steam_turbine", "before_1984"): 2.0,
-    ("steam_turbine", "1984-2000"): 2.0,
-    ("steam_turbine", "after_2000"): 2.0,
-}
-
-# SOx emission factor (g SOx per kg fuel)
-# SOx = 20 × S (sulfur fraction). Post-2020 global cap: 0.50% S.
-# Source: IMO MARPOL Annex VI, IMO Fourth GHG Study
-SOX_FACTORS = {
-    "HFO": 10.0,  # 0.50% S (VLSFO compliant) → 20 × 0.50 = 10.0
-    "MDO": 2.0,  # ~0.10% S (typical low-sulfur distillate) → 20 × 0.10 = 2.0
-    "LNG": 0.0,  # No sulfur
-    "MeOH": 0.0,  # No sulfur
-}
-
-# PM emission factors (g PM per kg fuel)
-# Source: IMO Fourth GHG Study, EMEP/EEA Guidebook
-# Post-2020 values (low-sulfur fuels)
-PM_FACTORS = {
-    "HFO": 0.6,  # VLSFO, post-2020
-    "MDO": 0.3,  # Low-sulfur distillate
-    "LNG": 0.02,  # Negligible
-    "MeOH": 0.03,  # Negligible
-}
 
 
 def estimate_co2_emissions_from_fuel_consumption(fuel_mass_kg, fuel_type):

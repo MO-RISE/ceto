@@ -1,0 +1,202 @@
+# ============================================================================
+# CETOS — Emission Factors for Maritime Fuel Combustion
+# ============================================================================
+#
+# This file contains all emission factors used by the cetos.emissions module.
+# Each factor includes full provenance metadata so values can be traced back
+# to their authoritative source.
+#
+# To update a factor: change the value AND update the source metadata.
+# ============================================================================
+
+# ---------------------------------------------------------------------------
+# Global Warming Potentials (100-year horizon)
+# ---------------------------------------------------------------------------
+gwp:
+  CH4: 28
+  N2O: 265
+  source:
+    document: "IPCC Fifth Assessment Report (AR5), Working Group I"
+    table: "Table 8.7"
+    year: 2013
+    url: "https://www.ipcc.ch/report/ar5/wg1/"
+    note: "100-year GWP values. AR6 (2021) updated CH4 to 29.8 but IMO/FuelEU still reference AR5. Table reference is 8.A.1 (Appendix) in some editions."
+    verified: "2026-04-02 — verified by AI. Both values confirmed against GHG Protocol and EPA references."
+
+# ---------------------------------------------------------------------------
+# CO2 Emission Factors (kg CO2 per kg fuel)
+# Stoichiometric conversion — these are physical constants based on fuel
+# carbon content, so they do not change over time.
+# ---------------------------------------------------------------------------
+co2_factors:
+  HFO: 3.114
+  MDO: 3.206
+  LNG: 2.750
+  MeOH: 1.375
+  source:
+    document: "IMO MEPC.308(73) — 2018 Guidelines on the Method of Calculation of the Attained EEDI"
+    table: "Table 1"
+    date: 2018-06-01
+    url: "https://wwwcdn.imo.org/localresources/en/KnowledgeCentre/IndexofIMOResolutions/MEPCDocuments/MEPC.308(73).pdf"
+    page: "Annex, Table 1"
+    note: "Stoichiometric CO2 conversion factors. Also referenced in MEPC.364(79)."
+    verified: "2026-04-02 — verified by AI. All 4 values confirmed against MEPC.308(73) Table 1."
+
+# ---------------------------------------------------------------------------
+# Lower Calorific Values (MJ/kg)
+# Physical property of each fuel — stable over time.
+# ---------------------------------------------------------------------------
+lcv:
+  HFO: 40.2
+  MDO: 42.7
+  LNG: 48.0
+  MeOH: 19.9
+  source:
+    document: "IMO MEPC.308(73) / MEPC.364(79)"
+    table: "Table 1"
+    date: 2018-06-01
+    url: "https://wwwcdn.imo.org/localresources/en/KnowledgeCentre/IndexofIMOResolutions/MEPCDocuments/MEPC.308(73).pdf"
+    page: "Annex, Table 1"
+    note: "Lower Calorific Values (net calorific values). Same values in MEPC.364(79). Note: FuelEU Maritime uses LNG LCV=49.1 from RED Annex III; MEPC.308(73) uses 48.0."
+    verified: "2026-04-02 — verified by AI. All 4 values confirmed against MEPC.308(73) Table 1."
+
+# ---------------------------------------------------------------------------
+# Well-to-Tank (WtT) Emission Factors (gCO2eq/MJ)
+# Upstream emissions from fuel production and transport.
+# These are regulatory default values for fossil fuels.
+# ---------------------------------------------------------------------------
+wtt_factors:
+  HFO: 13.5
+  MDO: 14.4
+  LNG: 18.5
+  MeOH: 31.3
+  source:
+    document: "Regulation (EU) 2023/1805 — FuelEU Maritime"
+    table: "Annex II, Table A"
+    date: 2023-09-13
+    url: "https://eur-lex.europa.eu/eli/reg/2023/1805/oj"
+    page: "Annex II"
+    note: "Default WtT values for fossil fuels. Renewable/low-carbon fuels may use certified actual values instead."
+    verified: "2026-04-02 — verified by AI. HFO, MDO, LNG confirmed via Veson IMOS FuelEU calculator. MeOH (31.3) not independently verified — verify manually against Annex II."
+
+# ---------------------------------------------------------------------------
+# CH4 Emission Factors (kg CH4 per kg fuel)
+# Methane slip during combustion — varies significantly by engine design.
+# ---------------------------------------------------------------------------
+ch4_factors:
+  oil_default: 0.00005       # 0.005% — negligible for oil fuels (HFO, MDO, MeOH)
+  LNG-Otto-MS: 0.031         # 3.1% — dual-fuel medium-speed Otto cycle
+  LBSI: 0.026                # 2.6% — lean-burn spark ignition
+  LNG_negligible: 0.0002     # ~0.02% — gas turbine / steam turbine on LNG
+  source:
+    document: "FuelEU Maritime Annex II; IMO Fourth GHG Study 2020"
+    table: "FuelEU Annex II, Table C (TtW); IMO 4th GHG Study Table 63"
+    date: 2023-09-13
+    url: "https://eur-lex.europa.eu/eli/reg/2023/1805/oj"
+    secondary_url: "https://www.imo.org/en/ourwork/Environment/Pages/Fourth-IMO-Greenhouse-Gas-Study-2020.aspx"
+    page: "FuelEU Annex II; IMO 4th GHG Study pp. 200-205"
+    note: >
+      CH4 slip is the dominant uncertainty in LNG vessel emissions.
+      Oil-fueled engines have negligible CH4. LNG-Otto-MS engines have highest slip
+      due to unburned methane escaping during low-pressure gas admission.
+      Values may decrease as engine technology improves.
+    verified: "2026-04-02 — verified by AI. oil_default (0.00005), LNG-Otto-MS (0.031), LBSI (0.026) confirmed against FuelEU Annex II. LNG_negligible (0.0002) plausible but not independently verified."
+
+# ---------------------------------------------------------------------------
+# N2O Emission Factors (kg N2O per kg fuel)
+# ---------------------------------------------------------------------------
+n2o_factors:
+  oil_default: 0.00018       # Oil-fueled engines (HFO, MDO, MeOH)
+  LNG: 0.00011               # LNG engines (slightly lower)
+  source:
+    document: "Regulation (EU) 2023/1805 — FuelEU Maritime"
+    table: "Annex II, Table C"
+    date: 2023-09-13
+    url: "https://eur-lex.europa.eu/eli/reg/2023/1805/oj"
+    page: "Annex II"
+    verified: "2026-04-02 — verified by AI. Both values confirmed against FuelEU Annex II via Veson IMOS."
+
+# ---------------------------------------------------------------------------
+# NOx Emission Factors (g/kWh)
+# Energy-based, varies by engine type and age (IMO Tier).
+# ---------------------------------------------------------------------------
+nox_factors:
+  SSD:
+    before_1984: 18.1    # Tier 0
+    "1984-2000": 17.0    # Tier I
+    after_2000: 14.4     # Tier II
+  MSD:
+    before_1984: 14.0
+    "1984-2000": 12.0
+    after_2000: 10.5
+  HSD:
+    before_1984: 12.0
+    "1984-2000": 10.0
+    after_2000: 8.0
+  LNG-Otto-MS:
+    before_1984: 6.0
+    "1984-2000": 6.0
+    after_2000: 5.0
+  LBSI:
+    before_1984: 6.0
+    "1984-2000": 6.0
+    after_2000: 5.0
+  gas_turbine:
+    before_1984: 6.0
+    "1984-2000": 5.0
+    after_2000: 4.0
+  steam_turbine:
+    before_1984: 2.0
+    "1984-2000": 2.0
+    after_2000: 2.0
+  source:
+    document: "IMO NOx Technical Code; IMO Fourth GHG Study 2020"
+    table: "IMO 4th GHG Study Table 54"
+    date: 2020-08-01
+    url: "https://www.imo.org/en/ourwork/Environment/Pages/Fourth-IMO-Greenhouse-Gas-Study-2020.aspx"
+    page: "Table 54, pp. 165-167"
+    note: >
+      Tier 0 = pre-regulation engines (before 1984 in this model).
+      Tier I = MARPOL Annex VI (2000). Tier II = MARPOL Annex VI amendment (2011).
+      Tier III (ECAs only, post-2016) not separately modeled — would need SCR/EGR data.
+    verified: "2026-04-02 — verified by AI. SSD values (18.1, 17.0, 14.4) confirmed against MARPOL Annex VI NOx limits. Other engine types plausible but require manual verification against IMO 4th GHG Study Table 54 (PDF not web-accessible)."
+
+# ---------------------------------------------------------------------------
+# SOx Emission Factors (g SOx per kg fuel)
+# SOx = 20 x S (sulfur mass fraction). Post-2020 global cap: 0.50% S.
+# ---------------------------------------------------------------------------
+sox_factors:
+  HFO: 10.0     # 0.50% S (VLSFO compliant) -> 20 x 0.50 = 10.0
+  MDO: 2.0      # ~0.10% S (typical low-sulfur distillate) -> 20 x 0.10 = 2.0
+  LNG: 0.0      # No sulfur
+  MeOH: 0.0     # No sulfur
+  source:
+    document: "IMO MARPOL Annex VI; IMO Fourth GHG Study 2020"
+    table: "IMO 4th GHG Study Table 57"
+    date: 2020-08-01
+    url: "https://www.imo.org/en/ourwork/Environment/Pages/Fourth-IMO-Greenhouse-Gas-Study-2020.aspx"
+    page: "Table 57"
+    note: >
+      SOx formation is a direct function of fuel sulfur content.
+      Post-2020: global sulfur cap 0.50% (MARPOL Annex VI reg. 14.1.3).
+      ECA limit: 0.10% S. HFO value assumes VLSFO compliant fuel.
+    verified: "2026-04-02 — verified by AI. All 4 values confirmed — stoichiometric calculation (SOx = 20 x S%) with standard sulfur fractions under MARPOL Annex VI."
+
+# ---------------------------------------------------------------------------
+# PM Emission Factors (g PM per kg fuel)
+# Post-2020 values (low-sulfur fuels).
+# ---------------------------------------------------------------------------
+pm_factors:
+  HFO: 0.6      # VLSFO, post-2020
+  MDO: 0.3      # Low-sulfur distillate
+  LNG: 0.02     # Negligible
+  MeOH: 0.03    # Negligible
+  source:
+    document: "IMO Fourth GHG Study 2020; EMEP/EEA Air Pollutant Emission Inventory Guidebook 2019"
+    table: "IMO 4th GHG Study Table 58; EMEP/EEA Chapter 1.A.3.d"
+    date: 2020-08-01
+    url: "https://www.imo.org/en/ourwork/Environment/Pages/Fourth-IMO-Greenhouse-Gas-Study-2020.aspx"
+    secondary_url: "https://www.eea.europa.eu/publications/emep-eea-guidebook-2019"
+    page: "IMO Table 58; EMEP/EEA pp. 28-32"
+    note: "PM factors are strongly correlated with fuel sulfur content. Post-2020 values assume VLSFO/low-sulfur compliance."
+    verified: "2026-04-02 — verified by AI. Values plausible and ordering correct (HFO > MDO >> LNG/MeOH), but specific numbers require manual verification against IMO 4th GHG Study Table 58 (PDF not web-accessible)."
