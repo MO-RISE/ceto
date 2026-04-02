@@ -86,7 +86,7 @@ def test_rating_boundaries_defined_for_tanker():
 
 def test_calculate_required_cii_tanker():
     # For a 50,000 DWT tanker: CII_ref = 5247 * 50000^(-0.610)
-    cii_ref = 5247 * (50_000 ** -0.610)
+    cii_ref = 5247 * (50_000**-0.610)
     # 2023 reduction: Z=5%
     expected = cii_ref * (1 - 5 / 100)
     result = calculate_required_cii("tanker", 50_000, 2023)

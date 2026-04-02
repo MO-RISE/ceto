@@ -7,6 +7,12 @@ See cetos/data/emissions_factors.yaml for factor values and their sources.
 """
 
 from cetos.factors import (
+    _CH4_LBSI,
+    _CH4_LNG_NEGLIGIBLE,
+    _CH4_LNG_OTTO_MS,
+    _CH4_OIL,
+    _N2O_LNG,
+    _N2O_OIL,
     CO2_FACTORS,
     GWP_CH4,
     GWP_N2O,
@@ -15,12 +21,6 @@ from cetos.factors import (
     PM_FACTORS,
     SOX_FACTORS,
     WTT_FACTORS,
-    _CH4_LBSI,
-    _CH4_LNG_NEGLIGIBLE,
-    _CH4_LNG_OTTO_MS,
-    _CH4_OIL,
-    _N2O_LNG,
-    _N2O_OIL,
 )
 from cetos.imo import estimate_energy_consumption, estimate_fuel_consumption
 from cetos.models import ENGINE_TYPES, FUEL_TYPES, VesselData, VoyageProfile

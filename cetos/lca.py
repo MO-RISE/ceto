@@ -13,23 +13,12 @@ See cetos/data/lca_factors.yaml and cetos/data/emissions_factors.yaml.
 """
 
 from cetos.emissions import (
-    CO2_FACTORS,
-    CH4_FACTORS,
-    N2O_FACTORS,
-    GWP_CH4,
-    GWP_N2O,
-    LCV,
-    WTT_FACTORS,
-    NOX_FACTORS,
-    SOX_FACTORS,
-    PM_FACTORS,
-    estimate_well_to_wake_emissions,
     estimate_air_pollutant_emissions,
+    estimate_well_to_wake_emissions,
 )
 from cetos.energy_systems import (
     REFERENCE_VALUES,
     estimate_internal_combustion_system,
-    suggest_alternative_energy_systems,
 )
 from cetos.factors import (
     BATTERY_LIFETIME_CYCLES,
@@ -116,21 +105,28 @@ def compare_propulsion_systems(
     total_voyages = vessel_lifetime_years * voyages_per_year
 
     # --- 1. Diesel baseline ---
-    diesel = _calc_diesel(
-        vessel_data, voyage_profile, total_voyages
-    )
+    diesel = _calc_diesel(vessel_data, voyage_profile, total_voyages)
 
     # --- 2. Battery-electric ---
     battery = _calc_battery(
-        vessel_data, voyage_profile, total_voyages,
-        vessel_lifetime_years, voyages_per_year,
-        grid_source, battery_type, reference_values,
+        vessel_data,
+        voyage_profile,
+        total_voyages,
+        vessel_lifetime_years,
+        voyages_per_year,
+        grid_source,
+        battery_type,
+        reference_values,
     )
 
     # --- 3. Hydrogen fuel cell ---
     hydrogen = _calc_hydrogen(
-        vessel_data, voyage_profile, total_voyages,
-        vessel_lifetime_years, hydrogen_source, reference_values,
+        vessel_data,
+        voyage_profile,
+        total_voyages,
+        vessel_lifetime_years,
+        hydrogen_source,
+        reference_values,
     )
 
     # --- Comparison ---
@@ -139,11 +135,13 @@ def compare_propulsion_systems(
         "diesel_vs_baseline_pct": 100.0,
         "battery_vs_baseline_pct": (
             battery["total_lifecycle_co2eq_kg"] / diesel_total * 100
-            if diesel_total > 0 else 0.0
+            if diesel_total > 0
+            else 0.0
         ),
         "hydrogen_vs_baseline_pct": (
             hydrogen["total_lifecycle_co2eq_kg"] / diesel_total * 100
-            if diesel_total > 0 else 0.0
+            if diesel_total > 0
+            else 0.0
         ),
     }
 
@@ -197,22 +195,30 @@ def _calc_diesel(vessel_data, voyage_profile, total_voyages):
 
 
 def _calc_battery(
-    vessel_data, voyage_profile, total_voyages,
-    vessel_lifetime_years, voyages_per_year,
-    grid_source, battery_type, reference_values,
+    vessel_data,
+    voyage_profile,
+    total_voyages,
+    vessel_lifetime_years,
+    voyages_per_year,
+    grid_source,
+    battery_type,
+    reference_values,
 ):
     """Calculate battery-electric propulsion lifecycle emissions."""
     # Get energy requirements from the diesel baseline
     energy = estimate_energy_consumption(
-        vessel_data, voyage_profile,
-        include_steam_boilers=False, limit_7_percent=False, delta_w=0.8,
+        vessel_data,
+        voyage_profile,
+        include_steam_boilers=False,
+        limit_7_percent=False,
+        delta_w=0.8,
     )
     required_energy_kwh = energy["total_kwh"]
     required_power_kw = energy["maximum_required_total_power_kw"]
 
     # Energy from grid (accounting for charging and motor efficiency)
-    grid_energy_per_voyage_kwh = (
-        required_energy_kwh / (CHARGING_EFFICIENCY * ELECTRIC_MOTOR_EFFICIENCY)
+    grid_energy_per_voyage_kwh = required_energy_kwh / (
+        CHARGING_EFFICIENCY * ELECTRIC_MOTOR_EFFICIENCY
     )
 
     # Grid emissions per voyage
@@ -221,8 +227,11 @@ def _calc_battery(
 
     # Battery system sizing (from energy_systems module)
     from cetos.energy_systems import estimate_vessel_battery_system
+
     battery_system = estimate_vessel_battery_system(
-        required_energy_kwh, required_power_kw, **reference_values,
+        required_energy_kwh,
+        required_power_kw,
+        **reference_values,
     )
     battery_capacity_kwh = battery_system["details"]["battery_packs"]["capacity_kwh"]
 
@@ -269,22 +278,32 @@ def _calc_battery(
 
 
 def _calc_hydrogen(
-    vessel_data, voyage_profile, total_voyages,
-    vessel_lifetime_years, hydrogen_source, reference_values,
+    vessel_data,
+    voyage_profile,
+    total_voyages,
+    vessel_lifetime_years,
+    hydrogen_source,
+    reference_values,
 ):
     """Calculate hydrogen fuel cell propulsion lifecycle emissions."""
     # Get energy requirements
     energy = estimate_energy_consumption(
-        vessel_data, voyage_profile,
-        include_steam_boilers=False, limit_7_percent=False, delta_w=0.8,
+        vessel_data,
+        voyage_profile,
+        include_steam_boilers=False,
+        limit_7_percent=False,
+        delta_w=0.8,
     )
     required_energy_kwh = energy["total_kwh"]
     required_power_kw = energy["maximum_required_total_power_kw"]
 
     # Hydrogen system sizing (from energy_systems module)
     from cetos.energy_systems import estimate_vessel_gas_hydrogen_system
+
     h2_system = estimate_vessel_gas_hydrogen_system(
-        required_energy_kwh, required_power_kw, **reference_values,
+        required_energy_kwh,
+        required_power_kw,
+        **reference_values,
     )
     h2_kg_per_voyage = h2_system["details"]["hydrogen"]["weight_kg"]
     fc_power_kw = h2_system["details"]["fuel_cell_system"]["power_kw"]

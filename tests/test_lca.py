@@ -1,9 +1,4 @@
-from pytest import approx
-
 from cetos.lca import (
-    BATTERY_MANUFACTURING_FACTORS,
-    GRID_EMISSION_FACTORS,
-    HYDROGEN_WTT_FACTORS,
     compare_propulsion_systems,
 )
 from cetos.models import VesselData, VoyageLeg, VoyageProfile
@@ -89,16 +84,12 @@ def test_comparison_diesel_is_100_pct():
 
 
 def test_battery_with_renewable_beats_diesel():
-    result = compare_propulsion_systems(
-        VESSEL, VOYAGE, grid_source="renewable"
-    )
+    result = compare_propulsion_systems(VESSEL, VOYAGE, grid_source="renewable")
     assert result["comparison"]["battery_vs_baseline_pct"] < 100.0
 
 
 def test_green_h2_beats_diesel():
-    result = compare_propulsion_systems(
-        VESSEL, VOYAGE, hydrogen_source="green"
-    )
+    result = compare_propulsion_systems(VESSEL, VOYAGE, hydrogen_source="green")
     assert result["comparison"]["hydrogen_vs_baseline_pct"] < 100.0
 
 
@@ -111,7 +102,8 @@ def test_system_weights_are_positive():
 
 def test_parameters_stored_in_result():
     result = compare_propulsion_systems(
-        VESSEL, VOYAGE,
+        VESSEL,
+        VOYAGE,
         vessel_lifetime_years=20,
         voyages_per_year=200,
         grid_source="sweden",

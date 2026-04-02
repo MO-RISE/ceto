@@ -110,7 +110,10 @@ def test_estimate_co2_emissions_returns_breakdown():
 
 def test_estimate_co2_emissions_total_equals_sum_of_parts():
     result = estimate_co2_emissions(DUMMY_VESSEL_DATA, DUMMY_VOYAGE_PROFILE)
-    total_from_parts = sum(result[key]["co2_kg"] for key in ["at_berth", "anchored", "manoeuvring", "at_sea"])
+    total_from_parts = sum(
+        result[key]["co2_kg"]
+        for key in ["at_berth", "anchored", "manoeuvring", "at_sea"]
+    )
     assert result["total_kg_co2"] == approx(total_from_parts)
 
 
