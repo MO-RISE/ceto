@@ -1,0 +1,158 @@
+# ============================================================================
+# CETOS — Life Cycle Analysis (LCA) Factors for Alternative Propulsion
+# ============================================================================
+#
+# This file contains emission factors for battery-electric, hydrogen fuel cell,
+# and grid electricity used in the LCA comparison module (cetos.lca).
+#
+# These factors change more frequently than combustion factors (emissions.yaml)
+# as technology and energy grids evolve. Check sources for updates annually.
+#
+# To update a factor: change the value AND update the source metadata.
+# ============================================================================
+
+# ---------------------------------------------------------------------------
+# Battery Manufacturing Emission Factors
+# kg CO2eq per kWh of battery capacity
+# ---------------------------------------------------------------------------
+battery_manufacturing:
+  factors:
+    NMC_china: 125.0       # NMC, manufactured in China
+    NMC_europe: 90.0       # NMC, manufactured in Europe (cleaner grid)
+    NMC_usa: 73.0          # NMC, manufactured in USA
+    LFP_china: 82.5        # LFP, manufactured in China
+    default: 100.0         # Conservative mid-range estimate
+  source:
+    document: "IVL Swedish Environmental Research Institute — Lithium-Ion Vehicle Battery Production (Emilsson & Dahllof 2019); updated with Dai et al. 2019 (Argonne)"
+    date: 2019-11-01
+    url: "https://www.ivl.se/download/18.14d7b12e16e3c5c36271070/1574923989017/C444.pdf"
+    secondary_url: "https://doi.org/10.1021/acs.est.8b00261"
+    page: "IVL Report C444, Table 10; Dai et al. Table 3"
+    note: >
+      Battery manufacturing footprint is rapidly declining (5-10% per year) due to
+      grid decarbonization and process improvements. These values reflect 2019 estimates.
+      China values are higher due to coal-heavy grid. European gigafactories (Northvolt etc.)
+      report ~60-70 kg CO2eq/kWh as of 2025.
+    last_reviewed: 2025-03-01
+    verified: "2026-04-02 — verified by AI. All values within IVL C444 range (61-106, up to 146 for coal-heavy grids). NMC_china (125) is a reasonable interpolation for coal-heavy grid. LFP_china (82.5) is a reasonable estimate though not directly from IVL C444 (NMC focus)."
+
+# ---------------------------------------------------------------------------
+# Battery Lifetime (full charge cycles before replacement)
+# ---------------------------------------------------------------------------
+battery_lifetime_cycles:
+  factors:
+    NMC_china: 1800
+    NMC_europe: 1800
+    NMC_usa: 1800
+    LFP_china: 5000
+    default: 3000
+  source:
+    document: "Battery cycle life literature review — see lca-data-analysis.md Section 1C"
+    date: 2024-01-01
+    note: >
+      NMC: 1500-2000 cycles typical (80% capacity retention).
+      LFP: 3000-6000 cycles typical. Maritime applications may see different
+      degradation due to charging patterns and thermal management.
+    last_reviewed: 2025-03-01
+    verified: "2026-04-02 — verified by AI. NMC 1800 cycles within typical 1500-2000 range. LFP 5000 cycles within typical 3000-6000 range."
+
+# ---------------------------------------------------------------------------
+# Fuel Cell Manufacturing Emission Factors
+# ---------------------------------------------------------------------------
+fuel_cell_manufacturing:
+  kg_co2eq_per_kw: 50.0    # kg CO2eq per kW of PEMFC capacity
+  lifetime_hours: 25000     # Operating hours before stack replacement
+  source:
+    document: "Literature estimates for PEMFC systems — Evangelisti et al. 2017; Miotti et al. 2017"
+    date: 2017-01-01
+    url: "https://doi.org/10.1016/j.apenergy.2016.12.049"
+    secondary_url: "https://doi.org/10.1016/j.ijhydene.2016.11.092"
+    note: >
+      Range in literature: 30-75 kg CO2eq/kW depending on stack size and
+      manufacturing location. 50 kg/kW is a mid-range estimate for maritime-scale
+      PEMFC systems (~100-500 kW). Lifetime 20,000-30,000 hours for current
+      generation; improving with technology.
+    last_reviewed: 2025-03-01
+    verified: "2026-04-02 — verified by AI. 50 kg/kW is within literature range (30-75). Evangelisti et al. reported ~62.5 for complete 80kW system. 25,000 hrs consistent with DOE targets and industry data."
+
+# ---------------------------------------------------------------------------
+# Hydrogen Tank Manufacturing
+# ---------------------------------------------------------------------------
+hydrogen_tank_manufacturing:
+  kg_co2eq_per_kg_tank: 2.0   # kg CO2eq per kg of steel tank
+  source:
+    document: "Generic steel manufacturing LCA — World Steel Association"
+    date: 2022-01-01
+    url: "https://worldsteel.org/steel-topics/life-cycle-thinking/"
+    note: "Approximate value for steel pressure vessel manufacturing. Composite (Type IV) tanks would be higher (~5-8 kg CO2eq/kg)."
+    last_reviewed: 2025-03-01
+    verified: "2026-04-02 — verified by AI. World Steel Association reports ~2.18 kg CO2eq/kg average; BF-BOF route ~1.99. Value of 2.0 matches well."
+
+# ---------------------------------------------------------------------------
+# Hydrogen Production Emission Factors (Well-to-Tank)
+# gCO2eq per MJ of hydrogen (LHV basis)
+# ---------------------------------------------------------------------------
+hydrogen_wtt:
+  factors:
+    grey: 110.0      # Steam methane reforming (SMR), no CCS
+    blue: 40.0       # SMR with carbon capture and storage (~60-65% capture rate)
+    green: 5.0       # Electrolysis with renewable electricity
+    default: 110.0   # Grey hydrogen (most common production method globally)
+  lcv_mj_per_kg: 120.0   # Hydrogen lower heating value
+  source:
+    document: "Argonne National Lab GREET Model 2023; IPCC AR6 WGIII Chapter 6"
+    date: 2023-10-01
+    url: "https://greet.anl.gov/"
+    secondary_url: "https://www.ipcc.ch/report/ar6/wg3/"
+    page: "GREET 2023 Hydrogen Pathways; IPCC AR6 WGIII Table 6.4"
+    note: >
+      Grey: 90-130 gCO2eq/MJ depending on natural gas source and reformer efficiency.
+      Blue: 25-60 gCO2eq/MJ depending on capture rate (typically 55-90%) and
+      upstream methane leakage. Green: 2-10 gCO2eq/MJ depending on electrolyzer
+      manufacturing and renewable electricity source. Values are rapidly evolving.
+    last_reviewed: 2025-03-01
+    verified: "2026-04-02 — verified by AI. Grey (110) within GREET range 90-130. Blue (40) within range 25-60. Green (5) within range 0-16. LHV 120.0 MJ/kg is the universally accepted standard value."
+
+# ---------------------------------------------------------------------------
+# Grid Electricity Emission Factors
+# gCO2eq per kWh (lifecycle, including upstream)
+# ---------------------------------------------------------------------------
+grid_emission_factors:
+  factors:
+    sweden: 45.0          # Hydro + nuclear dominated
+    norway: 30.0          # Hydro dominated
+    france: 56.0          # Nuclear dominated (~70% nuclear), 2023 EEA value
+    germany: 380.0        # Coal + gas + renewables mix
+    eu_average: 250.0     # EU-27 average
+    world_average: 475.0  # Global average
+    renewable: 0.0        # 100% renewable shore power
+    default: 250.0        # EU average as default
+  source:
+    document: "European Environment Agency — Greenhouse gas emission intensity of electricity generation; IEA Emission Factors 2023"
+    date: 2023-01-01
+    url: "https://www.eea.europa.eu/data-and-maps/daviz/co2-emission-intensity-14"
+    secondary_url: "https://www.iea.org/data-and-statistics/data-product/emissions-factors-2023"
+    page: "EEA indicator; IEA country profiles"
+    note: >
+      Grid factors are lifecycle values (include upstream fuel production and
+      infrastructure). Values change annually as grids decarbonize.
+      Germany is declining rapidly (~380 in 2023, was ~500 in 2018).
+      Sweden/Norway/France are already very low due to hydro/nuclear.
+    last_reviewed: 2025-03-01
+    verified: "2026-04-02 — verified by AI. Norway (30) confirmed. Germany (380) confirmed (371-381 range, 2023). Sweden (45) close to actual ~41. EU avg (250) close to actual ~242. World avg (475) close to actual ~481. France CORRECTED from 35 to 56 (EEA 2023 data). All values within acceptable range."
+
+# ---------------------------------------------------------------------------
+# Efficiency Parameters
+# ---------------------------------------------------------------------------
+charging_efficiency: 0.90   # Grid to battery (includes charger + battery losses)
+electric_motor_efficiency: 0.95
+
+efficiency_source:
+  document: "General marine electrical engineering references; DNV rules for battery installations"
+  date: 2023-01-01
+  note: >
+    Charging: 88-92% typical for marine battery systems (charger ~95% x battery ~95%).
+    Motor: 93-97% for permanent magnet synchronous motors at rated load.
+    Combined drivetrain efficiency ~85% is conservative.
+  last_reviewed: 2025-03-01
+  verified: "2026-04-02 — verified by AI. Charging 0.90 within typical 88-92% range. Motor 0.95 within typical 93-97% range for PMSM."
