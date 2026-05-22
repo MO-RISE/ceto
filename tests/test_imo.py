@@ -8,9 +8,11 @@ from cetos.imo import (
     estimate_fuel_consumption_of_propulsion_engines,
     estimate_instantaneous_fuel_consumption_of_auxiliary_systems,
     estimate_propulsion_engine_load,
+    estimate_propulsion_engine_sfc,
     estimate_specific_fuel_consumption,
 )
 from cetos.models import VesselData, VoyageLeg, VoyageProfile
+from cetos.sfc import SFCCurve
 
 DUMMY_VESSEL_DATA = VesselData(
     design_speed_kn=10,
@@ -188,4 +190,57 @@ def test_estimate_fuel_consumption_of_propulsion_engines():
     assert fc == approx(
         fc_all["manoeuvring"]["propulsion_engines_kg"]
         + fc_all["at_sea"]["propulsion_engines_kg"]
+    )
+
+
+def test_estimate_propulsion_engine_sfc():
+    # Without a custom curve, the resolver reproduces the IMO model exactly.
+    load = 0.6
+    expected_imo = estimate_specific_fuel_consumption(load, "MSD", "MDO", "after_2000")
+    assert estimate_propulsion_engine_sfc(DUMMY_VESSEL_DATA, load) == approx(
+        expected_imo
+    )
+
+    # With a custom curve, the resolver returns the curve's value.
+    vessel = replace(
+        DUMMY_VESSEL_DATA, propulsion_engine_sfc_curve=SFCCurve.constant(200)
+    )
+    assert estimate_propulsion_engine_sfc(vessel, load) == approx(0.200)
+
+
+def test_custom_sfc_curve_changes_propulsion_fuel_consumption():
+    # A custom curve overrides the IMO SFC model for the propulsion engines.
+    fc_imo = estimate_fuel_consumption(DUMMY_VESSEL_DATA, DUMMY_VOYAGE_PROFILE)
+
+    # A deliberately high flat SFC must increase propulsion fuel consumption.
+    vessel_high = replace(
+        DUMMY_VESSEL_DATA, propulsion_engine_sfc_curve=SFCCurve.constant(500)
+    )
+    fc_high = estimate_fuel_consumption(vessel_high, DUMMY_VOYAGE_PROFILE)
+
+    assert (
+        fc_high["at_sea"]["propulsion_engines_kg"]
+        > fc_imo["at_sea"]["propulsion_engines_kg"]
+    )
+    # Auxiliary engines still use the IMO model, so they are unaffected.
+    assert fc_high["at_sea"]["auxiliary_engines_kg"] == approx(
+        fc_imo["at_sea"]["auxiliary_engines_kg"]
+    )
+
+
+def test_custom_curve_matching_imo_reproduces_fuel_consumption():
+    # A custom curve that mirrors the IMO model reproduces the IMO result.
+    imo_curve = SFCCurve.from_callable(
+        lambda load: estimate_specific_fuel_consumption(
+            load, "MSD", "MDO", "after_2000"
+        ),
+        units="kg/kWh",
+    )
+    vessel = replace(DUMMY_VESSEL_DATA, propulsion_engine_sfc_curve=imo_curve)
+
+    fc_custom = estimate_fuel_consumption(vessel, DUMMY_VOYAGE_PROFILE)
+    fc_imo = estimate_fuel_consumption(DUMMY_VESSEL_DATA, DUMMY_VOYAGE_PROFILE)
+
+    assert fc_custom["at_sea"]["propulsion_engines_kg"] == approx(
+        fc_imo["at_sea"]["propulsion_engines_kg"]
     )

@@ -9,6 +9,7 @@
         "propulsion_engine_age": "after_2000",
         "propulsion_engine_fuel_type": "MDO",
         "propulsion_engine_power_kw": 19874.343602077697,
+        "propulsion_engine_sfc_curve": null,
         "propulsion_engine_type": "SSD",
         "size": 149400.0,
         "type": "oil_tanker"
@@ -23,6 +24,7 @@
         "propulsion_engine_age": "after_2000",
         "propulsion_engine_fuel_type": "MDO",
         "propulsion_engine_power_kw": 81.24362828203402,
+        "propulsion_engine_sfc_curve": null,
         "propulsion_engine_type": "HSD",
         "size": 67.19999999999999,
         "type": "service-other"
@@ -37,6 +39,7 @@
         "propulsion_engine_age": "after_2000",
         "propulsion_engine_fuel_type": "MDO",
         "propulsion_engine_power_kw": 374.4310936077655,
+        "propulsion_engine_sfc_curve": null,
         "propulsion_engine_type": "HSD",
         "size": 441.0,
         "type": "miscellaneous-fishing"
@@ -51,6 +54,7 @@
         "propulsion_engine_age": "after_2000",
         "propulsion_engine_fuel_type": "MDO",
         "propulsion_engine_power_kw": 429.697010223062,
+        "propulsion_engine_sfc_curve": null,
         "propulsion_engine_type": "HSD",
         "size": 909.9999999999999,
         "type": "service-other"
@@ -65,6 +69,7 @@
         "propulsion_engine_age": "after_2000",
         "propulsion_engine_fuel_type": "MDO",
         "propulsion_engine_power_kw": 342.4869948609484,
+        "propulsion_engine_sfc_curve": null,
         "propulsion_engine_type": "MSD",
         "size": 418.72656,
         "type": "ferry-ropax"
@@ -79,6 +84,7 @@
         "propulsion_engine_age": "after_2000",
         "propulsion_engine_fuel_type": "MDO",
         "propulsion_engine_power_kw": 4153.162252003798,
+        "propulsion_engine_sfc_curve": null,
         "propulsion_engine_type": "MSD",
         "size": 16233.70663384615,
         "type": "ferry-ropax"
@@ -93,6 +99,7 @@
         "propulsion_engine_age": "after_2000",
         "propulsion_engine_fuel_type": "MDO",
         "propulsion_engine_power_kw": 4332.868134818988,
+        "propulsion_engine_sfc_curve": null,
         "propulsion_engine_type": "SSD",
         "size": 15395.624999999998,
         "type": "general_cargo"
@@ -107,6 +114,7 @@
         "propulsion_engine_age": "after_2000",
         "propulsion_engine_fuel_type": "MDO",
         "propulsion_engine_power_kw": 12031.936926164448,
+        "propulsion_engine_sfc_curve": null,
         "propulsion_engine_type": "SSD",
         "size": 71238.46153846153,
         "type": "general_cargo"
@@ -121,6 +129,7 @@
         "propulsion_engine_age": "after_2000",
         "propulsion_engine_fuel_type": "MDO",
         "propulsion_engine_power_kw": 8882.912889744446,
+        "propulsion_engine_sfc_curve": null,
         "propulsion_engine_type": "SSD",
         "size": 47808.0,
         "type": "oil_tanker"
@@ -1397,6 +1406,7 @@
             "propulsion_engine_age": "after_2000",
             "propulsion_engine_fuel_type": "MDO",
             "propulsion_engine_power_kw": 342.4869948609484,
+            "propulsion_engine_sfc_curve": null,
             "propulsion_engine_type": "MSD",
             "size": 418.72656,
             "type": "ferry-ropax"
