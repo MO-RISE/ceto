@@ -787,8 +787,8 @@ def estimate_fuel_consumption(
     Returns:
     --------
 
-        Dict
-            Total fuel consumed (kg) and breakdown according to the voyage profile.
+        float
+            Total fuel consumed (kg) over the voyage.
 
     Source:
     -------
@@ -907,16 +907,12 @@ def estimate_fuel_consumption(
     # At sea
     fc_at_sea = _estimate_sailing_fuel_consumption(voyage_profile.legs_at_sea, "at_sea")
 
-    return {
-        "total_kg": fc_at_berth["subtotal_kg"]
+    return (
+        fc_at_berth["subtotal_kg"]
         + fc_anchored["subtotal_kg"]
         + fc_manoeuvring["subtotal_kg"]
-        + fc_at_sea["subtotal_kg"],
-        "at_berth": fc_at_berth,
-        "anchored": fc_anchored,
-        "manoeuvring": fc_manoeuvring,
-        "at_sea": fc_at_sea,
-    }
+        + fc_at_sea["subtotal_kg"]
+    )
 
 
 def estimate_energy_consumption(
