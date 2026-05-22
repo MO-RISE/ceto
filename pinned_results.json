@@ -127,12 +127,14 @@
     },
     "tests/test_ais_adapter_pinned.py::test_guesstimate_voyage_data_different_positions_zero_speed_pinned_1": {
         "legs_at_sea": [],
+        "legs_fishing": [],
         "legs_manoeuvring": [],
         "time_anchored_h": 5.0,
         "time_at_berth_h": 0.0
     },
     "tests/test_ais_adapter_pinned.py::test_guesstimate_voyage_data_pinned[55.0-10.0-55.5-11.0-7-7-0-15-8-16-7-complex_ops]_1": {
         "legs_at_sea": [],
+        "legs_fishing": [],
         "legs_manoeuvring": [
             {
                 "distance_nm": 45.49482303388,
@@ -145,6 +147,7 @@
     },
     "tests/test_ais_adapter_pinned.py::test_guesstimate_voyage_data_pinned[56.0-12.0-56.1-12.1-2.8-2.8-12-12-2-13.5-2.84-short_coastal]_1": {
         "legs_at_sea": [],
+        "legs_fishing": [],
         "legs_manoeuvring": [
             {
                 "distance_nm": 6.872575541180036,
@@ -157,6 +160,7 @@
     },
     "tests/test_ais_adapter_pinned.py::test_guesstimate_voyage_data_pinned[56.5-11.5-56.52-11.55-3.5-3.5-5-6-0.5-10-3.5-maneuvering]_1": {
         "legs_at_sea": [],
+        "legs_fishing": [],
         "legs_manoeuvring": [
             {
                 "distance_nm": 2.0446634658423517,
@@ -169,6 +173,7 @@
     },
     "tests/test_ais_adapter_pinned.py::test_guesstimate_voyage_data_pinned[57.0-11.0-57.5-12.0-12-10-14-14-10-15-12-medium_draft_change]_1": {
         "legs_at_sea": [],
+        "legs_fishing": [],
         "legs_manoeuvring": [
             {
                 "distance_nm": 44.200599005561045,
@@ -181,6 +186,7 @@
     },
     "tests/test_ais_adapter_pinned.py::test_guesstimate_voyage_data_pinned[57.5-12.0-58.0-13.0-6.5-6.5-0-20-5-22-6.5-berth_to_sea]_1": {
         "legs_at_sea": [],
+        "legs_fishing": [],
         "legs_manoeuvring": [
             {
                 "distance_nm": 43.87730636402624,
@@ -193,6 +199,7 @@
     },
     "tests/test_ais_adapter_pinned.py::test_guesstimate_voyage_data_pinned[58.0-12.0-60.0-15.0-8.5-7.0-16-16-50-18-8.5-long_voyage]_1": {
         "legs_at_sea": [],
+        "legs_fishing": [],
         "legs_manoeuvring": [
             {
                 "distance_nm": 151.6277308409243,
@@ -205,6 +212,7 @@
     },
     "tests/test_ais_adapter_pinned.py::test_guesstimate_voyage_data_stationary_vessel_pinned_1": {
         "legs_at_sea": [],
+        "legs_fishing": [],
         "legs_manoeuvring": [],
         "time_anchored_h": 10.0,
         "time_at_berth_h": 0.0
@@ -742,222 +750,36 @@
         }
     ],
     "tests/test_imo_pinned.py::test_estimate_energy_consumption_pinned[vessel_data0-voyage_profile0-ferry_pax_daily]_1": {
-        "anchored": {
-            "auxiliary_engines_kwh": 95.0,
-            "maximum_required_total_power_kw": 190,
-            "subtotal_kwh": 95.0
-        },
-        "at_berth": {
-            "auxiliary_engines_kwh": 380.0,
-            "maximum_required_total_power_kw": 190,
-            "subtotal_kwh": 380.0
-        },
-        "at_sea": {
-            "auxiliary_engines_kwh": 316.6666666666667,
-            "average_energy_consumption_kwh_per_nm": 107.64439859900958,
-            "maximum_required_propulsion_power_kw": 1101.732783188115,
-            "maximum_required_total_power_kw": 1291.732783188115,
-            "maxium_engine_load_percent": 83.46460478697841,
-            "subtotal_kwh": 2152.8879719801917
-        },
-        "manoeuvring": {
-            "auxiliary_engines_kwh": 38.0,
-            "average_energy_consumption_kwh_per_nm": 53.9394210530688,
-            "maximum_required_propulsion_power_kw": 79.69710526534399,
-            "maximum_required_total_power_kw": 269.697105265344,
-            "maxium_engine_load_percent": 6.037659489798787,
-            "subtotal_kwh": 53.9394210530688
-        },
         "maximum_required_propulsion_power_kw": 1101.732783188115,
         "maximum_required_total_power_kw": 1291.732783188115,
         "total_kwh": 2681.8273930332607
     },
     "tests/test_imo_pinned.py::test_estimate_energy_consumption_pinned[vessel_data1-voyage_profile1-oil_tanker_long]_1": {
-        "anchored": {
-            "auxiliary_engines_kwh": 4900.0,
-            "maximum_required_total_power_kw": 490,
-            "subtotal_kwh": 4900.0
-        },
-        "at_berth": {
-            "auxiliary_engines_kwh": 14880.0,
-            "maximum_required_total_power_kw": 620,
-            "subtotal_kwh": 14880.0
-        },
-        "at_sea": {
-            "auxiliary_engines_kwh": 40000.0,
-            "average_energy_consumption_kwh_per_nm": 584.4559426735063,
-            "maximum_required_propulsion_power_kw": 8000.0,
-            "maximum_required_total_power_kw": 8560.0,
-            "maxium_engine_load_percent": 100.0,
-            "subtotal_kwh": 584455.9426735063
-        },
-        "manoeuvring": {
-            "auxiliary_engines_kwh": 385.0,
-            "average_energy_consumption_kwh_per_nm": 276.14352574838307,
-            "maximum_required_propulsion_power_kw": 1526.503265411671,
-            "maximum_required_total_power_kw": 2296.5032654116712,
-            "maxium_engine_load_percent": 19.081290817645886,
-            "subtotal_kwh": 1104.5741029935323
-        },
         "maximum_required_propulsion_power_kw": 8000.0,
         "maximum_required_total_power_kw": 8560.0,
         "total_kwh": 605340.5167764998
     },
     "tests/test_imo_pinned.py::test_estimate_energy_consumption_pinned[vessel_data2-voyage_profile2-general_cargo_medium]_1": {
-        "anchored": {
-            "auxiliary_engines_kwh": 1850.0,
-            "maximum_required_total_power_kw": 370,
-            "subtotal_kwh": 1850.0
-        },
-        "at_berth": {
-            "auxiliary_engines_kwh": 8640.0,
-            "maximum_required_total_power_kw": 720,
-            "subtotal_kwh": 8640.0
-        },
-        "at_sea": {
-            "auxiliary_engines_kwh": 13000.0,
-            "average_energy_consumption_kwh_per_nm": 291.8020484765501,
-            "maximum_required_propulsion_power_kw": 4416.965467047658,
-            "maximum_required_total_power_kw": 4936.965467047658,
-            "maxium_engine_load_percent": 88.33930934095316,
-            "subtotal_kwh": 116720.81939062005
-        },
-        "manoeuvring": {
-            "auxiliary_engines_kwh": 725.0,
-            "average_energy_consumption_kwh_per_nm": 278.1310172336815,
-            "maximum_required_propulsion_power_kw": 232.92591330134135,
-            "maximum_required_total_power_kw": 1682.9259133013413,
-            "maxium_engine_load_percent": 4.658518266026827,
-            "subtotal_kwh": 834.3930517010446
-        },
         "maximum_required_propulsion_power_kw": 4416.965467047658,
         "maximum_required_total_power_kw": 4936.965467047658,
         "total_kwh": 128045.21244232109
     },
     "tests/test_imo_pinned.py::test_estimate_energy_consumption_pinned[vessel_data3-voyage_profile3-offshore_short]_1": {
-        "anchored": {
-            "auxiliary_engines_kwh": 3200.0,
-            "maximum_required_total_power_kw": 320,
-            "subtotal_kwh": 3200.0
-        },
-        "at_berth": {
-            "auxiliary_engines_kwh": 3200.0,
-            "maximum_required_total_power_kw": 320,
-            "subtotal_kwh": 3200.0
-        },
-        "at_sea": {
-            "auxiliary_engines_kwh": 960.0,
-            "average_energy_consumption_kwh_per_nm": 132.0,
-            "maximum_required_propulsion_power_kw": 1000.0,
-            "maximum_required_total_power_kw": 1320.0,
-            "maxium_engine_load_percent": 100.0,
-            "subtotal_kwh": 3960.0
-        },
-        "manoeuvring": {
-            "auxiliary_engines_kwh": 320.0,
-            "average_energy_consumption_kwh_per_nm": 132.0,
-            "maximum_required_propulsion_power_kw": 1000.0,
-            "maximum_required_total_power_kw": 1320.0,
-            "maxium_engine_load_percent": 100.0,
-            "subtotal_kwh": 1320.0
-        },
         "maximum_required_propulsion_power_kw": 1000.0,
         "maximum_required_total_power_kw": 1320.0,
         "total_kwh": 11680.0
     },
     "tests/test_imo_pinned.py::test_estimate_energy_consumption_pinned[vessel_data4-voyage_profile4-ropax_frequent]_1": {
-        "anchored": {
-            "auxiliary_engines_kwh": 0.0,
-            "maximum_required_total_power_kw": 0.0,
-            "subtotal_kwh": 0.0
-        },
-        "at_berth": {
-            "auxiliary_engines_kwh": 7800.0,
-            "maximum_required_total_power_kw": 1950,
-            "subtotal_kwh": 7800.0
-        },
-        "at_sea": {
-            "auxiliary_engines_kwh": 9750.0,
-            "average_energy_consumption_kwh_per_nm": 322.8350419534144,
-            "maximum_required_propulsion_power_kw": 4506.700839068288,
-            "maximum_required_total_power_kw": 6456.700839068288,
-            "maxium_engine_load_percent": 90.13401678136574,
-            "subtotal_kwh": 32283.50419534144
-        },
-        "manoeuvring": {
-            "auxiliary_engines_kwh": 975.0,
-            "average_energy_consumption_kwh_per_nm": 279.8036067125463,
-            "maximum_required_propulsion_power_kw": 288.42885370037044,
-            "maximum_required_total_power_kw": 2238.4288537003704,
-            "maxium_engine_load_percent": 5.768577074007409,
-            "subtotal_kwh": 1119.2144268501852
-        },
         "maximum_required_propulsion_power_kw": 4506.700839068288,
         "maximum_required_total_power_kw": 6456.700839068288,
         "total_kwh": 41202.71862219163
     },
     "tests/test_imo_pinned.py::test_estimate_energy_consumption_with_7_percent_limit_pinned_1": {
-        "anchored": {
-            "auxiliary_engines_kwh": 1850.0,
-            "maximum_required_total_power_kw": 370,
-            "subtotal_kwh": 1850.0
-        },
-        "at_berth": {
-            "auxiliary_engines_kwh": 8640.0,
-            "maximum_required_total_power_kw": 720,
-            "subtotal_kwh": 8640.0
-        },
-        "at_sea": {
-            "auxiliary_engines_kwh": 13000.0,
-            "average_energy_consumption_kwh_per_nm": 291.8020484765501,
-            "maximum_required_propulsion_power_kw": 4416.965467047658,
-            "maximum_required_total_power_kw": 4936.965467047658,
-            "maxium_engine_load_percent": 88.33930934095316,
-            "subtotal_kwh": 116720.81939062005
-        },
-        "manoeuvring": {
-            "auxiliary_engines_kwh": 725.0,
-            "average_energy_consumption_kwh_per_nm": 241.66666666666666,
-            "maximum_required_propulsion_power_kw": 0.0,
-            "maximum_required_total_power_kw": 1450.0,
-            "maxium_engine_load_percent": 4.658518266026827,
-            "subtotal_kwh": 725.0
-        },
         "maximum_required_propulsion_power_kw": 4416.965467047658,
         "maximum_required_total_power_kw": 4936.965467047658,
         "total_kwh": 127935.81939062005
     },
     "tests/test_imo_pinned.py::test_estimate_energy_consumption_with_steam_boilers_pinned_1": {
-        "anchored": {
-            "auxiliary_engines_kwh": 4900.0,
-            "maximum_required_total_power_kw": 850,
-            "steam_boilers_kwh": 3600.0,
-            "subtotal_kwh": 8500.0
-        },
-        "at_berth": {
-            "auxiliary_engines_kwh": 14880.0,
-            "maximum_required_total_power_kw": 3870,
-            "steam_boilers_kwh": 78000.0,
-            "subtotal_kwh": 92880.0
-        },
-        "at_sea": {
-            "auxiliary_engines_kwh": 40000.0,
-            "average_energy_consumption_kwh_per_nm": 604.4559426735063,
-            "maximum_required_propulsion_power_kw": 8000.0,
-            "maximum_required_total_power_kw": 8840.0,
-            "maxium_engine_load_percent": 100.0,
-            "steam_boilers_kwh": 20000.0,
-            "subtotal_kwh": 604455.9426735063
-        },
-        "manoeuvring": {
-            "auxiliary_engines_kwh": 385.0,
-            "average_energy_consumption_kwh_per_nm": 321.14352574838307,
-            "maximum_required_propulsion_power_kw": 1526.503265411671,
-            "maximum_required_total_power_kw": 2656.5032654116712,
-            "maxium_engine_load_percent": 19.081290817645886,
-            "steam_boilers_kwh": 180.0,
-            "subtotal_kwh": 1284.5741029935323
-        },
         "maximum_required_propulsion_power_kw": 8000.0,
         "maximum_required_total_power_kw": 8840.0,
         "total_kwh": 707120.5167764998
@@ -1305,32 +1127,6 @@
             "total_weight_kg": 7691.414197930774
         },
         "energy_consumption": {
-            "anchored": {
-                "auxiliary_engines_kwh": 0.0,
-                "maximum_required_total_power_kw": 0.0,
-                "subtotal_kwh": 0.0
-            },
-            "at_berth": {
-                "auxiliary_engines_kwh": 0.0,
-                "maximum_required_total_power_kw": 0.0,
-                "subtotal_kwh": 0.0
-            },
-            "at_sea": {
-                "auxiliary_engines_kwh": 0.0,
-                "average_energy_consumption_kwh_per_nm": 0.0,
-                "maximum_required_propulsion_power_kw": 0.0,
-                "maximum_required_total_power_kw": 0.0,
-                "propulsion_engines_kwh": 0.0,
-                "subtotal_kwh": 0.0
-            },
-            "manoeuvring": {
-                "auxiliary_engines_kwh": 420.0,
-                "average_energy_consumption_kwh_per_nm": 30.077804190966464,
-                "maximum_required_propulsion_power_kw": 12.652803523251832,
-                "maximum_required_total_power_kw": 117.65280352325183,
-                "maxium_engine_load_percent": 1.8471947421520252,
-                "subtotal_kwh": 470.61121409300733
-            },
             "maximum_required_propulsion_power_kw": 12.652803523251832,
             "maximum_required_total_power_kw": 117.65280352325183,
             "total_kwh": 470.61121409300733
@@ -1403,6 +1199,7 @@
         },
         "voyage_data": {
             "legs_at_sea": [],
+            "legs_fishing": [],
             "legs_manoeuvring": [
                 {
                     "distance_nm": 15.646461793057028,

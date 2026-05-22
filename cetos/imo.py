@@ -931,13 +931,9 @@ def estimate_energy_consumption(
     Returns:
     --------
 
-        Tuple(
-            total_energy_consumption,
-            maximum_power_demand,
-            energy_and_power_consumption_breakdown,
-        )
-            Total energy consumption (kWh), maximum power demand (kW), and energy and power
-            consumption breakdown according to the voyage profile.
+        Dict
+            Dictionary with total energy consumption (kWh), maximum required total
+            power demand (kW), and maximum required propulsion power (kW).
 
     """
     installed_propulsion_power = calculate_installed_propulsion_power(vessel_data)
@@ -1102,8 +1098,4 @@ def estimate_energy_consumption(
                 energy_at_sea["maximum_required_propulsion_power_kw"],
             ]
         ),
-        "at_berth": energy_at_berth,
-        "anchored": energy_anchored,
-        "manoeuvring": energy_manoeuvring,
-        "at_sea": energy_at_sea,
     }
