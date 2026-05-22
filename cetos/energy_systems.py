@@ -21,7 +21,7 @@ HYDROGEN_ENERGY_DENSITY_KWHPKG = 33.322  # 119.96 MJ / (3.6 MJ / kWh)
 
 # Current estimates correspond to:
 #   For fuel cell system: PowerCellution 100, see https://powercellgroup.com/
-#   For battery packs: Corvus Orca Energy, https://corvusenergy.com/products/energy-storage-solutions/corvus-orca-energy/
+#   For battery packs: Corvus Orca Energy, https://corvusenergy.com/products/corvus-orca-ess
 #   For hydrogen gas tank: Hexagon Purus, see row "O" in https://www.hannovermesse.de/apollo/hannover_messe_2021/obs/Binary/A1090299/HexagonPurus_Type4_datasheet_2021.pdf
 
 REFERENCE_VALUES = {
@@ -29,10 +29,11 @@ REFERENCE_VALUES = {
     "reference_fuel_cell_weight_kg": 1070,
     "reference_fuel_cell_power_kw": 185,
     "reference_fuel_cell_efficiency_pct": 45,
-    "reference_battery_pack_volume_m3": 2.241 * 0.865 * 0.738,
-    "reference_battery_pack_weight_kg": 1628,
-    "reference_battery_pack_capacity_kwh": 124,
+    "reference_battery_pack_volume_m3": 0.600 * 0.430 * 0.163,
+    "reference_battery_pack_weight_kg": 58,
+    "reference_battery_pack_capacity_kwh": 5.65,
     "reference_battery_pack_depth_of_discharge_pct": 80,
+    "reference_battery_pack_continuous_power_kw": 3 * 5.65,
     "reference_hydrogen_gas_tank_volume_m3": 1.033,
     "reference_hydrogen_gas_tank_capacity_kg": 18.4,
     "reference_hydrogen_gas_tank_weight_kg": 272,
@@ -58,6 +59,7 @@ def _verify_reference_values(reference_values):
         "reference_battery_pack_weight_kg",
         "reference_battery_pack_capacity_kwh",
         "reference_battery_pack_depth_of_discharge_pct",
+        "reference_battery_pack_continuous_power_kw",
         "reference_hydrogen_gas_tank_volume_m3",
         "reference_hydrogen_gas_tank_capacity_kg",
         "reference_hydrogen_gas_tank_weight_kg",
@@ -223,10 +225,12 @@ def estimate_internal_combustion_system(
 def estimate_vessel_battery_system(
     required_energy_kwh,
     required_power_kw,
+    required_propulsion_power_kw,
     reference_battery_pack_volume_m3,
     reference_battery_pack_weight_kg,
     reference_battery_pack_capacity_kwh,
     reference_battery_pack_depth_of_discharge_pct,
+    reference_battery_pack_continuous_power_kw,
     **kwargs,
 ):
     """Estimate the key details of a battery propulsion system
@@ -237,6 +241,12 @@ def estimate_vessel_battery_system(
         required_energy_kwh: float
 
         required_power_kw: float
+            Maximum total power demand (kW). The pack count must be large
+            enough to deliver this continuously.
+
+        required_propulsion_power_kw: float
+            Maximum propulsion power demand (kW). Used to size the
+            electrical engine/s.
 
         reference_battery_pack_volume_m3: float
 
@@ -245,6 +255,9 @@ def estimate_vessel_battery_system(
         reference_battery_pack_capacity_kwh: float
 
         reference_battery_pack_depth_of_discharge_pct: float
+
+        reference_battery_pack_continuous_power_kw: float
+            Continuous discharge power (kW) per reference pack.
 
     Returns:
     --------
@@ -255,24 +268,21 @@ def estimate_vessel_battery_system(
 
     """
 
-    # Battery packs
+    # Battery packs: sized by whichever constraint binds, energy or power.
+    packs_for_energy = required_energy_kwh / (
+        reference_battery_pack_capacity_kwh
+        * reference_battery_pack_depth_of_discharge_pct
+        / 100
+    )
+    packs_for_power = required_power_kw / reference_battery_pack_continuous_power_kw
+    number_of_packs = max(packs_for_energy, packs_for_power)
 
-    battery_packs_capacity_kwh = required_energy_kwh / (
-        reference_battery_pack_depth_of_discharge_pct / 100
-    )
-    battery_packs_weight_kg = (
-        battery_packs_capacity_kwh
-        * reference_battery_pack_weight_kg
-        / reference_battery_pack_capacity_kwh
-    )
-    battery_packs_volume_m3 = (
-        battery_packs_capacity_kwh
-        * reference_battery_pack_volume_m3
-        / reference_battery_pack_capacity_kwh
-    )
+    battery_packs_capacity_kwh = number_of_packs * reference_battery_pack_capacity_kwh
+    battery_packs_weight_kg = number_of_packs * reference_battery_pack_weight_kg
+    battery_packs_volume_m3 = number_of_packs * reference_battery_pack_volume_m3
 
     # Electrical engine/s
-    electrical_engine_power_kw = math.ceil(required_power_kw / 10) * 10
+    electrical_engine_power_kw = math.ceil(required_propulsion_power_kw / 10) * 10
     electrical_engine_weight_kg = (
         electrical_engine_power_kw / ELECTRICAL_ENGINE_GRAVIMETRIC_POWER_DENSITY_KWPKG
     )
@@ -305,6 +315,7 @@ def estimate_vessel_battery_system(
 def estimate_vessel_gas_hydrogen_system(
     required_energy_kwh,
     required_power_kw,
+    required_propulsion_power_kw,
     reference_fuel_cell_power_kw,
     reference_fuel_cell_weight_kg,
     reference_fuel_cell_volume_m3,
@@ -322,6 +333,11 @@ def estimate_vessel_gas_hydrogen_system(
         required_energy_kwh: float
 
         required_power_kw: float
+            Maximum total power demand (kW). Used to size the fuel cell.
+
+        required_propulsion_power_kw: float
+            Maximum propulsion power demand (kW). Used to size the
+            electrical engine/s.
 
         reference_fuel_cell_power_kw: float
 
@@ -361,7 +377,7 @@ def estimate_vessel_gas_hydrogen_system(
     )
 
     # Electrical engine/s
-    electrical_engine_power_kw = math.ceil(required_power_kw / 10) * 10
+    electrical_engine_power_kw = math.ceil(required_propulsion_power_kw / 10) * 10
     electrical_engine_weight_kg = (
         electrical_engine_power_kw / ELECTRICAL_ENGINE_GRAVIMETRIC_POWER_DENSITY_KWPKG
     )
@@ -453,16 +469,21 @@ def suggest_alternative_energy_systems_simple(
     fuel_type = propulsion_engine_fuel_type
     required_energy_kwh = FUEL_ENERGY_DENSITY_KWHPL[fuel_type] * total_fc_l
 
+    # No auxiliary load information available in this simplified API, so
+    # propulsion power is reused as the total-power proxy for storage sizing.
     required_power_kw = propulsion_power_kw
+    required_propulsion_power_kw = propulsion_power_kw
 
     battery = estimate_vessel_battery_system(
         required_energy_kwh,
         required_power_kw,
+        required_propulsion_power_kw,
         **reference_values,
     )
     gas = estimate_vessel_gas_hydrogen_system(
         required_energy_kwh,
         required_power_kw,
+        required_propulsion_power_kw,
         **reference_values,
     )
 
@@ -499,6 +520,7 @@ def _iterate_energy_system(
         new_system = estimate_energy_system(
             energy["total_kwh"],
             energy["maximum_required_total_power_kw"],
+            energy["maximum_required_propulsion_power_kw"],
             **reference_values,
         )
 

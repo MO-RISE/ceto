@@ -68,16 +68,20 @@ def test_estimate_internal_combustion_system_pinned(
 
 
 @pytest.mark.parametrize(
-    "required_energy_kwh,required_power_kw,scenario_name",
+    "required_energy_kwh,required_power_kw,required_propulsion_power_kw,scenario_name",
     [
-        (1_000, 500, "small_system"),
-        (10_000, 2_000, "medium_system"),
-        (50_000, 10_000, "large_system"),
-        (100_000, 15_000, "very_large_system"),
+        (1_000, 500, 400, "small_system"),
+        (10_000, 2_000, 1_600, "medium_system"),
+        (50_000, 10_000, 8_000, "large_system"),
+        (100_000, 15_000, 12_000, "very_large_system"),
     ],
 )
 def test_estimate_vessel_battery_system_pinned(
-    required_energy_kwh, required_power_kw, scenario_name, pinned
+    required_energy_kwh,
+    required_power_kw,
+    required_propulsion_power_kw,
+    scenario_name,
+    pinned,
 ):
     """
     Pin complete battery system estimations for various energy requirements.
@@ -88,22 +92,29 @@ def test_estimate_vessel_battery_system_pinned(
     - Electrical engine details (power, weight, volume)
     """
     result = estimate_vessel_battery_system(
-        required_energy_kwh, required_power_kw, **REFERENCE_VALUES
+        required_energy_kwh,
+        required_power_kw,
+        required_propulsion_power_kw,
+        **REFERENCE_VALUES,
     )
     assert result == pinned
 
 
 @pytest.mark.parametrize(
-    "required_energy_kwh,required_power_kw,scenario_name",
+    "required_energy_kwh,required_power_kw,required_propulsion_power_kw,scenario_name",
     [
-        (1_000, 500, "small_system"),
-        (10_000, 2_000, "medium_system"),
-        (50_000, 10_000, "large_system"),
-        (100_000, 15_000, "very_large_system"),
+        (1_000, 500, 400, "small_system"),
+        (10_000, 2_000, 1_600, "medium_system"),
+        (50_000, 10_000, 8_000, "large_system"),
+        (100_000, 15_000, 12_000, "very_large_system"),
     ],
 )
 def test_estimate_vessel_gas_hydrogen_system_pinned(
-    required_energy_kwh, required_power_kw, scenario_name, pinned
+    required_energy_kwh,
+    required_power_kw,
+    required_propulsion_power_kw,
+    scenario_name,
+    pinned,
 ):
     """
     Pin complete hydrogen gas system estimations for various energy requirements.
@@ -116,7 +127,10 @@ def test_estimate_vessel_gas_hydrogen_system_pinned(
     - Electrical engine details (power, weight, volume)
     """
     result = estimate_vessel_gas_hydrogen_system(
-        required_energy_kwh, required_power_kw, **REFERENCE_VALUES
+        required_energy_kwh,
+        required_power_kw,
+        required_propulsion_power_kw,
+        **REFERENCE_VALUES,
     )
     assert result == pinned
 
@@ -186,23 +200,27 @@ def test_suggest_alternative_energy_systems_simple_pinned(
 
 def test_estimate_battery_system_high_power_density_pinned(pinned):
     """Pin battery system for high power density scenario (low energy, high power)."""
-    result = estimate_vessel_battery_system(5_000, 10_000, **REFERENCE_VALUES)
+    result = estimate_vessel_battery_system(5_000, 10_000, 8_000, **REFERENCE_VALUES)
     assert result == pinned
 
 
 def test_estimate_battery_system_high_energy_density_pinned(pinned):
     """Pin battery system for high energy density scenario (high energy, low power)."""
-    result = estimate_vessel_battery_system(100_000, 5_000, **REFERENCE_VALUES)
+    result = estimate_vessel_battery_system(100_000, 5_000, 4_000, **REFERENCE_VALUES)
     assert result == pinned
 
 
 def test_estimate_hydrogen_system_high_power_density_pinned(pinned):
     """Pin hydrogen system for high power density scenario (low energy, high power)."""
-    result = estimate_vessel_gas_hydrogen_system(5_000, 10_000, **REFERENCE_VALUES)
+    result = estimate_vessel_gas_hydrogen_system(
+        5_000, 10_000, 8_000, **REFERENCE_VALUES
+    )
     assert result == pinned
 
 
 def test_estimate_hydrogen_system_high_energy_density_pinned(pinned):
     """Pin hydrogen system for high energy density scenario (high energy, low power)."""
-    result = estimate_vessel_gas_hydrogen_system(100_000, 5_000, **REFERENCE_VALUES)
+    result = estimate_vessel_gas_hydrogen_system(
+        100_000, 5_000, 4_000, **REFERENCE_VALUES
+    )
     assert result == pinned
