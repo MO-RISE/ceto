@@ -14,6 +14,7 @@ cetos provides tools for analyzing vessel performance, estimating fuel consumpti
 ### Features
 
 - **Fuel Consumption Estimation**: Calculate vessel fuel consumption based on IMO methodologies
+- **Custom SFC Curves**: Override the IMO fuel model with your own measured engine SFC curve
 - **Energy System Analysis**: Analyze batteries, hydrogen systems, and hybrid propulsion
 - **AIS Data Processing**: Convert AIS data to voyage profiles
 - **Multiple Vessel Types**: Support for various vessel types (ferries, container ships, tankers, etc.)
@@ -52,10 +53,10 @@ vessel_data = VesselData(
 voyage_profile = VoyageProfile(
     time_anchored_h=10.0,
     time_at_berth_h=10.0,
-    legs_manoeuvring=[VoyageLeg(distance_nm=10, speed_kn=10, draft_m=6)],
+    legs_manoeuvring=[VoyageLeg(distance_nm=10, speed_kn=10, draft_m=2.8)],
     legs_at_sea=[
-        VoyageLeg(distance_nm=30, speed_kn=10, draft_m=6),
-        VoyageLeg(distance_nm=30, speed_kn=10, draft_m=6),
+        VoyageLeg(distance_nm=30, speed_kn=10, draft_m=2.8),
+        VoyageLeg(distance_nm=30, speed_kn=10, draft_m=2.8),
     ],
 )
 
@@ -63,6 +64,37 @@ voyage_profile = VoyageProfile(
 results = imo.estimate_fuel_consumption(vessel_data, voyage_profile)
 print(f"Total fuel consumption: {results['total_kg']} kg")
 ```
+
+## Custom SFC curves
+
+By default, cetos estimates specific fuel consumption (SFC) using the IMO Fourth GHG Study 2020 model. You can instead supply your own SFC curve — for example, one measured on an engine test bed — and cetos will use it for the propulsion engines.
+
+Continuing from the Quick Start above:
+
+```python
+from cetos import SFCCurve
+
+# Build an SFC curve from measured points (g/kWh at part loads, the default unit)
+sfc_curve = SFCCurve.from_points(
+    [(0.25, 205), (0.50, 190), (0.75, 182), (0.85, 180), (1.00, 185)],
+    interpolation="pchip",  # smooth, shape-preserving; "linear" is the default
+)
+
+# Attach the curve to the vessel. Fuel estimates now use your curve for the
+# propulsion engines in place of the IMO model (auxiliary engines and steam
+# boilers are unaffected).
+vessel_data.propulsion_engine_sfc_curve = sfc_curve
+
+results = imo.estimate_fuel_consumption(vessel_data, voyage_profile)
+print(f"Total fuel consumption: {results['total_kg']} kg")
+```
+
+A curve can also be passed directly to `VesselData(...)` as the `propulsion_engine_sfc_curve` argument. Besides `SFCCurve.from_points`, two other constructors are available:
+
+- `SFCCurve.from_callable(fn, units="g/kWh")` — wrap any `load -> SFC` function
+- `SFCCurve.constant(value, units="g/kWh")` — a flat, load-independent SFC
+
+SFC values are interpreted as `g/kWh` by default; pass `units="kg/kWh"` if your data is already in `kg/kWh`.
 
 ## Modules
 

@@ -3,6 +3,7 @@
 from dataclasses import dataclass, field
 from typing import List, Optional
 
+from cetos.sfc import SFCCurve
 from cetos.utils import verify_range, verify_set
 
 # Validation constants
@@ -89,6 +90,10 @@ class VesselData:
     propulsion_engine_age: str  # One of ENGINE_AGES
     propulsion_engine_fuel_type: str  # One of FUEL_TYPES
 
+    # Optional custom SFC curve for the propulsion engine. When set, it
+    # overrides the IMO SFC model (see cetos.imo.estimate_propulsion_engine_sfc).
+    propulsion_engine_sfc_curve: Optional[SFCCurve] = None
+
     def __post_init__(self):
         """Validate vessel data."""
         verify_range("length_m", self.length_m, 5.0, 450.0)
@@ -121,6 +126,13 @@ class VesselData:
 
         if self.size is not None:
             verify_range("size", self.size, 0, 500_000)
+
+        if self.propulsion_engine_sfc_curve is not None and not isinstance(
+            self.propulsion_engine_sfc_curve, SFCCurve
+        ):
+            raise ValueError(
+                "'propulsion_engine_sfc_curve' must be an SFCCurve instance or None."
+            )
 
 
 @dataclass

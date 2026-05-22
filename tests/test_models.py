@@ -3,6 +3,7 @@ from dataclasses import replace
 from pytest import raises
 
 from cetos.models import VesselData, VoyageLeg, VoyageProfile
+from cetos.sfc import SFCCurve
 
 VALID_VESSEL_DATA = VesselData(
     length_m=100,
@@ -80,6 +81,21 @@ def test_vessel_data_invalid_number_of_engines():
     with raises(ValueError) as info:
         replace(VALID_VESSEL_DATA, number_of_propulsion_engines=5)
     assert "number_of_propulsion_engines" in str(info)
+
+
+def test_vessel_data_invalid_sfc_curve():
+    """Test that a non-SFCCurve propulsion SFC curve raises ValueError."""
+    with raises(ValueError) as info:
+        replace(VALID_VESSEL_DATA, propulsion_engine_sfc_curve=lambda load: 0.18)
+    assert "propulsion_engine_sfc_curve" in str(info)
+
+
+def test_vessel_data_accepts_sfc_curve():
+    """Test that an SFCCurve is accepted as the propulsion SFC curve."""
+    vessel = replace(
+        VALID_VESSEL_DATA, propulsion_engine_sfc_curve=SFCCurve.constant(190)
+    )
+    assert vessel.propulsion_engine_sfc_curve is not None
 
 
 def test_voyage_leg_valid_creation():

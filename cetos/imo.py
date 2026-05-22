@@ -226,6 +226,41 @@ def estimate_specific_fuel_consumption(engine_load, engine_type, fuel_type, engi
     return sfc
 
 
+def estimate_propulsion_engine_sfc(vessel_data: VesselData, engine_load):
+    """Resolve the specific fuel consumption of a vessel's propulsion engine.
+
+    If the vessel has a custom SFC curve (``propulsion_engine_sfc_curve``), that
+    curve is evaluated and fully replaces the IMO model. Otherwise the IMO
+    Fourth GHG Study 2020 model is used (see
+    :func:`estimate_specific_fuel_consumption`).
+
+    Arguments:
+    ----------
+
+        vessel_data: VesselData
+            VesselData instance describing the vessel.
+
+        engine_load: float
+            Engine load as a fraction between 0.0 and 1.0.
+
+    Returns:
+    --------
+
+        float
+            Specific fuel consumption (kg/kWh).
+
+    """
+    curve = vessel_data.propulsion_engine_sfc_curve
+    if curve is not None:
+        return curve(engine_load)
+    return estimate_specific_fuel_consumption(
+        engine_load,
+        vessel_data.propulsion_engine_type,
+        vessel_data.propulsion_engine_fuel_type,
+        vessel_data.propulsion_engine_age,
+    )
+
+
 def estimate_auxiliary_power_demand(vessel_data: VesselData, operation_mode):
     """
     Estimate the auxiliary power demand.
@@ -692,17 +727,11 @@ def estimate_instantanous_fuel_consumption_of_propulsion_engines(
 
     installed_propulsion_power = calculate_installed_propulsion_power(vessel_data)
 
-    fuel_type = vessel_data.propulsion_engine_fuel_type
-    engine_age = vessel_data.propulsion_engine_age
-    engine_type = vessel_data.propulsion_engine_type
-
     load = estimate_propulsion_engine_load(speed, draft, vessel_data, delta_w=delta_w)
     if load < 0.07 and limit_7_percent:
         sfc = 0.0
     else:
-        sfc = estimate_specific_fuel_consumption(
-            load, engine_type, fuel_type, engine_age
-        )
+        sfc = estimate_propulsion_engine_sfc(vessel_data, load)
     return installed_propulsion_power * load * sfc
 
 
