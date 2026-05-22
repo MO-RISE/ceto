@@ -143,3 +143,5 @@ cetos/_version.py
 
 # Claude
 CLAUDE.md
+.claude
+tmp/
