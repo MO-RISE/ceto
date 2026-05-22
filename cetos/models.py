@@ -131,6 +131,7 @@ class VoyageProfile:
     time_at_berth_h: float = 0.0  # hours
     legs_manoeuvring: List[VoyageLeg] = field(default_factory=list)
     legs_at_sea: List[VoyageLeg] = field(default_factory=list)
+    legs_fishing: List[VoyageLeg] = field(default_factory=list)
 
     def __post_init__(self):
         """Convert raw tuples to VoyageLeg dataclasses if needed and validate."""
@@ -149,6 +150,8 @@ class VoyageProfile:
             raise ValueError("legs_manoeuvring must be a list")
         if not isinstance(self.legs_at_sea, list):
             raise ValueError("legs_at_sea must be a list")
+        if not isinstance(self.legs_fishing, list):
+            raise ValueError("legs_fishing must be a list")
 
         # Convert raw tuples to VoyageLeg dataclasses (validation happens in VoyageLeg)
         self.legs_manoeuvring = [
@@ -158,4 +161,8 @@ class VoyageProfile:
         self.legs_at_sea = [
             VoyageLeg(*leg) if not isinstance(leg, VoyageLeg) else leg
             for leg in self.legs_at_sea
+        ]
+        self.legs_fishing = [
+            VoyageLeg(*leg) if not isinstance(leg, VoyageLeg) else leg
+            for leg in self.legs_fishing
         ]
