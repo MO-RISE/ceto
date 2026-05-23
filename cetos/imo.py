@@ -63,7 +63,7 @@ def estimate_change_in_draft(vessel_data: VesselData, load_change):
     b_wl = vessel_data.beam_m
 
     # Approximation of design block coefficient (c_b)
-    f_n = 0.5144 * knots_to_ms(vessel_data.design_speed_kn) / math.sqrt(9.81 * l_wl)
+    f_n = knots_to_ms(vessel_data.design_speed_kn) / math.sqrt(9.81 * l_wl)
     c_b = 0.7 + (1 / 8) * math.atan((23 - 100 * f_n) / 4)
 
     # Approximation of the waterplane area coefficient (c_wp)
