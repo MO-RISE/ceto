@@ -220,9 +220,9 @@
     "tests/test_energy_systems_pinned.py::test_estimate_battery_system_high_energy_density_pinned_1": {
         "details": {
             "battery_packs": {
-                "capacity_kwh": 125000.0,
-                "volume_m3": 1442.1241633064517,
-                "weight_kg": 1641129.0322580645
+                "capacity_kwh": 125000.00000000003,
+                "volume_m3": 930.3982300884957,
+                "weight_kg": 1283185.8407079647
             },
             "electrical_engines": {
                 "power_kw": 4000,
@@ -230,15 +230,15 @@
                 "weight_kg": 4473.2
             }
         },
-        "total_volume_m3": 1444.5241633064518,
-        "total_weight_kg": 1645602.2322580644
+        "total_volume_m3": 932.7982300884956,
+        "total_weight_kg": 1287659.0407079647
     },
     "tests/test_energy_systems_pinned.py::test_estimate_battery_system_high_power_density_pinned_1": {
         "details": {
             "battery_packs": {
-                "capacity_kwh": 6249.999999999999,
-                "volume_m3": 72.10620816532258,
-                "weight_kg": 82056.45161290321
+                "capacity_kwh": 6250.000000000001,
+                "volume_m3": 46.51991150442478,
+                "weight_kg": 64159.29203539823
             },
             "electrical_engines": {
                 "power_kw": 8000,
@@ -246,8 +246,8 @@
                 "weight_kg": 8946.4
             }
         },
-        "total_volume_m3": 76.90620816532258,
-        "total_weight_kg": 91002.8516129032
+        "total_volume_m3": 51.31991150442478,
+        "total_weight_kg": 73105.69203539823
     },
     "tests/test_energy_systems_pinned.py::test_estimate_hydrogen_system_high_energy_density_pinned_1": {
         "details": {
@@ -336,9 +336,9 @@
     "tests/test_energy_systems_pinned.py::test_estimate_vessel_battery_system_pinned[1000-500-400-small_system]_1": {
         "details": {
             "battery_packs": {
-                "capacity_kwh": 1250.0,
-                "volume_m3": 14.421241633064517,
-                "weight_kg": 16411.290322580644
+                "capacity_kwh": 1250.0000000000002,
+                "volume_m3": 9.303982300884957,
+                "weight_kg": 12831.858407079648
             },
             "electrical_engines": {
                 "power_kw": 400,
@@ -346,8 +346,8 @@
                 "weight_kg": 447.32
             }
         },
-        "total_volume_m3": 14.661241633064517,
-        "total_weight_kg": 16858.610322580644
+        "total_volume_m3": 9.543982300884958,
+        "total_weight_kg": 13279.178407079648
     },
     "tests/test_energy_systems_pinned.py::test_estimate_vessel_battery_system_pinned[1000-500-small_system]_1": {
         "details": {
@@ -368,9 +368,9 @@
     "tests/test_energy_systems_pinned.py::test_estimate_vessel_battery_system_pinned[10000-2000-1600-medium_system]_1": {
         "details": {
             "battery_packs": {
-                "capacity_kwh": 12499.999999999998,
-                "volume_m3": 144.21241633064517,
-                "weight_kg": 164112.90322580643
+                "capacity_kwh": 12500.000000000002,
+                "volume_m3": 93.03982300884957,
+                "weight_kg": 128318.58407079647
             },
             "electrical_engines": {
                 "power_kw": 1600,
@@ -378,8 +378,8 @@
                 "weight_kg": 1789.28
             }
         },
-        "total_volume_m3": 145.17241633064518,
-        "total_weight_kg": 165902.18322580642
+        "total_volume_m3": 93.99982300884956,
+        "total_weight_kg": 130107.86407079647
     },
     "tests/test_energy_systems_pinned.py::test_estimate_vessel_battery_system_pinned[10000-2000-medium_system]_1": {
         "details": {
@@ -400,9 +400,9 @@
     "tests/test_energy_systems_pinned.py::test_estimate_vessel_battery_system_pinned[100000-15000-12000-very_large_system]_1": {
         "details": {
             "battery_packs": {
-                "capacity_kwh": 125000.0,
-                "volume_m3": 1442.1241633064517,
-                "weight_kg": 1641129.0322580645
+                "capacity_kwh": 125000.00000000003,
+                "volume_m3": 930.3982300884957,
+                "weight_kg": 1283185.8407079647
             },
             "electrical_engines": {
                 "power_kw": 12000,
@@ -410,8 +410,8 @@
                 "weight_kg": 13419.6
             }
         },
-        "total_volume_m3": 1449.3241633064517,
-        "total_weight_kg": 1654548.6322580646
+        "total_volume_m3": 937.5982300884957,
+        "total_weight_kg": 1296605.4407079648
     },
     "tests/test_energy_systems_pinned.py::test_estimate_vessel_battery_system_pinned[100000-15000-very_large_system]_1": {
         "details": {
@@ -432,9 +432,9 @@
     "tests/test_energy_systems_pinned.py::test_estimate_vessel_battery_system_pinned[50000-10000-8000-large_system]_1": {
         "details": {
             "battery_packs": {
-                "capacity_kwh": 62500.0,
-                "volume_m3": 721.0620816532258,
-                "weight_kg": 820564.5161290322
+                "capacity_kwh": 62500.000000000015,
+                "volume_m3": 465.19911504424783,
+                "weight_kg": 641592.9203539824
             },
             "electrical_engines": {
                 "power_kw": 8000,
@@ -442,8 +442,8 @@
                 "weight_kg": 8946.4
             }
         },
-        "total_volume_m3": 725.8620816532258,
-        "total_weight_kg": 829510.9161290323
+        "total_volume_m3": 469.99911504424784,
+        "total_weight_kg": 650539.3203539824
     },
     "tests/test_energy_systems_pinned.py::test_estimate_vessel_battery_system_pinned[50000-10000-large_system]_1": {
         "details": {
@@ -655,7 +655,7 @@
     },
     "tests/test_energy_systems_pinned.py::test_suggest_alternative_energy_systems_pinned[vessel_data0-voyage_profile0-ferry_pax_daily]_1": [
         {
-            "change_in_draft_m": 0.010290925526872344,
+            "change_in_draft_m": 0.012920421892507581,
             "details": {
                 "electrical_engines": {
                     "power_kw": 890,
@@ -680,26 +680,26 @@
             "total_weight_kg": 9624.770223477379
         },
         {
-            "change_in_draft_m": 0.09209992789334188,
+            "change_in_draft_m": 0.08664989055136736,
             "details": {
                 "battery_packs": {
-                    "capacity_kwh": 2928.989052335877,
-                    "volume_m3": 33.79172709146907,
-                    "weight_kg": 38454.791751635545
+                    "capacity_kwh": 2926.6674790729103,
+                    "volume_m3": 21.78372994069596,
+                    "weight_kg": 30043.66615685465
                 },
                 "electrical_engines": {
-                    "power_kw": 910,
-                    "volume_m3": 0.5459999999999999,
-                    "weight_kg": 1017.653
+                    "power_kw": 900,
+                    "volume_m3": 0.5399999999999999,
+                    "weight_kg": 1006.47
                 }
             },
-            "total_volume_m3": 34.33772709146907,
-            "total_weight_kg": 39472.44475163554
+            "total_volume_m3": 22.32372994069596,
+            "total_weight_kg": 31050.136156854653
         }
     ],
     "tests/test_energy_systems_pinned.py::test_suggest_alternative_energy_systems_pinned[vessel_data1-voyage_profile1-offshore_short]_1": [
         {
-            "change_in_draft_m": 0.009352826391702403,
+            "change_in_draft_m": 0.009606840734002012,
             "details": {
                 "electrical_engines": {
                     "power_kw": 960,
@@ -724,12 +724,12 @@
             "total_weight_kg": 20402.13776067327
         },
         {
-            "change_in_draft_m": 0.1010047900540482,
+            "change_in_draft_m": 0.08078952609993581,
             "details": {
                 "battery_packs": {
-                    "capacity_kwh": 14211.500466598667,
-                    "volume_m3": 163.9579857577828,
-                    "weight_kg": 186583.2480614728
+                    "capacity_kwh": 14202.118442057714,
+                    "volume_m3": 105.70900689598143,
+                    "weight_kg": 145791.6583432473
                 },
                 "electrical_engines": {
                     "power_kw": 970,
@@ -737,8 +737,8 @@
                     "weight_kg": 1084.751
                 }
             },
-            "total_volume_m3": 164.5399857577828,
-            "total_weight_kg": 187667.9990614728
+            "total_volume_m3": 106.29100689598143,
+            "total_weight_kg": 146876.4093432473
         }
     ],
     "tests/test_energy_systems_pinned.py::test_suggest_alternative_energy_systems_simple_pinned[10-MDO-1000-100-medium_vessel_medium]_1": [
@@ -769,9 +769,9 @@
         {
             "details": {
                 "battery_packs": {
-                    "capacity_kwh": 162000.0,
-                    "volume_m3": 1868.9929156451615,
-                    "weight_kg": 2126903.225806452
+                    "capacity_kwh": 162000.00000000003,
+                    "volume_m3": 1205.7961061946905,
+                    "weight_kg": 1663008.8495575225
                 },
                 "electrical_engines": {
                     "power_kw": 1000,
@@ -779,8 +779,8 @@
                     "weight_kg": 1118.3
                 }
             },
-            "total_volume_m3": 1869.5929156451614,
-            "total_weight_kg": 2128021.5258064517
+            "total_volume_m3": 1206.3961061946904,
+            "total_weight_kg": 1664127.1495575225
         }
     ],
     "tests/test_energy_systems_pinned.py::test_suggest_alternative_energy_systems_simple_pinned[2-MDO-500-50-small_cargo_medium]_1": [
@@ -812,8 +812,8 @@
             "details": {
                 "battery_packs": {
                     "capacity_kwh": 16200.000000000002,
-                    "volume_m3": 186.89929156451615,
-                    "weight_kg": 212690.32258064518
+                    "volume_m3": 120.57961061946904,
+                    "weight_kg": 166300.88495575223
                 },
                 "electrical_engines": {
                     "power_kw": 500,
@@ -821,8 +821,8 @@
                     "weight_kg": 559.15
                 }
             },
-            "total_volume_m3": 187.19929156451616,
-            "total_weight_kg": 213249.47258064518
+            "total_volume_m3": 120.87961061946903,
+            "total_weight_kg": 166860.03495575223
         }
     ],
     "tests/test_energy_systems_pinned.py::test_suggest_alternative_energy_systems_simple_pinned[5-MDO-330-20-small_ferry_short]_1": [
@@ -854,8 +854,8 @@
             "details": {
                 "battery_packs": {
                     "capacity_kwh": 16200.000000000002,
-                    "volume_m3": 186.89929156451615,
-                    "weight_kg": 212690.32258064518
+                    "volume_m3": 120.57961061946904,
+                    "weight_kg": 166300.88495575223
                 },
                 "electrical_engines": {
                     "power_kw": 330,
@@ -863,8 +863,8 @@
                     "weight_kg": 369.039
                 }
             },
-            "total_volume_m3": 187.09729156451615,
-            "total_weight_kg": 213059.36158064517
+            "total_volume_m3": 120.77761061946903,
+            "total_weight_kg": 166669.92395575222
         }
     ],
     "tests/test_energy_systems_pinned.py::test_suggest_alternative_energy_systems_simple_pinned[50-HFO-8000-1000-large_tanker_long]_1": [
@@ -895,9 +895,9 @@
         {
             "details": {
                 "battery_packs": {
-                    "capacity_kwh": 7515000.0,
-                    "volume_m3": 86700.50469798388,
-                    "weight_kg": 98664677.41935484
+                    "capacity_kwh": 7515000.000000001,
+                    "volume_m3": 55935.54159292036,
+                    "weight_kg": 77145132.74336283
                 },
                 "electrical_engines": {
                     "power_kw": 8000,
@@ -905,8 +905,8 @@
                     "weight_kg": 8946.4
                 }
             },
-            "total_volume_m3": 86705.30469798388,
-            "total_weight_kg": 98673623.81935485
+            "total_volume_m3": 55940.34159292036,
+            "total_weight_kg": 77154079.14336284
         }
     ],
     "tests/test_imo_pinned.py::test_estimate_energy_consumption_pinned[vessel_data0-voyage_profile0-ferry_pax_daily]_1": {
@@ -958,12 +958,12 @@
     "tests/test_integration_pinned.py::test_ais_to_vessel_data_to_fuel_consumption_pinned[80-150-50-15-15-14-12-57.0-11.0-oil_tanker]_1": 7279.305527558114,
     "tests/test_integration_pinned.py::test_complete_ferry_workflow_pinned_1": {
         "battery_system": {
-            "change_in_draft_m": 0.014024376046084109,
+            "change_in_draft_m": 0.01107154210709807,
             "details": {
                 "battery_packs": {
-                    "capacity_kwh": 575.6112140930073,
-                    "volume_m3": 6.640822724109512,
-                    "weight_kg": 7557.218197930773
+                    "capacity_kwh": 575.6112140930074,
+                    "volume_m3": 4.284381238489793,
+                    "weight_kg": 5908.929277414943
                 },
                 "electrical_engines": {
                     "power_kw": 20,
@@ -971,8 +971,8 @@
                     "weight_kg": 22.366
                 }
             },
-            "total_volume_m3": 6.6528227241095115,
-            "total_weight_kg": 7579.584197930773
+            "total_volume_m3": 4.296381238489793,
+            "total_weight_kg": 5931.295277414943
         },
         "energy_consumption": {
             "maximum_required_propulsion_power_kw": 12.652803523251832,
@@ -981,7 +981,7 @@
         },
         "fuel_consumption": 295.3,
         "gas_system": {
-            "change_in_draft_m": -0.005073091897887718,
+            "change_in_draft_m": -0.00616470187485888,
             "details": {
                 "electrical_engines": {
                     "power_kw": 20,
