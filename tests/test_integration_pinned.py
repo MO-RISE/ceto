@@ -13,6 +13,7 @@ from datetime import datetime
 
 import pytest
 
+from cetos import imo
 from cetos.ais_adapter import guesstimate_vessel_data, guesstimate_voyage_data
 from cetos.energy_systems import (
     REFERENCE_VALUES,
@@ -152,7 +153,7 @@ def test_complete_ferry_workflow_pinned(pinned):
 
     # Step 5: Suggest alternatives
     gas_system, battery_system = suggest_alternative_energy_systems(
-        vessel_data, voyage_data, REFERENCE_VALUES
+        vessel_data, voyage_data, REFERENCE_VALUES, energy_module=imo
     )
 
     # Combine all results

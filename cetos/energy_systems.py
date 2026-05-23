@@ -5,15 +5,8 @@ Energy Systems
 import copy
 import math
 
-from cetos.imo import (
-    calculate_fuel_volume,
-    estimate_energy_consumption,
-    estimate_fuel_consumption_of_propulsion_engines,
-)
 from cetos.models import VesselData, VoyageLeg, VoyageProfile
-from cetos.utils import knots_to_ms, verify_range
-
-DENSITY_SEAWATER = 1025  # kg/m3
+from cetos.utils import calculate_fuel_volume, verify_range, verify_set
 
 ELECTRICAL_ENGINE_VOLUMETRIC_POWER_DENSITY_KWPM3 = 1 / 0.0006
 ELECTRICAL_ENGINE_GRAVIMETRIC_POWER_DENSITY_KWPKG = 1 / 1.1183
@@ -73,7 +66,7 @@ def _verify_reference_values(reference_values):
         raise Exception(f"Missing reference values: {missing}")
 
 
-def estimate_internal_combustion_engine(power_kw):
+def estimate_internal_combustion_engine(power_kw, engine_class=None):
     """Estimate the key details of an internal combustion engine
 
     Arguments:
@@ -82,6 +75,15 @@ def estimate_internal_combustion_engine(power_kw):
         power: float
             Engine's Maximum Continous Rating (MCR) power (kW).
 
+        engine_class (optional): str
+            One of "SSD", "MSD", "HSD", "outboard". When omitted (default), the
+            legacy single-curve regression is used and ``power_kw`` must be in
+            [50, 2000]. When provided, the weight is routed through
+            ``estimate_combustion_main_engine_weight`` with an RPM band implied
+            by the class (SSD <= 400, MSD ~750, HSD ~1500 rpm); the volume
+            still uses the legacy power-law fit (volume data by class is a
+            documented gap). The valid power range widens to [5, 6000] kW.
+            "outboard" is reserved but not yet supported.
 
     Returns:
     --------
@@ -90,60 +92,35 @@ def estimate_internal_combustion_engine(power_kw):
             Weight (kg) and volume (m3) of the engine.
     """
 
-    verify_range("power", power_kw, 50, 2000)
-    details = {}
-    details["volume_m3"] = 0.0353 * power_kw**0.6409
-    details["weight_kg"] = 38.946 * power_kw**0.5865
-    return details
+    if engine_class is None:
+        verify_range("power", power_kw, 50, 2000)
+        return {
+            "volume_m3": 0.0353 * power_kw**0.6409,
+            "weight_kg": 38.946 * power_kw**0.5865,
+        }
 
+    verify_set("engine_class", engine_class, ["SSD", "MSD", "HSD", "outboard"])
+    verify_range("power", power_kw, 5, 6000)
 
-def _estimate_change_in_draft(vessel_data: VesselData, load_change):
-    """Estimate the change in draft of a vessel due to a change in load.
+    if engine_class == "outboard":
+        raise NotImplementedError(
+            "outboard engine sizing pending — see fishing.py / planing.py TODOs"
+        )
 
-    Arguments:
-    ----------
-
-        vessel_data
-            VesselData instance containing the vessel data.
-
-        load_change
-            Change in load (kg)
-
-    Returns:
-    --------
-
-        float
-            Change in draft (m)
-
-    Sources:
-        [1] MAN Energy Solutions. (2018). Basic Principles of Ship Propulsion.
-            Copenhagen: MAN Energy Solutions.
-        [2] Schneekluth, H., & Bertram, V. (1998). Ship design for efficiency
-            and economy (Vol. 218). Oxford: Butterworth-Heinemann.
-    """
-
-    # Approximations of length and breadth on waterline (l_wl, b_wl)
-    l_wl = vessel_data.length_m * 0.98
-    b_wl = vessel_data.beam_m
-
-    # Approximation of design block coefficient (c_b)
-    f_n = 0.5144 * knots_to_ms(vessel_data.design_speed_kn) / math.sqrt(9.81 * l_wl)
-    c_b = 0.7 + (1 / 8) * math.atan((23 - 100 * f_n) / 4)
-
-    # Approximation of the waterplane area coefficient (c_wp)
-    c_wp = (1 + 2 * c_b) / 3  # see Ch 1.6 p. 31 in [1]
-
-    # Waterplane area (a_wp)
-    a_wp = c_wp * l_wl * b_wl
-
-    # Assuming a constant waterplane area
-    draft_change = load_change / (a_wp * DENSITY_SEAWATER)
-
-    return draft_change
+    rpm_by_class = {"SSD": 300, "MSD": 750, "HSD": 1500}
+    weight_kg = estimate_combustion_main_engine_weight(
+        power_kw, rpm=rpm_by_class[engine_class]
+    )
+    # TODO: replace with class-specific volume regression once datasheet data
+    # is collected. The legacy power-law fit is a stop-gap.
+    volume_m3 = 0.0353 * power_kw**0.6409
+    return {"volume_m3": volume_m3, "weight_kg": weight_kg}
 
 
 def estimate_internal_combustion_system(
-    vessel_data: VesselData, voyage_profile: VoyageProfile
+    vessel_data: VesselData,
+    voyage_profile: VoyageProfile,
+    energy_module,
 ):
     """Estimate the key details of an internal combustion system for a vessel
     and voyage profile
@@ -157,6 +134,11 @@ def estimate_internal_combustion_system(
         voyage_profile: VoyageProfile
             VoyageProfile instance containing the voyage profile.
 
+        energy_module: module
+            Methodology module exposing ``estimate_fuel_consumption_of_propulsion_engines``
+            with the same signature as ``cetos.imo``. Pass ``cetos.imo``,
+            ``cetos.planing``, or ``cetos.fishing``.
+
     Returns:
     --------
 
@@ -169,7 +151,6 @@ def estimate_internal_combustion_system(
         The system does not include steam boilers or auxiliary engines.
 
     """
-
     # Propulsion engines
     prop_engines = estimate_internal_combustion_engine(
         vessel_data.propulsion_engine_power_kw
@@ -188,7 +169,7 @@ def estimate_internal_combustion_system(
         gearboxes_volume_m3 = 0.0
 
     # Fuel
-    fc_kg, _ = estimate_fuel_consumption_of_propulsion_engines(
+    fc_kg, _ = energy_module.estimate_fuel_consumption_of_propulsion_engines(
         vessel_data,
         voyage_profile,
         limit_7_percent=False,
@@ -435,9 +416,21 @@ def estimate_vessel_gas_hydrogen_system(
 
 
 def suggest_alternative_energy_systems(
-    vessel_data: VesselData, voyage_profile: VoyageProfile, reference_values
+    vessel_data: VesselData,
+    voyage_profile: VoyageProfile,
+    reference_values,
+    energy_module,
 ):
-    """Suggest alternative energy systems"""
+    """Suggest alternative energy systems
+
+    Arguments:
+    ----------
+
+        energy_module: module
+            Methodology module supplying ``estimate_energy_consumption`` and
+            ``estimate_fuel_consumption_of_propulsion_engines``. Pass
+            ``cetos.imo``, ``cetos.planing``, or ``cetos.fishing``.
+    """
     _verify_reference_values(reference_values)
 
     gas = _iterate_energy_system(
@@ -445,10 +438,15 @@ def suggest_alternative_energy_systems(
         voyage_profile,
         reference_values,
         estimate_vessel_gas_hydrogen_system,
+        energy_module=energy_module,
     )
 
     battery = _iterate_energy_system(
-        vessel_data, voyage_profile, reference_values, estimate_vessel_battery_system
+        vessel_data,
+        voyage_profile,
+        reference_values,
+        estimate_vessel_battery_system,
+        energy_module=energy_module,
     )
 
     return gas, battery
@@ -495,21 +493,25 @@ def _iterate_energy_system(
     voyage_profile: VoyageProfile,
     reference_values,
     estimate_energy_system,
+    energy_module,
     include_steam_boilers=False,
     limit_7_percent=False,
     delta_w=0.8,
 ):
     """Iterate energy system to address changes in draft due to changes in weight"""
-    ice = estimate_internal_combustion_system(vessel_data, voyage_profile)
+    ice = estimate_internal_combustion_system(
+        vessel_data, voyage_profile, energy_module=energy_module
+    )
     weight = ice["total_weight_kg"]
     iteration = 0
     voyage_profile_copy = copy.copy(voyage_profile)
     # Deep copy the leg lists since we'll modify them
     voyage_profile_copy.legs_manoeuvring = list(voyage_profile.legs_manoeuvring)
     voyage_profile_copy.legs_at_sea = list(voyage_profile.legs_at_sea)
+    voyage_profile_copy.legs_fishing = list(voyage_profile.legs_fishing)
 
     while iteration < 100:
-        energy = estimate_energy_consumption(
+        energy = energy_module.estimate_energy_consumption(
             vessel_data,
             voyage_profile_copy,
             include_steam_boilers=include_steam_boilers,
@@ -524,7 +526,7 @@ def _iterate_energy_system(
             **reference_values,
         )
 
-        change_draft = _estimate_change_in_draft(
+        change_draft = energy_module.estimate_change_in_draft(
             vessel_data, new_system["total_weight_kg"] - weight
         )
 
@@ -539,10 +541,14 @@ def _iterate_energy_system(
             VoyageLeg(leg.distance_nm, leg.speed_kn, leg.draft_m + change_draft)
             for leg in voyage_profile_copy.legs_at_sea
         ]
+        voyage_profile_copy.legs_fishing = [
+            VoyageLeg(leg.distance_nm, leg.speed_kn, leg.draft_m + change_draft)
+            for leg in voyage_profile_copy.legs_fishing
+        ]
         weight = new_system["total_weight_kg"]
         iteration += 1
 
-    new_system["change_in_draft_m"] = _estimate_change_in_draft(
+    new_system["change_in_draft_m"] = energy_module.estimate_change_in_draft(
         vessel_data, new_system["total_weight_kg"] - ice["total_weight_kg"]
     )
     return new_system

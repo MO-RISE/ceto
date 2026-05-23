@@ -4,6 +4,8 @@ Estimates of fuel and energy consumption for vessels.
 
 # pylint: disable=too-many-locals
 
+import math
+
 from cetos.models import (
     ENGINE_AGES,
     ENGINE_TYPES,
@@ -13,85 +15,67 @@ from cetos.models import (
     VoyageProfile,
 )
 from cetos.utils import (
+    calculate_fuel_volume,
+    calculate_installed_propulsion_power,
+    knots_to_ms,
     verify_range,
     verify_set,
 )
+
+DENSITY_SEAWATER = 1025  # kg/m3
 
 # Keep old name for backwards compatibility
 MIN_VESSEL_DRAFT = MIN_VESSEL_DRAFT_M
 
 
-def calculate_fuel_volume(mass, fuel_type):
-    """Calculate the fuel volume
+def estimate_change_in_draft(vessel_data: VesselData, load_change):
+    """Estimate the change in draft of a vessel due to a change in load.
+
+    Displacement-mode hydrostatics: assumes constant waterplane area and that
+    weight is fully supported by buoyancy. Not valid in planing regime where
+    part of the weight is supported by hydrodynamic lift, and uses a block-
+    coefficient approximation calibrated for merchant-ship hull forms.
 
     Arguments:
-    -----------
+    ----------
 
-        mass: float
-            Mass of fuel (kg).
+        vessel_data
+            VesselData instance containing the vessel data.
 
-        fuel_type: string
-            Type of fuel. Possible values:
-                - HFO: Heavy Fuel Oil
-                - MDO: Marine Diesel Oil
-                - LNG: Liquid Natural Gas
-                - MeOH: Methanol
+        load_change
+            Change in load (kg)
 
     Returns:
     --------
 
         float
-            Volume of the fuel (m3).
+            Change in draft (m)
 
-    Source:
-        Table 10 in page 294 of [1].
+    Sources:
+        [1] MAN Energy Solutions. (2018). Basic Principles of Ship Propulsion.
+            Copenhagen: MAN Energy Solutions.
+        [2] Schneekluth, H., & Bertram, V. (1998). Ship design for efficiency
+            and economy (Vol. 218). Oxford: Butterworth-Heinemann.
     """
-    verify_set("fuel_type", fuel_type, FUEL_TYPES)
-    if fuel_type == "HFO":
-        return mass / 1001
-    if fuel_type == "MDO":
-        return mass / 895
-    if fuel_type == "LNG":
-        return mass / 450
-    return mass / 790
 
+    # Approximations of length and breadth on waterline (l_wl, b_wl)
+    l_wl = vessel_data.length_m * 0.98
+    b_wl = vessel_data.beam_m
 
-def calculate_fuel_mass(volume, fuel_type):
-    """Calculate the fuel mass
+    # Approximation of design block coefficient (c_b)
+    f_n = 0.5144 * knots_to_ms(vessel_data.design_speed_kn) / math.sqrt(9.81 * l_wl)
+    c_b = 0.7 + (1 / 8) * math.atan((23 - 100 * f_n) / 4)
 
-    Arguments:
-    -----------
+    # Approximation of the waterplane area coefficient (c_wp)
+    c_wp = (1 + 2 * c_b) / 3  # see Ch 1.6 p. 31 in [1]
 
-        volume: float
-            Volume of fuel (m3).
+    # Waterplane area (a_wp)
+    a_wp = c_wp * l_wl * b_wl
 
-        fuel_type: string
-            Type of fuel used by the engine. The possible types/values are:
-                - 'HFO': Heavy Fuel Oil
-                - 'MDO': Marine Diesel Oil
-                - 'MeOH': Methanol
-                - 'LNG': Liquid Natural Gas
+    # Assuming a constant waterplane area
+    draft_change = load_change / (a_wp * DENSITY_SEAWATER)
 
-    Returns:
-    --------
-
-        float
-            Mass of the fuel (kg).
-
-    Source:
-    -------
-
-        [1] IMO. Fourth IMO GHG Study 2020. IMO. (Table 10, page 294)
-
-    """
-    verify_set("fuel_type", fuel_type, FUEL_TYPES)
-    if fuel_type == "HFO":
-        return volume * 1001
-    if fuel_type == "MDO":
-        return volume * 895
-    if fuel_type == "LNG":
-        return volume * 450
-    return volume * 790
+    return draft_change
 
 
 def estimate_specific_fuel_consumption(engine_load, engine_type, fuel_type, engine_age):
@@ -528,30 +512,6 @@ def estimate_propulsion_engine_load(
 
     # Load cannot exceed 100%
     return min(1.0, load)
-
-
-def calculate_installed_propulsion_power(vessel_data: VesselData):
-    """Calculate the installed propulsion power of a vessel
-
-    Arguments:
-    ----------
-
-        vessel_data: VesselData
-            VesselData instance describing the vessel.
-
-    Returns:
-    --------
-
-        float
-            Installed propulsion power (kW)
-    """
-    installed_propulsion_power = (
-        vessel_data.number_of_propulsion_engines
-        * vessel_data.propulsion_engine_power_kw
-    )
-    if vessel_data.double_ended:
-        installed_propulsion_power /= 2
-    return installed_propulsion_power
 
 
 def estimate_instantaneous_fuel_consumption_of_auxiliary_systems(

@@ -16,6 +16,7 @@ from fixtures import (
     OFFSHORE_VESSEL,
 )
 
+from cetos import imo
 from cetos.energy_systems import (
     REFERENCE_VALUES,
     estimate_internal_combustion_system,
@@ -63,7 +64,9 @@ def test_estimate_internal_combustion_system_pinned(
     Note: Only tests vessels with engine power <= 2000 kW due to
     estimate_internal_combustion_engine constraints.
     """
-    result = estimate_internal_combustion_system(vessel_data, voyage_profile)
+    result = estimate_internal_combustion_system(
+        vessel_data, voyage_profile, energy_module=imo
+    )
     assert result == pinned
 
 
@@ -156,7 +159,7 @@ def test_suggest_alternative_energy_systems_pinned(
     Note: Only tests vessels with engine power <= 2000 kW due to internal constraints.
     """
     result = suggest_alternative_energy_systems(
-        vessel_data, voyage_profile, REFERENCE_VALUES
+        vessel_data, voyage_profile, REFERENCE_VALUES, energy_module=imo
     )
     # Result is a tuple (gas_system, battery_system) - convert to list for JSON compatibility
     result = _to_json_serializable(result)

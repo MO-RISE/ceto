@@ -1,5 +1,6 @@
 import pytest
 
+from cetos import imo
 from cetos.energy_systems import (
     HYDROGEN_ENERGY_DENSITY_KWHPKG,
     REFERENCE_VALUES,
@@ -73,7 +74,8 @@ def test_estimate_vessel_battery_system_power_bound():
         **REFERENCE_VALUES,
     )
     expected_packs = (
-        required_power_kw / REFERENCE_VALUES["reference_battery_pack_continuous_power_kw"]
+        required_power_kw
+        / REFERENCE_VALUES["reference_battery_pack_continuous_power_kw"]
     )
     assert system["details"]["battery_packs"]["capacity_kwh"] == pytest.approx(
         expected_packs * REFERENCE_VALUES["reference_battery_pack_capacity_kwh"]
@@ -105,7 +107,9 @@ def test_estimate_vessel_gas_hydrogen_system():
 
 
 def test_suggest_alternative_energy_systems():
-    ice = estimate_internal_combustion_system(DUMMY_VESSEL_DATA, DUMMY_VOYAGE_PROFILE)
+    ice = estimate_internal_combustion_system(
+        DUMMY_VESSEL_DATA, DUMMY_VOYAGE_PROFILE, energy_module=imo
+    )
 
     energy = estimate_energy_consumption(
         DUMMY_VESSEL_DATA,
@@ -129,7 +133,7 @@ def test_suggest_alternative_energy_systems():
     )
 
     gas, battery = suggest_alternative_energy_systems(
-        DUMMY_VESSEL_DATA, DUMMY_VOYAGE_PROFILE, REFERENCE_VALUES
+        DUMMY_VESSEL_DATA, DUMMY_VOYAGE_PROFILE, REFERENCE_VALUES, energy_module=imo
     )
 
     assert ice["total_weight_kg"] != battery["total_weight_kg"]
