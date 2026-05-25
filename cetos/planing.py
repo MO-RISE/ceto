@@ -238,6 +238,14 @@ def estimate_fuel_consumption_of_propulsion_engines(
     _validate_in_scope(vessel_data)
     _validate_leg_drafts(vessel_data, voyage_profile)
 
+    # TODO: SFC and the 7% low-load cut-off are pulled from cetos.imo (IMO
+    # Fourth GHG Study 2020), whose Table 19 baselines are fitted to merchant
+    # displacement-mode engines (SSD/MSD/HSD on cargo/tanker duty cycles).
+    # Planing-yacht engines are typically high-speed marine diesels run on
+    # short, high-load duty cycles, so the load-vs-SFC curve and the low-load
+    # behaviour differ. Replace with planing-specific SFC data (e.g., engine
+    # manufacturer data sheets for the MAN/MTU/Volvo/Cummins fast-craft lines)
+    # when sourced.
     installed = calculate_installed_propulsion_power(vessel_data)
     total_fc_kg = 0.0
     total_distance_nm = 0.0
@@ -276,12 +284,13 @@ def estimate_energy_consumption(
     limit_7_percent: bool = True,
     delta_w=None,
 ):
-    """Estimate the total energy consumption of a planing-hull vessel.
+    """Estimate the propulsion energy consumption of a planing-hull vessel.
 
     Propulsion energy per leg is P_B * t with P_B from HSVA Eq. 3.65 (no
-    SFC, since this is the shaft-energy demand rather than fuel). Auxiliary
-    and steam-boiler loads are delegated to ``cetos.imo`` so the
-    vessel-type-keyed power tables remain the single source of truth.
+    SFC, since this is shaft-energy demand rather than fuel). Auxiliary
+    and steam-boiler loads are not modelled (see TODO below); ``total_kwh``
+    and ``maximum_required_total_power_kw`` therefore reflect propulsion
+    only and equal the propulsion-power figure.
 
     Arguments:
     ----------
@@ -291,8 +300,9 @@ def estimate_energy_consumption(
         voyage_profile: VoyageProfile
 
         include_steam_boilers (optional): boolean
-            If True, the steam-boiler energy and peak power are included
-            in the totals. Defaults to True.
+            Accepted for signature parity with ``cetos.imo`` but ignored;
+            steam boilers are not yet modelled for planing hulls (see
+            TODO). Defaults to True.
 
         limit_7_percent (optional): boolean
             If True, legs whose HSVA brake-power demand falls below 7% of
@@ -312,69 +322,33 @@ def estimate_energy_consumption(
             required total power demand (kW), and maximum required
             propulsion power (kW).
     """
-    del delta_w
+    del delta_w, include_steam_boilers
     _validate_in_scope(vessel_data)
     _validate_leg_drafts(vessel_data, voyage_profile)
+
+    # TODO: auxiliary-engine, steam-boiler, and at-berth/anchored hotel
+    # loads are not modelled here. Previously these were delegated to
+    # cetos.imo.estimate_auxiliary_power_demand, but the IMO Fourth GHG
+    # Study 2020 tables are vessel-class averages (e.g., a single 130 kW
+    # yacht bin) calibrated for displacement-mode commercial duty, not
+    # planing-yacht hotel profiles. Add a planing-specific aux model
+    # (manufacturer-spec service loads, a refrigeration/lighting/
+    # electronics survey, or a vessel-survey dataset) when available;
+    # until then the returned total reflects propulsion only.
     installed = calculate_installed_propulsion_power(vessel_data)
+    propulsion_kwh = 0.0
+    peak_propulsion_kw = 0.0
 
-    def _sailing(legs, mode):
-        if not legs:
-            return 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
-        total_h = sum(leg.distance_nm / leg.speed_kn for leg in legs)
-        p_aux, p_boiler = imo.estimate_auxiliary_power_demand(vessel_data, mode)
-        prop_kwh = 0.0
-        peak_prop = 0.0
-        for leg in legs:
-            p_b = _leg_brake_power_kw(vessel_data, leg)
-            load = min(p_b / installed, 1.0) if installed > 0 else 0.0
-            if load < 0.07 and limit_7_percent:
-                continue
-            prop_kwh += p_b * (leg.distance_nm / leg.speed_kn)
-            peak_prop = max(peak_prop, p_b)
-        return (
-            prop_kwh,
-            p_aux * total_h,
-            p_boiler * total_h,
-            peak_prop,
-            p_aux,
-            p_boiler,
-        )
-
-    def _stationary(hours, mode):
-        if hours == 0:
-            return 0.0, 0.0, 0.0, 0.0
-        p_aux, p_boiler = imo.estimate_auxiliary_power_demand(vessel_data, mode)
-        return p_aux * hours, p_boiler * hours, p_aux, p_boiler
-
-    modes = []
-    for legs, mode in (
-        (voyage_profile.legs_manoeuvring, "manoeuvring"),
-        (voyage_profile.legs_at_sea, "at_sea"),
-    ):
-        prop_kwh, aux_kwh, boiler_kwh, peak_prop, peak_aux, peak_boiler = _sailing(
-            legs, mode
-        )
-        modes.append((prop_kwh, aux_kwh, boiler_kwh, peak_prop, peak_aux, peak_boiler))
-    for hours, mode in (
-        (voyage_profile.time_at_berth_h, "at_berth"),
-        (voyage_profile.time_anchored_h, "anchored"),
-    ):
-        aux_kwh, boiler_kwh, peak_aux, peak_boiler = _stationary(hours, mode)
-        modes.append((0.0, aux_kwh, boiler_kwh, 0.0, peak_aux, peak_boiler))
-
-    total_kwh = 0.0
-    peak_total_kw = 0.0
-    peak_prop_kw = 0.0
-    for prop_kwh, aux_kwh, boiler_kwh, peak_prop, peak_aux, peak_boiler in modes:
-        total_kwh += prop_kwh + aux_kwh + (boiler_kwh if include_steam_boilers else 0.0)
-        mode_peak = (
-            peak_prop + peak_aux + (peak_boiler if include_steam_boilers else 0.0)
-        )
-        peak_total_kw = max(peak_total_kw, mode_peak)
-        peak_prop_kw = max(peak_prop_kw, peak_prop)
+    for leg in voyage_profile.legs_manoeuvring + voyage_profile.legs_at_sea:
+        p_b = _leg_brake_power_kw(vessel_data, leg)
+        load = min(p_b / installed, 1.0) if installed > 0 else 0.0
+        if load < 0.07 and limit_7_percent:
+            continue
+        propulsion_kwh += p_b * (leg.distance_nm / leg.speed_kn)
+        peak_propulsion_kw = max(peak_propulsion_kw, p_b)
 
     return {
-        "total_kwh": total_kwh,
-        "maximum_required_total_power_kw": peak_total_kw,
-        "maximum_required_propulsion_power_kw": peak_prop_kw,
+        "total_kwh": propulsion_kwh,
+        "maximum_required_total_power_kw": peak_propulsion_kw,
+        "maximum_required_propulsion_power_kw": peak_propulsion_kw,
     }
