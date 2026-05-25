@@ -116,6 +116,12 @@ class VesselData:
         None  # One of REFRIGERATION_SYSTEM_TYPES; required iff refrigeration_power_kw is set
     )
 
+    # Planing-hull-specific (used by cetos.planing). Optional so other vessel
+    # types keep their existing schema; required by cetos.planing.
+    displacement_kg: Optional[float] = (
+        None  # Static displacement mass at design_draft_m; required by cetos.planing
+    )
+
     def __post_init__(self):
         """Validate vessel data."""
         verify_range("length_m", self.length_m, 5.0, 450.0)
@@ -151,6 +157,8 @@ class VesselData:
 
         if self.gear_type is not None:
             verify_set("gear_type", self.gear_type, GEAR_TYPES)
+        if self.displacement_kg is not None:
+            verify_range("displacement_kg", self.displacement_kg, 100, 1_000_000_000)
         if self.refrigeration_power_kw is not None:
             verify_range("refrigeration_power_kw", self.refrigeration_power_kw, 0, 1000)
             if self.refrigeration_system_type is None:

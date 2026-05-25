@@ -225,6 +225,39 @@ MIRA_DAY_VOYAGE = VoyageProfile(
     ],
 )
 
+# Planing-hull yacht: 20 m motor yacht in the HSVA (Eq. 3.65) scope.
+# Fn at 30 kn over L_wl ~= 19.6 m is 1.12, well into the planing regime.
+YACHT_VESSEL = VesselData(
+    length_m=20.0,
+    beam_m=5.0,
+    design_speed_kn=30.0,
+    design_draft_m=1.2,
+    double_ended=False,
+    number_of_propulsion_engines=2,
+    propulsion_engine_power_kw=1_000,
+    propulsion_engine_type="HSD",
+    propulsion_engine_age="after_2000",
+    propulsion_engine_fuel_type="MDO",
+    type="yacht",
+    size=200.0,
+    # 50-tonne hull at design draft -- planing-yacht regime.
+    displacement_kg=50_000.0,
+)
+
+YACHT_DAY_VOYAGE = VoyageProfile(
+    time_anchored_h=0.0,
+    time_at_berth_h=2.0,
+    legs_manoeuvring=[
+        VoyageLeg(2.0, 8.0, 1.2),
+        VoyageLeg(2.0, 8.0, 1.2),
+    ],
+    legs_at_sea=[
+        VoyageLeg(50.0, 30.0, 1.2),
+        VoyageLeg(50.0, 30.0, 1.2),
+    ],
+)
+
+
 # Minimal voyage profile (edge case)
 MINIMAL_VOYAGE = VoyageProfile(
     time_anchored_h=0.0,

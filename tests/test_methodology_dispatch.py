@@ -1,9 +1,8 @@
 """Dispatch sanity tests for the methodology-module split.
 
-``planing`` still delegates to ``imo`` and so must match the IMO baseline on a
-ferry fixture; once planing lands its own equations these equality assertions
-will fail loudly. ``fishing`` is now a real VEAT implementation that rejects
-non-fishing vessels and must be exercised against a fishing fixture instead.
+Each methodology module (``imo``, ``planing``, ``fishing``) is exercised
+against a fixture in its own scope and must reject vessels that fall outside
+that scope when routed through ``cetos.energy_systems``.
 """
 
 import pytest
@@ -12,6 +11,8 @@ from fixtures import (
     FERRY_PAX_VESSEL,
     FREDRIKA_DAY_VOYAGE,
     FREDRIKA_VESSEL,
+    YACHT_DAY_VOYAGE,
+    YACHT_VESSEL,
 )
 
 from cetos import fishing, imo, planing
@@ -20,18 +21,6 @@ from cetos.energy_systems import (
     estimate_internal_combustion_system,
     suggest_alternative_energy_systems,
 )
-
-
-@pytest.mark.parametrize("energy_module", [imo, planing])
-def test_internal_combustion_system_dispatch_matches_imo(energy_module):
-    """planing still delegates to imo on a ferry fixture; results must match."""
-    reference = estimate_internal_combustion_system(
-        FERRY_PAX_VESSEL, FERRY_PAX_DAILY_VOYAGE, energy_module=imo
-    )
-    result = estimate_internal_combustion_system(
-        FERRY_PAX_VESSEL, FERRY_PAX_DAILY_VOYAGE, energy_module=energy_module
-    )
-    assert result == reference
 
 
 def test_fishing_rejects_non_fishing_vessel_via_dispatch():
@@ -50,26 +39,41 @@ def test_fishing_runs_for_fishing_vessel_via_dispatch():
     assert result["total_weight_kg"] > 0
 
 
-@pytest.mark.parametrize("energy_module", [planing])
-def test_suggest_alternative_energy_systems_dispatch_ferry(energy_module):
-    """planing still works on the ferry fixture (delegates to imo)."""
-    gas, battery = suggest_alternative_energy_systems(
-        FERRY_PAX_VESSEL,
-        FERRY_PAX_DAILY_VOYAGE,
-        REFERENCE_VALUES,
-        energy_module=energy_module,
+def test_planing_rejects_displacement_mode_vessel_via_dispatch():
+    """planing's Fn>=0.6 scope check must propagate through energy_systems."""
+    with pytest.raises(ValueError, match="HSVA scope"):
+        estimate_internal_combustion_system(
+            FERRY_PAX_VESSEL, FERRY_PAX_DAILY_VOYAGE, energy_module=planing
+        )
+
+
+def test_planing_runs_for_planing_vessel_via_dispatch():
+    """planing on a yacht fixture must produce positive ICE-system weight and
+    must diverge from imo on the same fixture (otherwise the HSVA brake-power
+    formula was not actually used)."""
+    planing_result = estimate_internal_combustion_system(
+        YACHT_VESSEL, YACHT_DAY_VOYAGE, energy_module=planing
     )
-    assert gas["total_weight_kg"] > 0
-    assert battery["total_weight_kg"] > 0
+    imo_result = estimate_internal_combustion_system(
+        YACHT_VESSEL, YACHT_DAY_VOYAGE, energy_module=imo
+    )
+    assert planing_result["total_weight_kg"] > 0
+    assert planing_result["total_weight_kg"] != imo_result["total_weight_kg"]
 
 
-def test_suggest_alternative_energy_systems_dispatch_fishing():
-    """fishing module routes through suggest_alternative_energy_systems on Fredrika."""
+@pytest.mark.parametrize(
+    "energy_module,vessel,voyage",
+    [
+        (imo, FERRY_PAX_VESSEL, FERRY_PAX_DAILY_VOYAGE),
+        (planing, YACHT_VESSEL, YACHT_DAY_VOYAGE),
+        (fishing, FREDRIKA_VESSEL, FREDRIKA_DAY_VOYAGE),
+    ],
+)
+def test_suggest_alternative_energy_systems_dispatch(energy_module, vessel, voyage):
+    """Each module routes through suggest_alternative_energy_systems on an
+    in-scope fixture and yields positive gas- and battery-system weights."""
     gas, battery = suggest_alternative_energy_systems(
-        FREDRIKA_VESSEL,
-        FREDRIKA_DAY_VOYAGE,
-        REFERENCE_VALUES,
-        energy_module=fishing,
+        vessel, voyage, REFERENCE_VALUES, energy_module=energy_module
     )
     assert gas["total_weight_kg"] > 0
     assert battery["total_weight_kg"] > 0
