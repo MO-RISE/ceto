@@ -42,6 +42,21 @@ ENGINE_TYPES = [
 
 ENGINE_AGES = ["before_1984", "1984-2000", "after_2000"]
 
+GEAR_TYPES = [
+    "seine",
+    "troll",
+    "gill_net",
+    "gill_net_with_power_roller",
+    "longline_autoline",
+    "longline_sheave_or_drum",
+    "longline_sheave_and_drum",
+    "pot_large",
+    "pot_small",
+    "other",
+]
+
+REFRIGERATION_SYSTEM_TYPES = ["direct_drive", "electric", "hydraulic"]
+
 # Validation limits
 MAX_VESSEL_SPEED_KN = 50
 MIN_VESSEL_DRAFT_M = 0.1
@@ -89,6 +104,18 @@ class VesselData:
     propulsion_engine_age: str  # One of ENGINE_AGES
     propulsion_engine_fuel_type: str  # One of FUEL_TYPES
 
+    # Fishing-specific (used by cetos.fishing). Optional so non-fishing
+    # vessels keep their existing schema.
+    gear_type: Optional[str] = (
+        None  # One of GEAR_TYPES; required when type == "miscellaneous-fishing"
+    )
+    refrigeration_power_kw: Optional[float] = (
+        None  # Average installed refrigeration power; None => not installed
+    )
+    refrigeration_system_type: Optional[str] = (
+        None  # One of REFRIGERATION_SYSTEM_TYPES; required iff refrigeration_power_kw is set
+    )
+
     def __post_init__(self):
         """Validate vessel data."""
         verify_range("length_m", self.length_m, 5.0, 450.0)
@@ -121,6 +148,20 @@ class VesselData:
 
         if self.size is not None:
             verify_range("size", self.size, 0, 500_000)
+
+        if self.gear_type is not None:
+            verify_set("gear_type", self.gear_type, GEAR_TYPES)
+        if self.refrigeration_power_kw is not None:
+            verify_range("refrigeration_power_kw", self.refrigeration_power_kw, 0, 1000)
+            if self.refrigeration_system_type is None:
+                raise ValueError(
+                    "refrigeration_system_type must be set when refrigeration_power_kw is provided"
+                )
+            verify_set(
+                "refrigeration_system_type",
+                self.refrigeration_system_type,
+                REFRIGERATION_SYSTEM_TYPES,
+            )
 
 
 @dataclass

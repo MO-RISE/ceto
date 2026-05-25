@@ -153,6 +153,78 @@ ROPAX_FREQUENT_VOYAGE = VoyageProfile(
     ],
 )
 
+# Fishing vessel: Fredrika (Stigfjord 40, 2016).
+# Source: Barman & Soerfeldt (2024) Table 2.1 (vessel) and Tables 4.4/4.8
+# (representative 12-string fishing day; thesis Section 4.1.2-4.1.3).
+FREDRIKA_VESSEL = VesselData(
+    length_m=11.91,
+    beam_m=4.0,
+    design_speed_kn=9.0,
+    design_draft_m=1.5,
+    double_ended=False,
+    number_of_propulsion_engines=1,
+    propulsion_engine_power_kw=242,
+    propulsion_engine_type="HSD",
+    propulsion_engine_age="after_2000",
+    propulsion_engine_fuel_type="MDO",
+    type="miscellaneous-fishing",
+    size=11.1,
+    gear_type="pot_small",
+)
+
+# Approximate representative day, ~8.8 h total, 12 strings of pots.
+# Table 4.4 averages for the 10 days with >=12 strings:
+#   steaming out 1.0 h / 7.7 nm; fishing 6.8 h / 22.6 nm; steaming in 1.0 h / 7.2 nm.
+# Within the 6.8 h fishing mode, the boat alternates between picking pots at
+# 0.7 kn (~24 min/string * 12 = 4.8 h) and short transits between strings at
+# ~9 kn (~2.0 h, ~19.2 nm). Both sub-modes are tagged "fishing" for the
+# hydraulics/DC duty cycles, but propulsion power differs hugely.
+FREDRIKA_DAY_VOYAGE = VoyageProfile(
+    time_anchored_h=0.0,
+    time_at_berth_h=0.0,
+    legs_at_sea=[
+        VoyageLeg(7.7, 8.8, 1.5),  # steaming out: 0.875 h
+        VoyageLeg(7.2, 8.8, 1.5),  # steaming in: 0.818 h
+    ],
+    legs_fishing=[
+        VoyageLeg(18.0, 9.0, 1.5),  # between-string transits: 2.0 h
+        VoyageLeg(3.4, 0.7, 1.5),  # pot pickup, 12 strings * 24 min: 4.857 h
+    ],
+)
+
+# Fishing vessel: Mira (Stigfjord 37, 1999). Smaller engine, slower transit.
+MIRA_VESSEL = VesselData(
+    length_m=11.0,
+    beam_m=4.1,
+    design_speed_kn=7.0,
+    design_draft_m=1.5,
+    double_ended=False,
+    number_of_propulsion_engines=1,
+    propulsion_engine_power_kw=167,
+    propulsion_engine_type="HSD",
+    propulsion_engine_age="1984-2000",
+    propulsion_engine_fuel_type="MDO",
+    type="miscellaneous-fishing",
+    size=12.11,
+    gear_type="pot_small",
+)
+
+# Mira average day: 7 strings, ~7.1 h, 21.3 nm (Table 4.5).
+# Within the 4.2 h fishing mode: ~2.8 h pot pickup at 0.7 kn (7 strings * 24 min)
+# and ~1.4 h between-string transits at 7 kn.
+MIRA_DAY_VOYAGE = VoyageProfile(
+    time_anchored_h=0.0,
+    time_at_berth_h=0.0,
+    legs_at_sea=[
+        VoyageLeg(5.4, 7.0, 1.5),  # steaming out: 0.77 h
+        VoyageLeg(6.3, 7.0, 1.5),  # steaming in: 0.9 h
+    ],
+    legs_fishing=[
+        VoyageLeg(9.8, 7.0, 1.5),  # between-string transits: 1.4 h
+        VoyageLeg(1.96, 0.7, 1.5),  # pot pickup, 7 strings * 24 min: 2.8 h
+    ],
+)
+
 # Minimal voyage profile (edge case)
 MINIMAL_VOYAGE = VoyageProfile(
     time_anchored_h=0.0,
