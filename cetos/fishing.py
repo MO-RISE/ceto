@@ -393,30 +393,20 @@ def estimate_energy_consumption(
     }
 
 
-def estimate_change_in_draft(vessel_data: VesselData, load_change):
-    """Estimate the change in draft of a fishing vessel due to a change in load.
+def _apply_change_in_displacement(
+    vessel_data: VesselData, voyage_profile: VoyageProfile, load_change
+):
+    """Apply a displacement change to the (vessel_data, voyage_profile) state.
 
-    TODO: Returns 0.0 unconditionally. The merchant-ship block-coefficient
-    approximation in ``cetos.imo.estimate_change_in_draft`` is calibrated for
-    cargo/tanker hull forms; fishing-boat hulls (beamy, full-bodied, often
-    with high deadrise) have meaningfully different Cb/Cwp, so the delegated
-    estimate is biased. A fishing-specific hydrostatics model is needed.
+    Called only by ``cetos.energy_systems._iterate_energy_system`` as its
+    per-module mass-feedback channel.
 
-    Arguments:
-    ----------
-
-        vessel_data: VesselData
-            VesselData instance describing the vessel.
-
-        load_change: float
-            Change in load (kg).
-
-    Returns:
-    --------
-
-        float
-            Change in draft (m). Currently always 0.0 pending a
-            fishing-specific hydrostatics model.
+    Currently a no-op (both inputs flow through unchanged) pending a
+    fishing-specific hydrostatics model: fishing-boat hulls (beamy,
+    full-bodied, often with high deadrise) have meaningfully different
+    Cb/Cwp from cargo/tanker forms, so the merchant-ship Archimedes
+    relation in ``cetos.imo`` is biased. When that model lands, mirror
+    the IMO implementation here.
     """
-    del vessel_data, load_change
-    return 0.0
+    del load_change
+    return vessel_data, voyage_profile

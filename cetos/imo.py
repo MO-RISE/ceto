@@ -4,6 +4,7 @@ Estimates of fuel and energy consumption for vessels.
 
 # pylint: disable=too-many-locals
 
+import copy
 import math
 
 from cetos.models import (
@@ -12,6 +13,7 @@ from cetos.models import (
     FUEL_TYPES,
     MIN_VESSEL_DRAFT_M,
     VesselData,
+    VoyageLeg,
     VoyageProfile,
 )
 from cetos.utils import (
@@ -26,6 +28,37 @@ DENSITY_SEAWATER = 1025  # kg/m3
 
 # Keep old name for backwards compatibility
 MIN_VESSEL_DRAFT = MIN_VESSEL_DRAFT_M
+
+
+def _apply_change_in_displacement(
+    vessel_data: VesselData, voyage_profile: VoyageProfile, load_change
+):
+    """Apply a displacement change to the (vessel_data, voyage_profile) state.
+
+    The IMO methodology runs the propulsion-load calc on a per-leg draft;
+    adding mass therefore lands on leg drafts via Archimedes -- compute
+    Delta_T from load_change, then return a new VoyageProfile with every
+    leg draft shifted by that amount. vessel_data is returned unchanged.
+
+    Called only by ``cetos.energy_systems._iterate_energy_system`` as its
+    per-module mass-feedback channel. User code should keep using
+    ``estimate_change_in_draft`` for stand-alone draft reporting.
+    """
+    delta_draft = estimate_change_in_draft(vessel_data, load_change)
+    new_voyage = copy.copy(voyage_profile)
+    new_voyage.legs_manoeuvring = [
+        VoyageLeg(leg.distance_nm, leg.speed_kn, leg.draft_m + delta_draft)
+        for leg in voyage_profile.legs_manoeuvring
+    ]
+    new_voyage.legs_at_sea = [
+        VoyageLeg(leg.distance_nm, leg.speed_kn, leg.draft_m + delta_draft)
+        for leg in voyage_profile.legs_at_sea
+    ]
+    new_voyage.legs_fishing = [
+        VoyageLeg(leg.distance_nm, leg.speed_kn, leg.draft_m + delta_draft)
+        for leg in voyage_profile.legs_fishing
+    ]
+    return vessel_data, new_voyage
 
 
 def estimate_change_in_draft(vessel_data: VesselData, load_change):

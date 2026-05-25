@@ -2,10 +2,9 @@
 Energy Systems
 """
 
-import copy
 import math
 
-from cetos.models import VesselData, VoyageLeg, VoyageProfile
+from cetos.models import VesselData, VoyageProfile
 from cetos.utils import calculate_fuel_volume, verify_range, verify_set
 
 ELECTRICAL_ENGINE_VOLUMETRIC_POWER_DENSITY_KWPM3 = 1 / 0.0006
@@ -498,22 +497,30 @@ def _iterate_energy_system(
     limit_7_percent=False,
     delta_w=0.8,
 ):
-    """Iterate energy system to address changes in draft due to changes in weight"""
+    """Iterate energy system to address changes in displacement due to changes
+    in weight.
+
+    Each methodology module owns its mass-feedback channel via
+    ``_apply_change_in_displacement(vessel_data, voyage_profile, load_change)
+    -> (vessel_data, voyage_profile)``.
+
+    Convergence is mass-based: the loop stops when the per-iteration weight
+    delta drops below 0.1% of the current system weight. That's tight enough
+    to keep behaviour effectively converged, and module-agnostic so fishing
+    doesn't need a draft-based stub.
+    """
     ice = estimate_internal_combustion_system(
         vessel_data, voyage_profile, energy_module=energy_module
     )
     weight = ice["total_weight_kg"]
     iteration = 0
-    voyage_profile_copy = copy.copy(voyage_profile)
-    # Deep copy the leg lists since we'll modify them
-    voyage_profile_copy.legs_manoeuvring = list(voyage_profile.legs_manoeuvring)
-    voyage_profile_copy.legs_at_sea = list(voyage_profile.legs_at_sea)
-    voyage_profile_copy.legs_fishing = list(voyage_profile.legs_fishing)
+    vessel_iter = vessel_data
+    voyage_iter = voyage_profile
 
     while iteration < 100:
         energy = energy_module.estimate_energy_consumption(
-            vessel_data,
-            voyage_profile_copy,
+            vessel_iter,
+            voyage_iter,
             include_steam_boilers=include_steam_boilers,
             limit_7_percent=limit_7_percent,
             delta_w=delta_w,
@@ -526,31 +533,17 @@ def _iterate_energy_system(
             **reference_values,
         )
 
-        change_draft = energy_module.estimate_change_in_draft(
-            vessel_data, new_system["total_weight_kg"] - weight
-        )
+        delta_w_kg = new_system["total_weight_kg"] - weight
 
-        if abs(change_draft) < vessel_data.design_draft_m * 0.01:
+        if abs(delta_w_kg) < new_system["total_weight_kg"] * 0.001:
             break
 
-        voyage_profile_copy.legs_manoeuvring = [
-            VoyageLeg(leg.distance_nm, leg.speed_kn, leg.draft_m + change_draft)
-            for leg in voyage_profile_copy.legs_manoeuvring
-        ]
-        voyage_profile_copy.legs_at_sea = [
-            VoyageLeg(leg.distance_nm, leg.speed_kn, leg.draft_m + change_draft)
-            for leg in voyage_profile_copy.legs_at_sea
-        ]
-        voyage_profile_copy.legs_fishing = [
-            VoyageLeg(leg.distance_nm, leg.speed_kn, leg.draft_m + change_draft)
-            for leg in voyage_profile_copy.legs_fishing
-        ]
+        vessel_iter, voyage_iter = energy_module._apply_change_in_displacement(
+            vessel_iter, voyage_iter, delta_w_kg
+        )
         weight = new_system["total_weight_kg"]
         iteration += 1
 
-    new_system["change_in_draft_m"] = energy_module.estimate_change_in_draft(
-        vessel_data, new_system["total_weight_kg"] - ice["total_weight_kg"]
-    )
     return new_system
 
 

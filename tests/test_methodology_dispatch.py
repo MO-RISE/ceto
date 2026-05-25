@@ -47,6 +47,35 @@ def test_planing_rejects_displacement_mode_vessel_via_dispatch():
         )
 
 
+def test_planing_rejects_user_leg_draft_off_design():
+    """Per-leg drafts other than design_draft_m must be rejected; load
+    deltas belong on vessel_data.displacement_kg via
+    ``_apply_change_in_displacement``, not on leg drafts."""
+    from cetos.models import VoyageLeg, VoyageProfile
+
+    bad_voyage = VoyageProfile(
+        time_anchored_h=0.0,
+        time_at_berth_h=0.0,
+        legs_at_sea=[VoyageLeg(50.0, 30.0, YACHT_VESSEL.design_draft_m + 0.3)],
+    )
+    with pytest.raises(ValueError, match="every leg draft must equal"):
+        planing.estimate_fuel_consumption_of_propulsion_engines(
+            YACHT_VESSEL, bad_voyage
+        )
+
+
+def test_planing_apply_change_in_displacement_bumps_displacement():
+    """planing's mass-feedback channel must add load_change to displacement_kg
+    on a copy, leaving the input vessel_data untouched and voyage_profile
+    flowing through unchanged."""
+    new_vessel, new_voyage = planing._apply_change_in_displacement(
+        YACHT_VESSEL, YACHT_DAY_VOYAGE, 1_000.0
+    )
+    assert new_vessel.displacement_kg == YACHT_VESSEL.displacement_kg + 1_000.0
+    assert YACHT_VESSEL.displacement_kg == 50_000.0  # input unchanged
+    assert new_voyage is YACHT_DAY_VOYAGE
+
+
 def test_planing_runs_for_planing_vessel_via_dispatch():
     """planing on a yacht fixture must produce positive ICE-system weight and
     must diverge from imo on the same fixture (otherwise the HSVA brake-power

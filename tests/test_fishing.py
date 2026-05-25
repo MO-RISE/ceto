@@ -204,8 +204,12 @@ def test_fuel_consumption_returns_tuple():
     assert fuel_kg > 0 and avg_l_per_nm > 0
 
 
-def test_change_in_draft_returns_zero():
+def test_apply_change_in_displacement_is_noop_pending_hydrostatics():
     # TODO: replace with a fishing-specific hydrostatics check once the model
-    # is implemented; until then the function returns 0.0 unconditionally.
-    assert fishing.estimate_change_in_draft(FREDRIKA_VESSEL, 100.0) == 0.0
-    assert fishing.estimate_change_in_draft(FREDRIKA_VESSEL, -5_000.0) == 0.0
+    # is implemented; until then load_change has no effect on the state and
+    # both inputs flow through unchanged.
+    new_vessel, new_voyage = fishing._apply_change_in_displacement(
+        FREDRIKA_VESSEL, FREDRIKA_DAY_VOYAGE, 100.0
+    )
+    assert new_vessel is FREDRIKA_VESSEL
+    assert new_voyage is FREDRIKA_DAY_VOYAGE

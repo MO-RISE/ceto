@@ -30,6 +30,7 @@ regime (Fn >= ~0.6). Vessels with a design Froude number below that
 threshold are rejected with ``ValueError`` -- they should use ``cetos.imo``.
 """
 
+import copy
 import math
 
 from cetos import imo
@@ -118,16 +119,62 @@ def _leg_brake_power_kw(vessel_data: VesselData, leg) -> float:
     + mechanical efficiency baked into the HSVA fit -- P_B is brake power at
     the engine flange, not calm-water resistance.
 
-    Per-leg displacement is the vessel's design displacement scaled by the
-    draft ratio (T_leg / T_design); this captures load deltas applied by
-    cetos.energy_systems (which translates added weight into added draft)
-    while assuming a roughly constant waterplane.
+    Displacement is read directly from ``vessel_data.displacement_kg``;
+    leg.draft_m is intentionally not consulted (planing-hull draft does not
+    vary leg-to-leg in operational practice, and the iteration weight-
+    feedback channel for planing is ``_apply_change_in_displacement``).
     """
-    disp_kg = vessel_data.displacement_kg * (leg.draft_m / vessel_data.design_draft_m)
+    disp_kg = vessel_data.displacement_kg
     b_c = 0.215 * disp_kg**0.275  # Eq. 3.66
     return 0.7354 * (  # Eq. 3.65
         disp_kg * leg.speed_kn / 765.2 + b_c**2 * leg.speed_kn**3 / 1051.1
     )
+
+
+def _validate_leg_drafts(
+    vessel_data: VesselData, voyage_profile: VoyageProfile
+) -> None:
+    """Reject per-leg drafts that differ from design draft.
+
+    Planing-hull draft does not vary leg-to-leg in operational practice,
+    and ``_leg_brake_power_kw`` deliberately ignores leg.draft_m. Setting
+    a non-design draft would silently no-op, so we make it loud instead.
+    Load changes are routed through ``vessel_data.displacement_kg`` via
+    ``_apply_change_in_displacement``.
+    """
+    legs = (
+        voyage_profile.legs_manoeuvring
+        + voyage_profile.legs_at_sea
+        + voyage_profile.legs_fishing
+    )
+    for leg in legs:
+        if not math.isclose(leg.draft_m, vessel_data.design_draft_m):
+            raise ValueError(
+                "cetos.planing (HSVA scope): every leg draft must equal "
+                f"vessel_data.design_draft_m={vessel_data.design_draft_m}; "
+                f"got leg.draft_m={leg.draft_m}. Planing-hull draft does "
+                "not vary leg to leg; route load deltas through "
+                "vessel_data.displacement_kg instead."
+            )
+
+
+def _apply_change_in_displacement(
+    vessel_data: VesselData, voyage_profile: VoyageProfile, load_change
+):
+    """Apply a displacement change to the (vessel_data, voyage_profile) state.
+
+    Planing-hull propulsion (Eq. 3.65) takes displacement mass as input, so
+    a load delta lands directly on a copy of vessel_data with
+    ``displacement_kg`` bumped by ``load_change``. voyage_profile is
+    returned unchanged. Mass conservation: ΔDisplacement = Δload exactly,
+    no hydrostatic translation through Cwp.
+
+    Called only by ``cetos.energy_systems._iterate_energy_system`` as its
+    per-module mass-feedback channel.
+    """
+    new_vessel = copy.copy(vessel_data)
+    new_vessel.displacement_kg = vessel_data.displacement_kg + load_change
+    return new_vessel, voyage_profile
 
 
 # ---------------------------------------------------------------------------
@@ -189,6 +236,7 @@ def estimate_fuel_consumption_of_propulsion_engines(
     """
     del delta_w
     _validate_in_scope(vessel_data)
+    _validate_leg_drafts(vessel_data, voyage_profile)
 
     installed = calculate_installed_propulsion_power(vessel_data)
     total_fc_kg = 0.0
@@ -266,6 +314,7 @@ def estimate_energy_consumption(
     """
     del delta_w
     _validate_in_scope(vessel_data)
+    _validate_leg_drafts(vessel_data, voyage_profile)
     installed = calculate_installed_propulsion_power(vessel_data)
 
     def _sailing(legs, mode):
@@ -329,53 +378,3 @@ def estimate_energy_consumption(
         "maximum_required_total_power_kw": peak_total_kw,
         "maximum_required_propulsion_power_kw": peak_prop_kw,
     }
-
-
-def estimate_change_in_draft(vessel_data: VesselData, load_change):
-    """Estimate the change in static draft due to a change in load.
-
-    Static buoyancy (Archimedes) with the planing-hull waterplane:
-        delta_T = delta_W / (rho_sw * A_wp),   A_wp = C_wp * L_wl * B
-
-    The block coefficient is backed out from the user-supplied
-    ``vessel_data.displacement_kg`` at ``design_draft_m``:
-        C_b = D / (rho_sw * L_wl * B * T_design)
-        C_wp = (1 + 2*C_b) / 3                   (Schneekluth & Bertram 1998)
-    so the result is calibrated to the actual vessel rather than a
-    generic planing-hull Cb.
-
-    Valid at rest (or near rest). At planing speed a substantial share of
-    weight is supported by hydrodynamic lift, so the running draft is
-    smaller than the static result; this function returns the static value,
-    which is what ``cetos.energy_systems`` uses for weight-induced draft
-    deltas.
-
-    Arguments:
-    ----------
-
-        vessel_data: VesselData
-            Must have ``displacement_kg`` set; otherwise ``ValueError``.
-
-        load_change: float
-            Change in load (kg).
-
-    Returns:
-    --------
-
-        float
-            Change in static draft (m).
-
-    Sources:
-    --------
-
-        [1] Schneekluth, H. & Bertram, V. (1998). Ship design for
-            efficiency and economy: C_wp = (1 + 2*Cb) / 3.
-    """
-    _validate_in_scope(vessel_data)
-    l_wl = vessel_data.length_m * 0.98
-    c_b = vessel_data.displacement_kg / (
-        _RHO_SW_KG_PER_M3 * l_wl * vessel_data.beam_m * vessel_data.design_draft_m
-    )
-    c_wp = (1.0 + 2.0 * c_b) / 3.0
-    a_wp = c_wp * l_wl * vessel_data.beam_m
-    return load_change / (a_wp * _RHO_SW_KG_PER_M3)

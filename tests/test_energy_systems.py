@@ -139,14 +139,19 @@ def test_suggest_alternative_energy_systems():
     assert ice["total_weight_kg"] != battery["total_weight_kg"]
     assert ice["total_weight_kg"] != gas["total_weight_kg"]
 
-    # If the draft change is lower than 1% of the design draft there should be no
-    # differences
-    if abs(battery["change_in_draft_m"]) < DUMMY_VESSEL_DATA.design_draft_m * 0.01:
+    # The iteration loop breaks when |new - prev| < new * 0.001 (mass-based,
+    # 0.1% of system weight). On the very first pass the loop compares the
+    # single-shot result (~battery_o) against the ICE weight; if that delta is
+    # already below the threshold, the loop breaks before applying any update
+    # and the iterated result equals the single-shot result.
+    battery_delta = battery_o["total_weight_kg"] - ice["total_weight_kg"]
+    if abs(battery_delta) < battery_o["total_weight_kg"] * 0.001:
         assert battery_o["total_weight_kg"] == battery["total_weight_kg"]
     else:
         assert battery_o["total_weight_kg"] != battery["total_weight_kg"]
 
-    if abs(gas["change_in_draft_m"]) < DUMMY_VESSEL_DATA.design_draft_m * 0.01:
+    gas_delta = gas_o["total_weight_kg"] - ice["total_weight_kg"]
+    if abs(gas_delta) < gas_o["total_weight_kg"] * 0.001:
         assert gas_o["total_weight_kg"] == gas["total_weight_kg"]
     else:
         assert gas_o["total_weight_kg"] != gas["total_weight_kg"]
