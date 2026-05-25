@@ -8,7 +8,7 @@ from dataclasses import replace
 import pytest
 from pytest import approx
 
-from cetos import fishing, imo
+from cetos import fishing
 from cetos.models import VoyageLeg, VoyageProfile
 from fixtures import FERRY_PAX_VESSEL, FREDRIKA_DAY_VOYAGE, FREDRIKA_VESSEL
 
@@ -204,8 +204,8 @@ def test_fuel_consumption_returns_tuple():
     assert fuel_kg > 0 and avg_l_per_nm > 0
 
 
-def test_change_in_draft_delegates_to_imo():
-    # Use a load_change small enough not to trigger any imo internal guards.
-    assert fishing.estimate_change_in_draft(
-        FREDRIKA_VESSEL, 100.0
-    ) == imo.estimate_change_in_draft(FREDRIKA_VESSEL, 100.0)
+def test_change_in_draft_returns_zero():
+    # TODO: replace with a fishing-specific hydrostatics check once the model
+    # is implemented; until then the function returns 0.0 unconditionally.
+    assert fishing.estimate_change_in_draft(FREDRIKA_VESSEL, 100.0) == 0.0
+    assert fishing.estimate_change_in_draft(FREDRIKA_VESSEL, -5_000.0) == 0.0

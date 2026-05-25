@@ -22,7 +22,7 @@ shore power.
 
 import math
 
-from cetos import imo, utils
+from cetos import utils
 from cetos.models import VesselData, VoyageProfile
 
 # ---------------------------------------------------------------------------
@@ -172,19 +172,52 @@ def estimate_fuel_consumption_of_propulsion_engines(
     limit_7_percent=True,
     delta_w=None,
 ):
-    """Main-engine fuel via VEAT propulsion + engine modules + auxiliary draw.
+    """Estimate the fuel consumption of the main engine of a fishing vessel.
 
     Small fishing vessels typically have a single main engine that drives the
     propeller AND every auxiliary (hydraulic pump, alternator, optional
-    refrigeration compressor). Per thesis Table 4.6 the engine model
+    refrigeration compressor). Per Table 4.6 in [2] the engine model
     F = alpha + beta * P is integrated over delivered shaft power including
     auxiliary loads — the idle (alpha * h) plus beta * E_aux contributions
     are attributed back to the main engine.
 
-    ``limit_7_percent`` and ``delta_w`` are accepted for signature parity with
-    ``cetos.imo`` but ignored.
+    Arguments:
+    ----------
 
-    Returns ``(fuel_kg, avg_l_per_nm)``.
+        vessel_data: VesselData
+            VesselData instance describing the vessel. Must be of type
+            'miscellaneous-fishing', 9-30 m LOA, design speed <= 12 kn, and
+            have ``gear_type`` set.
+
+        voyage_profile: VoyageProfile
+            VoyageProfile instance describing the voyage profile. Time at
+            berth/anchor is ignored (shore power assumed).
+
+        limit_7_percent (optional): boolean
+            Accepted for signature parity with ``cetos.imo`` but ignored;
+            VEAT uses a continuous fuel-consumption polynomial with no
+            low-load cut-off. Defaults to True.
+
+        delta_w (optional): float
+            Accepted for signature parity with ``cetos.imo`` but ignored;
+            VEAT does not apply a speed-power correction factor. Defaults
+            to None.
+
+    Returns:
+    --------
+
+        Tuple(float, float)
+            Total fuel consumed (kg) over the voyage and average fuel
+            consumption (L/nm).
+
+    Sources:
+    --------
+
+        [1] Kemp, J. (2018). Vessel energy analysis tool (VEAT).
+        [2] Barman, A., & Soerfeldt, E. (2024). A method for determining
+            feasibility of electrification of small fishing vessels.
+            Appendix B contains the metric reformulation used here
+            (Eqs. B.1, B.3, B.5, B.7, B.8).
     """
     del limit_7_percent, delta_w
     _validate_vessel_in_scope(vessel_data)
@@ -238,21 +271,65 @@ def estimate_energy_consumption(
     limit_7_percent=True,
     delta_w=None,
 ):
-    """Total shaft energy + peak power across all VEAT subsystems.
+    """Estimate the energy consumption of a fishing vessel.
 
-    Subsystem activity by leg type (locked, not configurable):
+    Sums shaft energy and bounds peak power across the VEAT subsystems.
+    Subsystem activity by leg type is fixed (not configurable):
+
         propulsion    : manoeuvring + at_sea + fishing
         hydraulics    : fishing only                    (rho from gear lookup)
         DC            : manoeuvring + at_sea + fishing
         refrigeration : manoeuvring + at_sea + fishing  (only if installed)
 
-    ``include_steam_boilers``, ``limit_7_percent``, ``delta_w`` are accepted
-    for parity with ``cetos.imo`` and ignored.
+    The peak power figure is a bound: propulsion peak plus every auxiliary
+    that can be simultaneously active during a fishing leg.
 
-    Returns a dict with the keys that ``cetos.energy_systems`` consumes:
-        total_kwh, maximum_required_total_power_kw,
-        maximum_required_propulsion_power_kw
-    plus a per-subsystem breakdown for diagnostics.
+    Arguments:
+    ----------
+
+        vessel_data: VesselData
+            VesselData instance describing the vessel. Must be of type
+            'miscellaneous-fishing', 9-30 m LOA, design speed <= 12 kn, and
+            have ``gear_type`` set.
+
+        voyage_profile: VoyageProfile
+            VoyageProfile instance describing the voyage profile. Time at
+            berth/anchor is ignored (shore power assumed).
+
+        include_steam_boilers (optional): boolean
+            Accepted for signature parity with ``cetos.imo`` but ignored;
+            small fishing vessels are not modelled as having steam boilers.
+            Defaults to True.
+
+        limit_7_percent (optional): boolean
+            Accepted for signature parity with ``cetos.imo`` but ignored;
+            see ``estimate_fuel_consumption_of_propulsion_engines``.
+            Defaults to True.
+
+        delta_w (optional): float
+            Accepted for signature parity with ``cetos.imo`` but ignored;
+            see ``estimate_fuel_consumption_of_propulsion_engines``.
+            Defaults to None.
+
+    Returns:
+    --------
+
+        Dict
+            Dictionary with total energy consumption (kWh), maximum required
+            total power demand (kW), maximum required propulsion power (kW),
+            and a per-subsystem breakdown (propulsion_kwh, hydraulic_kwh,
+            dc_kwh, refrigeration_kwh) for diagnostics.
+
+    Sources:
+    --------
+
+        [1] Kemp, J. (2018). Vessel energy analysis tool (VEAT).
+            Table 12 (refrigeration efficiencies), Table 13 (per-gear deck
+            power and duty cycle).
+        [2] Barman, A., & Soerfeldt, E. (2024). A method for determining
+            feasibility of electrification of small fishing vessels.
+            Appendix B contains the metric reformulation used here
+            (Eqs. B.1, B.2, B.3, B.5).
     """
     del include_steam_boilers, limit_7_percent, delta_w
     _validate_vessel_in_scope(vessel_data)
@@ -317,12 +394,29 @@ def estimate_energy_consumption(
 
 
 def estimate_change_in_draft(vessel_data: VesselData, load_change):
-    """Delegate to imo hydrostatics.
+    """Estimate the change in draft of a fishing vessel due to a change in load.
 
-    The merchant-ship block-coefficient approximation used by imo is calibrated
-    for cargo/tanker hull forms. Fishing-boat hulls (beamy, full-bodied, often
-    with high deadrise) have meaningfully different Cb/Cwp, so the predicted
-    draft change is biased even though the hydrostatics machinery itself is
-    appropriate.
+    TODO: Returns 0.0 unconditionally. The merchant-ship block-coefficient
+    approximation in ``cetos.imo.estimate_change_in_draft`` is calibrated for
+    cargo/tanker hull forms; fishing-boat hulls (beamy, full-bodied, often
+    with high deadrise) have meaningfully different Cb/Cwp, so the delegated
+    estimate is biased. A fishing-specific hydrostatics model is needed.
+
+    Arguments:
+    ----------
+
+        vessel_data: VesselData
+            VesselData instance describing the vessel.
+
+        load_change: float
+            Change in load (kg).
+
+    Returns:
+    --------
+
+        float
+            Change in draft (m). Currently always 0.0 pending a
+            fishing-specific hydrostatics model.
     """
-    return imo.estimate_change_in_draft(vessel_data, load_change)
+    del vessel_data, load_change
+    return 0.0
