@@ -1,3 +1,6 @@
+import pytest
+
+from cetos import imo
 from cetos.energy_systems import (
     HYDROGEN_ENERGY_DENSITY_KWHPKG,
     REFERENCE_VALUES,
@@ -41,24 +44,52 @@ DUMMY_VOYAGE_PROFILE = VoyageProfile(
 def test_estimate_vessel_battery_system():
     required_energy_kwh = 10_000
     required_power_kw = 1_000
+    required_propulsion_power_kw = 800
     system = estimate_vessel_battery_system(
         required_energy_kwh,
         required_power_kw,
+        required_propulsion_power_kw,
         **REFERENCE_VALUES,
     )
-    assert system["details"]["battery_packs"]["capacity_kwh"] == required_energy_kwh / (
-        REFERENCE_VALUES["reference_battery_pack_depth_of_discharge_pct"] / 100
+    assert system["details"]["battery_packs"]["capacity_kwh"] == pytest.approx(
+        required_energy_kwh
+        / (REFERENCE_VALUES["reference_battery_pack_depth_of_discharge_pct"] / 100)
     )
     assert system["total_weight_kg"] > system["details"]["battery_packs"]["weight_kg"]
-    assert system["details"]["electrical_engines"]["power_kw"] == required_power_kw
+    assert (
+        system["details"]["electrical_engines"]["power_kw"]
+        == required_propulsion_power_kw
+    )
+
+
+def test_estimate_vessel_battery_system_power_bound():
+    # Low energy, high power demand: pack count is dictated by power, not energy.
+    required_energy_kwh = 100
+    required_power_kw = 5_000
+    required_propulsion_power_kw = 4_000
+    system = estimate_vessel_battery_system(
+        required_energy_kwh,
+        required_power_kw,
+        required_propulsion_power_kw,
+        **REFERENCE_VALUES,
+    )
+    expected_packs = (
+        required_power_kw
+        / REFERENCE_VALUES["reference_battery_pack_continuous_power_kw"]
+    )
+    assert system["details"]["battery_packs"]["capacity_kwh"] == pytest.approx(
+        expected_packs * REFERENCE_VALUES["reference_battery_pack_capacity_kwh"]
+    )
 
 
 def test_estimate_vessel_gas_hydrogen_system():
     required_energy_kwh = 10_000
     required_power_kw = 1_000
+    required_propulsion_power_kw = 800
     system = estimate_vessel_gas_hydrogen_system(
         required_energy_kwh,
         required_power_kw,
+        required_propulsion_power_kw,
         **REFERENCE_VALUES,
     )
     assert (
@@ -68,11 +99,17 @@ def test_estimate_vessel_gas_hydrogen_system():
         / HYDROGEN_ENERGY_DENSITY_KWHPKG
     )
     assert system["total_weight_kg"] > system["details"]["gas_tanks"]["weight_kg"]
-    assert system["details"]["electrical_engines"]["power_kw"] == required_power_kw
+    assert system["details"]["fuel_cell_system"]["power_kw"] == required_power_kw
+    assert (
+        system["details"]["electrical_engines"]["power_kw"]
+        == required_propulsion_power_kw
+    )
 
 
 def test_suggest_alternative_energy_systems():
-    ice = estimate_internal_combustion_system(DUMMY_VESSEL_DATA, DUMMY_VOYAGE_PROFILE)
+    ice = estimate_internal_combustion_system(
+        DUMMY_VESSEL_DATA, DUMMY_VOYAGE_PROFILE, energy_module=imo
+    )
 
     energy = estimate_energy_consumption(
         DUMMY_VESSEL_DATA,
@@ -85,29 +122,36 @@ def test_suggest_alternative_energy_systems():
     battery_o = estimate_vessel_battery_system(
         energy["total_kwh"],
         energy["maximum_required_total_power_kw"],
+        energy["maximum_required_propulsion_power_kw"],
         **REFERENCE_VALUES,
     )
     gas_o = estimate_vessel_gas_hydrogen_system(
         energy["total_kwh"],
         energy["maximum_required_total_power_kw"],
+        energy["maximum_required_propulsion_power_kw"],
         **REFERENCE_VALUES,
     )
 
     gas, battery = suggest_alternative_energy_systems(
-        DUMMY_VESSEL_DATA, DUMMY_VOYAGE_PROFILE, REFERENCE_VALUES
+        DUMMY_VESSEL_DATA, DUMMY_VOYAGE_PROFILE, REFERENCE_VALUES, energy_module=imo
     )
 
     assert ice["total_weight_kg"] != battery["total_weight_kg"]
     assert ice["total_weight_kg"] != gas["total_weight_kg"]
 
-    # If the draft change is lower than 1% of the design draft there should be no
-    # differences
-    if abs(battery["change_in_draft_m"]) < DUMMY_VESSEL_DATA.design_draft_m * 0.01:
+    # The iteration loop breaks when |new - prev| < new * 0.001 (mass-based,
+    # 0.1% of system weight). On the very first pass the loop compares the
+    # single-shot result (~battery_o) against the ICE weight; if that delta is
+    # already below the threshold, the loop breaks before applying any update
+    # and the iterated result equals the single-shot result.
+    battery_delta = battery_o["total_weight_kg"] - ice["total_weight_kg"]
+    if abs(battery_delta) < battery_o["total_weight_kg"] * 0.001:
         assert battery_o["total_weight_kg"] == battery["total_weight_kg"]
     else:
         assert battery_o["total_weight_kg"] != battery["total_weight_kg"]
 
-    if abs(gas["change_in_draft_m"]) < DUMMY_VESSEL_DATA.design_draft_m * 0.01:
+    gas_delta = gas_o["total_weight_kg"] - ice["total_weight_kg"]
+    if abs(gas_delta) < gas_o["total_weight_kg"] * 0.001:
         assert gas_o["total_weight_kg"] == gas["total_weight_kg"]
     else:
         assert gas_o["total_weight_kg"] != gas["total_weight_kg"]

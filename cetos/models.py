@@ -42,6 +42,21 @@ ENGINE_TYPES = [
 
 ENGINE_AGES = ["before_1984", "1984-2000", "after_2000"]
 
+GEAR_TYPES = [
+    "seine",
+    "troll",
+    "gill_net",
+    "gill_net_with_power_roller",
+    "longline_autoline",
+    "longline_sheave_or_drum",
+    "longline_sheave_and_drum",
+    "pot_large",
+    "pot_small",
+    "other",
+]
+
+REFRIGERATION_SYSTEM_TYPES = ["direct_drive", "electric", "hydraulic"]
+
 # Validation limits
 MAX_VESSEL_SPEED_KN = 50
 MIN_VESSEL_DRAFT_M = 0.1
@@ -89,6 +104,24 @@ class VesselData:
     propulsion_engine_age: str  # One of ENGINE_AGES
     propulsion_engine_fuel_type: str  # One of FUEL_TYPES
 
+    # Fishing-specific (used by cetos.fishing). Optional so non-fishing
+    # vessels keep their existing schema.
+    gear_type: Optional[str] = (
+        None  # One of GEAR_TYPES; required when type == "miscellaneous-fishing"
+    )
+    refrigeration_power_kw: Optional[float] = (
+        None  # Average installed refrigeration power; None => not installed
+    )
+    refrigeration_system_type: Optional[str] = (
+        None  # One of REFRIGERATION_SYSTEM_TYPES; required iff refrigeration_power_kw is set
+    )
+
+    # Planing-hull-specific (used by cetos.planing). Optional so other vessel
+    # types keep their existing schema; required by cetos.planing.
+    displacement_kg: Optional[float] = (
+        None  # Static displacement mass at design_draft_m; required by cetos.planing
+    )
+
     def __post_init__(self):
         """Validate vessel data."""
         verify_range("length_m", self.length_m, 5.0, 450.0)
@@ -122,6 +155,22 @@ class VesselData:
         if self.size is not None:
             verify_range("size", self.size, 0, 500_000)
 
+        if self.gear_type is not None:
+            verify_set("gear_type", self.gear_type, GEAR_TYPES)
+        if self.displacement_kg is not None:
+            verify_range("displacement_kg", self.displacement_kg, 100, 1_000_000_000)
+        if self.refrigeration_power_kw is not None:
+            verify_range("refrigeration_power_kw", self.refrigeration_power_kw, 0, 1000)
+            if self.refrigeration_system_type is None:
+                raise ValueError(
+                    "refrigeration_system_type must be set when refrigeration_power_kw is provided"
+                )
+            verify_set(
+                "refrigeration_system_type",
+                self.refrigeration_system_type,
+                REFRIGERATION_SYSTEM_TYPES,
+            )
+
 
 @dataclass
 class VoyageProfile:
@@ -131,6 +180,7 @@ class VoyageProfile:
     time_at_berth_h: float = 0.0  # hours
     legs_manoeuvring: List[VoyageLeg] = field(default_factory=list)
     legs_at_sea: List[VoyageLeg] = field(default_factory=list)
+    legs_fishing: List[VoyageLeg] = field(default_factory=list)
 
     def __post_init__(self):
         """Convert raw tuples to VoyageLeg dataclasses if needed and validate."""
@@ -149,6 +199,8 @@ class VoyageProfile:
             raise ValueError("legs_manoeuvring must be a list")
         if not isinstance(self.legs_at_sea, list):
             raise ValueError("legs_at_sea must be a list")
+        if not isinstance(self.legs_fishing, list):
+            raise ValueError("legs_fishing must be a list")
 
         # Convert raw tuples to VoyageLeg dataclasses (validation happens in VoyageLeg)
         self.legs_manoeuvring = [
@@ -158,4 +210,8 @@ class VoyageProfile:
         self.legs_at_sea = [
             VoyageLeg(*leg) if not isinstance(leg, VoyageLeg) else leg
             for leg in self.legs_at_sea
+        ]
+        self.legs_fishing = [
+            VoyageLeg(*leg) if not isinstance(leg, VoyageLeg) else leg
+            for leg in self.legs_fishing
         ]

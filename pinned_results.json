@@ -1,15 +1,45 @@
 {
+    "tests/fishing_pinned.py::test_energy_consumption_pinned[vessel0-voyage0-fredrika_day]_1": {
+        "dc_kwh": 5.343952922077922,
+        "hydraulic_kwh": 13.714285714285715,
+        "maximum_required_propulsion_power_kw": 86.15613788914514,
+        "maximum_required_total_power_kw": 90.94780455581181,
+        "propulsion_kwh": 302.64699170005883,
+        "refrigeration_kwh": 0.0,
+        "total_kwh": 321.70523033642246
+    },
+    "tests/fishing_pinned.py::test_energy_consumption_pinned[vessel1-voyage1-mira_day]_1": {
+        "dc_kwh": 3.6696428571428577,
+        "hydraulic_kwh": 8.4,
+        "maximum_required_propulsion_power_kw": 25.765191200687024,
+        "maximum_required_total_power_kw": 30.556857867353692,
+        "propulsion_kwh": 79.2296855652946,
+        "refrigeration_kwh": 0.0,
+        "total_kwh": 91.29932842243747
+    },
+    "tests/fishing_pinned.py::test_fuel_consumption_pinned[vessel0-voyage0-fredrika_day]_1": {
+        "avg_l_per_nm": 2.9221692079139907,
+        "fuel_kg": 94.93689431131368
+    },
+    "tests/fishing_pinned.py::test_fuel_consumption_pinned[vessel1-voyage1-mira_day]_1": {
+        "avg_l_per_nm": 1.5275371042071395,
+        "fuel_kg": 32.07323831590605
+    },
     "tests/test_ais_adapter_pinned.py::test_guesstimate_vessel_data_large_dimensions_pinned_1": {
         "beam_m": 50,
         "design_draft_m": 15,
         "design_speed_kn": 19.113255471894803,
+        "displacement_kg": null,
         "double_ended": false,
+        "gear_type": null,
         "length_m": 300,
         "number_of_propulsion_engines": 1,
         "propulsion_engine_age": "after_2000",
         "propulsion_engine_fuel_type": "MDO",
         "propulsion_engine_power_kw": 19874.343602077697,
         "propulsion_engine_type": "SSD",
+        "refrigeration_power_kw": null,
+        "refrigeration_system_type": null,
         "size": 149400.0,
         "type": "oil_tanker"
     },
@@ -17,13 +47,17 @@
         "beam_m": 4,
         "design_draft_m": 1.2307692307692308,
         "design_speed_kn": 7.9808835831722895,
+        "displacement_kg": null,
         "double_ended": false,
+        "gear_type": null,
         "length_m": 15,
         "number_of_propulsion_engines": 1,
         "propulsion_engine_age": "after_2000",
         "propulsion_engine_fuel_type": "MDO",
         "propulsion_engine_power_kw": 81.24362828203402,
         "propulsion_engine_type": "HSD",
+        "refrigeration_power_kw": null,
+        "refrigeration_system_type": null,
         "size": 67.19999999999999,
         "type": "service-other"
     },
@@ -31,13 +65,17 @@
         "beam_m": 8,
         "design_draft_m": 3.5,
         "design_speed_kn": 21.64728779385341,
+        "displacement_kg": null,
         "double_ended": false,
+        "gear_type": null,
         "length_m": 25,
         "number_of_propulsion_engines": 1,
         "propulsion_engine_age": "after_2000",
         "propulsion_engine_fuel_type": "MDO",
         "propulsion_engine_power_kw": 374.4310936077655,
         "propulsion_engine_type": "HSD",
+        "refrigeration_power_kw": null,
+        "refrigeration_system_type": null,
         "size": 441.0,
         "type": "miscellaneous-fishing"
     },
@@ -45,13 +83,17 @@
         "beam_m": 10,
         "design_draft_m": 4,
         "design_speed_kn": 10.303276401882151,
+        "displacement_kg": null,
         "double_ended": false,
+        "gear_type": null,
         "length_m": 25,
         "number_of_propulsion_engines": 1,
         "propulsion_engine_age": "after_2000",
         "propulsion_engine_fuel_type": "MDO",
         "propulsion_engine_power_kw": 429.697010223062,
         "propulsion_engine_type": "HSD",
+        "refrigeration_power_kw": null,
+        "refrigeration_system_type": null,
         "size": 909.9999999999999,
         "type": "service-other"
     },
@@ -59,13 +101,17 @@
         "beam_m": 10,
         "design_draft_m": 2.8,
         "design_speed_kn": 15.723196851999262,
+        "displacement_kg": null,
         "double_ended": false,
+        "gear_type": null,
         "length_m": 40,
         "number_of_propulsion_engines": 2,
         "propulsion_engine_age": "after_2000",
         "propulsion_engine_fuel_type": "MDO",
         "propulsion_engine_power_kw": 342.4869948609484,
         "propulsion_engine_type": "MSD",
+        "refrigeration_power_kw": null,
+        "refrigeration_system_type": null,
         "size": 418.72656,
         "type": "ferry-ropax"
     },
@@ -73,13 +119,17 @@
         "beam_m": 28,
         "design_draft_m": 8.615384615384615,
         "design_speed_kn": 33.35393734793897,
+        "displacement_kg": null,
         "double_ended": false,
+        "gear_type": null,
         "length_m": 180,
         "number_of_propulsion_engines": 2,
         "propulsion_engine_age": "after_2000",
         "propulsion_engine_fuel_type": "MDO",
         "propulsion_engine_power_kw": 4153.162252003798,
         "propulsion_engine_type": "MSD",
+        "refrigeration_power_kw": null,
+        "refrigeration_system_type": null,
         "size": 16233.70663384615,
         "type": "ferry-ropax"
     },
@@ -87,13 +137,17 @@
         "beam_m": 23,
         "design_draft_m": 8.5,
         "design_speed_kn": 16.901657999475564,
+        "displacement_kg": null,
         "double_ended": false,
+        "gear_type": null,
         "length_m": 150,
         "number_of_propulsion_engines": 1,
         "propulsion_engine_age": "after_2000",
         "propulsion_engine_fuel_type": "MDO",
         "propulsion_engine_power_kw": 4332.868134818988,
         "propulsion_engine_type": "SSD",
+        "refrigeration_power_kw": null,
+        "refrigeration_system_type": null,
         "size": 15395.624999999998,
         "type": "general_cargo"
     },
@@ -101,13 +155,17 @@
         "beam_m": 42,
         "design_draft_m": 12.923076923076923,
         "design_speed_kn": 21.819946651754073,
+        "displacement_kg": null,
         "double_ended": false,
+        "gear_type": null,
         "length_m": 250,
         "number_of_propulsion_engines": 1,
         "propulsion_engine_age": "after_2000",
         "propulsion_engine_fuel_type": "MDO",
         "propulsion_engine_power_kw": 12031.936926164448,
         "propulsion_engine_type": "SSD",
+        "refrigeration_power_kw": null,
+        "refrigeration_system_type": null,
         "size": 71238.46153846153,
         "type": "general_cargo"
     },
@@ -115,24 +173,30 @@
         "beam_m": 30,
         "design_draft_m": 12,
         "design_speed_kn": 15.605907743200259,
+        "displacement_kg": null,
         "double_ended": false,
+        "gear_type": null,
         "length_m": 200,
         "number_of_propulsion_engines": 1,
         "propulsion_engine_age": "after_2000",
         "propulsion_engine_fuel_type": "MDO",
         "propulsion_engine_power_kw": 8882.912889744446,
         "propulsion_engine_type": "SSD",
+        "refrigeration_power_kw": null,
+        "refrigeration_system_type": null,
         "size": 47808.0,
         "type": "oil_tanker"
     },
     "tests/test_ais_adapter_pinned.py::test_guesstimate_voyage_data_different_positions_zero_speed_pinned_1": {
         "legs_at_sea": [],
+        "legs_fishing": [],
         "legs_manoeuvring": [],
         "time_anchored_h": 5.0,
         "time_at_berth_h": 0.0
     },
     "tests/test_ais_adapter_pinned.py::test_guesstimate_voyage_data_pinned[55.0-10.0-55.5-11.0-7-7-0-15-8-16-7-complex_ops]_1": {
         "legs_at_sea": [],
+        "legs_fishing": [],
         "legs_manoeuvring": [
             {
                 "distance_nm": 45.49482303388,
@@ -145,6 +209,7 @@
     },
     "tests/test_ais_adapter_pinned.py::test_guesstimate_voyage_data_pinned[56.0-12.0-56.1-12.1-2.8-2.8-12-12-2-13.5-2.84-short_coastal]_1": {
         "legs_at_sea": [],
+        "legs_fishing": [],
         "legs_manoeuvring": [
             {
                 "distance_nm": 6.872575541180036,
@@ -157,6 +222,7 @@
     },
     "tests/test_ais_adapter_pinned.py::test_guesstimate_voyage_data_pinned[56.5-11.5-56.52-11.55-3.5-3.5-5-6-0.5-10-3.5-maneuvering]_1": {
         "legs_at_sea": [],
+        "legs_fishing": [],
         "legs_manoeuvring": [
             {
                 "distance_nm": 2.0446634658423517,
@@ -169,6 +235,7 @@
     },
     "tests/test_ais_adapter_pinned.py::test_guesstimate_voyage_data_pinned[57.0-11.0-57.5-12.0-12-10-14-14-10-15-12-medium_draft_change]_1": {
         "legs_at_sea": [],
+        "legs_fishing": [],
         "legs_manoeuvring": [
             {
                 "distance_nm": 44.200599005561045,
@@ -181,6 +248,7 @@
     },
     "tests/test_ais_adapter_pinned.py::test_guesstimate_voyage_data_pinned[57.5-12.0-58.0-13.0-6.5-6.5-0-20-5-22-6.5-berth_to_sea]_1": {
         "legs_at_sea": [],
+        "legs_fishing": [],
         "legs_manoeuvring": [
             {
                 "distance_nm": 43.87730636402624,
@@ -193,6 +261,7 @@
     },
     "tests/test_ais_adapter_pinned.py::test_guesstimate_voyage_data_pinned[58.0-12.0-60.0-15.0-8.5-7.0-16-16-50-18-8.5-long_voyage]_1": {
         "legs_at_sea": [],
+        "legs_fishing": [],
         "legs_manoeuvring": [
             {
                 "distance_nm": 151.6277308409243,
@@ -205,6 +274,7 @@
     },
     "tests/test_ais_adapter_pinned.py::test_guesstimate_voyage_data_stationary_vessel_pinned_1": {
         "legs_at_sea": [],
+        "legs_fishing": [],
         "legs_manoeuvring": [],
         "time_anchored_h": 10.0,
         "time_at_berth_h": 0.0
@@ -212,41 +282,41 @@
     "tests/test_energy_systems_pinned.py::test_estimate_battery_system_high_energy_density_pinned_1": {
         "details": {
             "battery_packs": {
-                "capacity_kwh": 125000.0,
-                "volume_m3": 1442.1241633064517,
-                "weight_kg": 1641129.0322580645
+                "capacity_kwh": 125000.00000000003,
+                "volume_m3": 930.3982300884957,
+                "weight_kg": 1283185.8407079647
             },
             "electrical_engines": {
-                "power_kw": 5000,
-                "volume_m3": 3.0,
-                "weight_kg": 5591.5
+                "power_kw": 4000,
+                "volume_m3": 2.4,
+                "weight_kg": 4473.2
             }
         },
-        "total_volume_m3": 1445.1241633064517,
-        "total_weight_kg": 1646720.5322580645
+        "total_volume_m3": 932.7982300884956,
+        "total_weight_kg": 1287659.0407079647
     },
     "tests/test_energy_systems_pinned.py::test_estimate_battery_system_high_power_density_pinned_1": {
         "details": {
             "battery_packs": {
-                "capacity_kwh": 6250.0,
-                "volume_m3": 72.10620816532258,
-                "weight_kg": 82056.45161290323
+                "capacity_kwh": 6250.000000000001,
+                "volume_m3": 46.51991150442478,
+                "weight_kg": 64159.29203539823
             },
             "electrical_engines": {
-                "power_kw": 10000,
-                "volume_m3": 6.0,
-                "weight_kg": 11183.0
+                "power_kw": 8000,
+                "volume_m3": 4.8,
+                "weight_kg": 8946.4
             }
         },
-        "total_volume_m3": 78.10620816532258,
-        "total_weight_kg": 93239.45161290323
+        "total_volume_m3": 51.31991150442478,
+        "total_weight_kg": 73105.69203539823
     },
     "tests/test_energy_systems_pinned.py::test_estimate_hydrogen_system_high_energy_density_pinned_1": {
         "details": {
             "electrical_engines": {
-                "power_kw": 5000,
-                "volume_m3": 3.0,
-                "weight_kg": 5591.5
+                "power_kw": 4000,
+                "volume_m3": 2.4,
+                "weight_kg": 4473.2
             },
             "fuel_cell_system": {
                 "power_kw": 5000,
@@ -262,15 +332,15 @@
                 "weight_kg": 6668.934104262115
             }
         },
-        "total_volume_m3": 416.46752408784124,
-        "total_weight_kg": 139763.59630357753
+        "total_volume_m3": 415.8675240878412,
+        "total_weight_kg": 138645.29630357755
     },
     "tests/test_energy_systems_pinned.py::test_estimate_hydrogen_system_high_power_density_pinned_1": {
         "details": {
             "electrical_engines": {
-                "power_kw": 10000,
-                "volume_m3": 6.0,
-                "weight_kg": 11183.0
+                "power_kw": 8000,
+                "volume_m3": 4.8,
+                "weight_kg": 8946.4
             },
             "fuel_cell_system": {
                 "power_kw": 10000,
@@ -286,8 +356,8 @@
                 "weight_kg": 333.44670521310576
             }
         },
-        "total_volume_m3": 102.84986269087857,
-        "total_weight_kg": 74283.49670707076
+        "total_volume_m3": 101.64986269087856,
+        "total_weight_kg": 72046.89670707077
     },
     "tests/test_energy_systems_pinned.py::test_estimate_internal_combustion_system_pinned[vessel_data0-voyage_profile0-ferry_pax_daily]_1": {
         "total_volume_m3": 7.261236072967157,
@@ -325,6 +395,22 @@
             }
         }
     },
+    "tests/test_energy_systems_pinned.py::test_estimate_vessel_battery_system_pinned[1000-500-400-small_system]_1": {
+        "details": {
+            "battery_packs": {
+                "capacity_kwh": 1250.0000000000002,
+                "volume_m3": 9.303982300884957,
+                "weight_kg": 12831.858407079648
+            },
+            "electrical_engines": {
+                "power_kw": 400,
+                "volume_m3": 0.24,
+                "weight_kg": 447.32
+            }
+        },
+        "total_volume_m3": 9.543982300884958,
+        "total_weight_kg": 13279.178407079648
+    },
     "tests/test_energy_systems_pinned.py::test_estimate_vessel_battery_system_pinned[1000-500-small_system]_1": {
         "details": {
             "battery_packs": {
@@ -340,6 +426,22 @@
         },
         "total_volume_m3": 14.721241633064519,
         "total_weight_kg": 16970.440322580645
+    },
+    "tests/test_energy_systems_pinned.py::test_estimate_vessel_battery_system_pinned[10000-2000-1600-medium_system]_1": {
+        "details": {
+            "battery_packs": {
+                "capacity_kwh": 12500.000000000002,
+                "volume_m3": 93.03982300884957,
+                "weight_kg": 128318.58407079647
+            },
+            "electrical_engines": {
+                "power_kw": 1600,
+                "volume_m3": 0.96,
+                "weight_kg": 1789.28
+            }
+        },
+        "total_volume_m3": 93.99982300884956,
+        "total_weight_kg": 130107.86407079647
     },
     "tests/test_energy_systems_pinned.py::test_estimate_vessel_battery_system_pinned[10000-2000-medium_system]_1": {
         "details": {
@@ -357,6 +459,22 @@
         "total_volume_m3": 145.41241633064516,
         "total_weight_kg": 166349.50322580646
     },
+    "tests/test_energy_systems_pinned.py::test_estimate_vessel_battery_system_pinned[100000-15000-12000-very_large_system]_1": {
+        "details": {
+            "battery_packs": {
+                "capacity_kwh": 125000.00000000003,
+                "volume_m3": 930.3982300884957,
+                "weight_kg": 1283185.8407079647
+            },
+            "electrical_engines": {
+                "power_kw": 12000,
+                "volume_m3": 7.199999999999999,
+                "weight_kg": 13419.6
+            }
+        },
+        "total_volume_m3": 937.5982300884957,
+        "total_weight_kg": 1296605.4407079648
+    },
     "tests/test_energy_systems_pinned.py::test_estimate_vessel_battery_system_pinned[100000-15000-very_large_system]_1": {
         "details": {
             "battery_packs": {
@@ -373,6 +491,22 @@
         "total_volume_m3": 1451.1241633064517,
         "total_weight_kg": 1657903.5322580645
     },
+    "tests/test_energy_systems_pinned.py::test_estimate_vessel_battery_system_pinned[50000-10000-8000-large_system]_1": {
+        "details": {
+            "battery_packs": {
+                "capacity_kwh": 62500.000000000015,
+                "volume_m3": 465.19911504424783,
+                "weight_kg": 641592.9203539824
+            },
+            "electrical_engines": {
+                "power_kw": 8000,
+                "volume_m3": 4.8,
+                "weight_kg": 8946.4
+            }
+        },
+        "total_volume_m3": 469.99911504424784,
+        "total_weight_kg": 650539.3203539824
+    },
     "tests/test_energy_systems_pinned.py::test_estimate_vessel_battery_system_pinned[50000-10000-large_system]_1": {
         "details": {
             "battery_packs": {
@@ -388,6 +522,30 @@
         },
         "total_volume_m3": 727.0620816532258,
         "total_weight_kg": 831747.5161290322
+    },
+    "tests/test_energy_systems_pinned.py::test_estimate_vessel_gas_hydrogen_system_pinned[1000-500-400-small_system]_1": {
+        "details": {
+            "electrical_engines": {
+                "power_kw": 400,
+                "volume_m3": 0.24,
+                "weight_kg": 447.32
+            },
+            "fuel_cell_system": {
+                "power_kw": 500,
+                "volume_m3": 3.906486486486487,
+                "weight_kg": 2891.891891891892
+            },
+            "gas_tanks": {
+                "capacity_kg": 66.68934104262115,
+                "volume_m3": 3.7440265922297633,
+                "weight_kg": 985.8424328039649
+            },
+            "hydrogen": {
+                "weight_kg": 66.68934104262115
+            }
+        },
+        "total_volume_m3": 7.890513078716251,
+        "total_weight_kg": 4391.743665738478
     },
     "tests/test_energy_systems_pinned.py::test_estimate_vessel_gas_hydrogen_system_pinned[1000-500-small_system]_1": {
         "details": {
@@ -413,6 +571,30 @@
         "total_volume_m3": 7.95051307871625,
         "total_weight_kg": 4503.573665738478
     },
+    "tests/test_energy_systems_pinned.py::test_estimate_vessel_gas_hydrogen_system_pinned[10000-2000-1600-medium_system]_1": {
+        "details": {
+            "electrical_engines": {
+                "power_kw": 1600,
+                "volume_m3": 0.96,
+                "weight_kg": 1789.28
+            },
+            "fuel_cell_system": {
+                "power_kw": 2000,
+                "volume_m3": 15.625945945945949,
+                "weight_kg": 11567.567567567568
+            },
+            "gas_tanks": {
+                "capacity_kg": 666.8934104262115,
+                "volume_m3": 37.440265922297634,
+                "weight_kg": 9858.42432803965
+            },
+            "hydrogen": {
+                "weight_kg": 666.8934104262115
+            }
+        },
+        "total_volume_m3": 54.026211868243585,
+        "total_weight_kg": 23882.16530603343
+    },
     "tests/test_energy_systems_pinned.py::test_estimate_vessel_gas_hydrogen_system_pinned[10000-2000-medium_system]_1": {
         "details": {
             "electrical_engines": {
@@ -437,6 +619,30 @@
         "total_volume_m3": 54.26621186824359,
         "total_weight_kg": 24329.485306033428
     },
+    "tests/test_energy_systems_pinned.py::test_estimate_vessel_gas_hydrogen_system_pinned[100000-15000-12000-very_large_system]_1": {
+        "details": {
+            "electrical_engines": {
+                "power_kw": 12000,
+                "volume_m3": 7.199999999999999,
+                "weight_kg": 13419.6
+            },
+            "fuel_cell_system": {
+                "power_kw": 15000,
+                "volume_m3": 117.19459459459462,
+                "weight_kg": 86756.75675675676
+            },
+            "gas_tanks": {
+                "capacity_kg": 6668.934104262115,
+                "volume_m3": 374.40265922297635,
+                "weight_kg": 98584.24328039649
+            },
+            "hydrogen": {
+                "weight_kg": 6668.934104262115
+            }
+        },
+        "total_volume_m3": 498.79725381757095,
+        "total_weight_kg": 205429.53414141535
+    },
     "tests/test_energy_systems_pinned.py::test_estimate_vessel_gas_hydrogen_system_pinned[100000-15000-very_large_system]_1": {
         "details": {
             "electrical_engines": {
@@ -460,6 +666,30 @@
         },
         "total_volume_m3": 500.59725381757096,
         "total_weight_kg": 208784.43414141535
+    },
+    "tests/test_energy_systems_pinned.py::test_estimate_vessel_gas_hydrogen_system_pinned[50000-10000-8000-large_system]_1": {
+        "details": {
+            "electrical_engines": {
+                "power_kw": 8000,
+                "volume_m3": 4.8,
+                "weight_kg": 8946.4
+            },
+            "fuel_cell_system": {
+                "power_kw": 10000,
+                "volume_m3": 78.12972972972975,
+                "weight_kg": 57837.83783783784
+            },
+            "gas_tanks": {
+                "capacity_kg": 3334.4670521310577,
+                "volume_m3": 187.20132961148818,
+                "weight_kg": 49292.121640198246
+            },
+            "hydrogen": {
+                "weight_kg": 3334.4670521310577
+            }
+        },
+        "total_volume_m3": 270.13105934121796,
+        "total_weight_kg": 119410.82653016713
     },
     "tests/test_energy_systems_pinned.py::test_estimate_vessel_gas_hydrogen_system_pinned[50000-10000-large_system]_1": {
         "details": {
@@ -487,90 +717,86 @@
     },
     "tests/test_energy_systems_pinned.py::test_suggest_alternative_energy_systems_pinned[vessel_data0-voyage_profile0-ferry_pax_daily]_1": [
         {
-            "change_in_draft_m": 0.010873300256917783,
             "details": {
                 "electrical_engines": {
-                    "power_kw": 1080,
-                    "volume_m3": 0.648,
-                    "weight_kg": 1207.7640000000001
+                    "power_kw": 890,
+                    "volume_m3": 0.534,
+                    "weight_kg": 995.287
                 },
                 "fuel_cell_system": {
-                    "power_kw": 1071.3862265504922,
-                    "volume_m3": 8.370711631654496,
-                    "weight_kg": 6196.6662832920365
+                    "power_kw": 1074.1103015233473,
+                    "volume_m3": 8.391994755793766,
+                    "weight_kg": 6212.421743945847
                 },
                 "gas_tanks": {
-                    "capacity_kg": 154.14542596215662,
-                    "volume_m3": 8.653925272766728,
-                    "weight_kg": 2278.6715142231847
+                    "capacity_kg": 154.45083218438265,
+                    "volume_m3": 8.671071176438438,
+                    "weight_kg": 2283.1862148995697
                 },
                 "hydrogen": {
-                    "weight_kg": 154.14542596215662
+                    "weight_kg": 154.45083218438265
                 }
             },
-            "total_volume_m3": 17.67263690442122,
-            "total_weight_kg": 9837.247223477378
+            "total_volume_m3": 17.597065932232205,
+            "total_weight_kg": 9645.3457910298
         },
         {
-            "change_in_draft_m": 0.0926914464971799,
             "details": {
                 "battery_packs": {
-                    "capacity_kwh": 2929.2431536502127,
-                    "volume_m3": 33.794658656631725,
-                    "weight_kg": 38458.12785598828
+                    "capacity_kwh": 2927.261427784934,
+                    "volume_m3": 21.7881508113394,
+                    "weight_kg": 30049.763329473655
                 },
                 "electrical_engines": {
-                    "power_kw": 1100,
-                    "volume_m3": 0.6599999999999999,
-                    "weight_kg": 1230.13
+                    "power_kw": 900,
+                    "volume_m3": 0.5399999999999999,
+                    "weight_kg": 1006.47
                 }
             },
-            "total_volume_m3": 34.45465865663172,
-            "total_weight_kg": 39688.257855988275
+            "total_volume_m3": 22.3281508113394,
+            "total_weight_kg": 31056.233329473656
         }
     ],
     "tests/test_energy_systems_pinned.py::test_suggest_alternative_energy_systems_pinned[vessel_data1-voyage_profile1-offshore_short]_1": [
         {
-            "change_in_draft_m": 0.009548910666480807,
             "details": {
                 "electrical_engines": {
-                    "power_kw": 1280,
-                    "volume_m3": 0.768,
-                    "weight_kg": 1431.424
+                    "power_kw": 970,
+                    "volume_m3": 0.582,
+                    "weight_kg": 1084.751
                 },
                 "fuel_cell_system": {
-                    "power_kw": 1279.7470106879828,
-                    "volume_m3": 9.998628806748165,
-                    "weight_kg": 7401.780007762927
+                    "power_kw": 1280.6249182118324,
+                    "volume_m3": 10.005487874504773,
+                    "weight_kg": 7406.857635063031
                 },
                 "gas_tanks": {
-                    "capacity_kg": 755.6919127188373,
-                    "volume_m3": 42.425529665139074,
-                    "weight_kg": 11171.097840191509
+                    "capacity_kg": 755.9322702980254,
+                    "volume_m3": 42.43902365314458,
+                    "weight_kg": 11174.650952231681
                 },
                 "hydrogen": {
-                    "weight_kg": 755.6919127188373
+                    "weight_kg": 755.9322702980254
                 }
             },
-            "total_volume_m3": 53.19215847188724,
-            "total_weight_kg": 20759.99376067327
+            "total_volume_m3": 53.026511527649355,
+            "total_weight_kg": 20422.191857592738
         },
         {
-            "change_in_draft_m": 0.10120153259919555,
             "details": {
                 "battery_packs": {
-                    "capacity_kwh": 14211.591969976856,
-                    "volume_m3": 163.9590414316445,
-                    "weight_kg": 186584.4494122768
+                    "capacity_kwh": 14202.223165665106,
+                    "volume_m3": 105.70978637325317,
+                    "weight_kg": 145792.73338204887
                 },
                 "electrical_engines": {
-                    "power_kw": 1290,
-                    "volume_m3": 0.7739999999999999,
-                    "weight_kg": 1442.607
+                    "power_kw": 970,
+                    "volume_m3": 0.582,
+                    "weight_kg": 1084.751
                 }
             },
-            "total_volume_m3": 164.7330414316445,
-            "total_weight_kg": 188027.05641227678
+            "total_volume_m3": 106.29178637325316,
+            "total_weight_kg": 146877.48438204886
         }
     ],
     "tests/test_energy_systems_pinned.py::test_suggest_alternative_energy_systems_simple_pinned[10-MDO-1000-100-medium_vessel_medium]_1": [
@@ -601,9 +827,9 @@
         {
             "details": {
                 "battery_packs": {
-                    "capacity_kwh": 162000.0,
-                    "volume_m3": 1868.9929156451615,
-                    "weight_kg": 2126903.2258064514
+                    "capacity_kwh": 162000.00000000003,
+                    "volume_m3": 1205.7961061946905,
+                    "weight_kg": 1663008.8495575225
                 },
                 "electrical_engines": {
                     "power_kw": 1000,
@@ -611,8 +837,8 @@
                     "weight_kg": 1118.3
                 }
             },
-            "total_volume_m3": 1869.5929156451614,
-            "total_weight_kg": 2128021.525806451
+            "total_volume_m3": 1206.3961061946904,
+            "total_weight_kg": 1664127.1495575225
         }
     ],
     "tests/test_energy_systems_pinned.py::test_suggest_alternative_energy_systems_simple_pinned[2-MDO-500-50-small_cargo_medium]_1": [
@@ -643,9 +869,9 @@
         {
             "details": {
                 "battery_packs": {
-                    "capacity_kwh": 16200.0,
-                    "volume_m3": 186.89929156451615,
-                    "weight_kg": 212690.32258064515
+                    "capacity_kwh": 16200.000000000002,
+                    "volume_m3": 120.57961061946904,
+                    "weight_kg": 166300.88495575223
                 },
                 "electrical_engines": {
                     "power_kw": 500,
@@ -653,8 +879,8 @@
                     "weight_kg": 559.15
                 }
             },
-            "total_volume_m3": 187.19929156451616,
-            "total_weight_kg": 213249.47258064515
+            "total_volume_m3": 120.87961061946903,
+            "total_weight_kg": 166860.03495575223
         }
     ],
     "tests/test_energy_systems_pinned.py::test_suggest_alternative_energy_systems_simple_pinned[5-MDO-330-20-small_ferry_short]_1": [
@@ -685,9 +911,9 @@
         {
             "details": {
                 "battery_packs": {
-                    "capacity_kwh": 16200.0,
-                    "volume_m3": 186.89929156451615,
-                    "weight_kg": 212690.32258064515
+                    "capacity_kwh": 16200.000000000002,
+                    "volume_m3": 120.57961061946904,
+                    "weight_kg": 166300.88495575223
                 },
                 "electrical_engines": {
                     "power_kw": 330,
@@ -695,8 +921,8 @@
                     "weight_kg": 369.039
                 }
             },
-            "total_volume_m3": 187.09729156451615,
-            "total_weight_kg": 213059.36158064514
+            "total_volume_m3": 120.77761061946903,
+            "total_weight_kg": 166669.92395575222
         }
     ],
     "tests/test_energy_systems_pinned.py::test_suggest_alternative_energy_systems_simple_pinned[50-HFO-8000-1000-large_tanker_long]_1": [
@@ -727,9 +953,9 @@
         {
             "details": {
                 "battery_packs": {
-                    "capacity_kwh": 7515000.0,
-                    "volume_m3": 86700.50469798388,
-                    "weight_kg": 98664677.41935484
+                    "capacity_kwh": 7515000.000000001,
+                    "volume_m3": 55935.54159292036,
+                    "weight_kg": 77145132.74336283
                 },
                 "electrical_engines": {
                     "power_kw": 8000,
@@ -737,672 +963,125 @@
                     "weight_kg": 8946.4
                 }
             },
-            "total_volume_m3": 86705.30469798388,
-            "total_weight_kg": 98673623.81935485
+            "total_volume_m3": 55940.34159292036,
+            "total_weight_kg": 77154079.14336284
         }
     ],
     "tests/test_imo_pinned.py::test_estimate_energy_consumption_pinned[vessel_data0-voyage_profile0-ferry_pax_daily]_1": {
-        "anchored": {
-            "auxiliary_engines_kwh": 95.0,
-            "maximum_required_total_power_kw": 190,
-            "subtotal_kwh": 95.0
-        },
-        "at_berth": {
-            "auxiliary_engines_kwh": 380.0,
-            "maximum_required_total_power_kw": 190,
-            "subtotal_kwh": 380.0
-        },
-        "at_sea": {
-            "auxiliary_engines_kwh": 316.6666666666667,
-            "average_energy_consumption_kwh_per_nm": 107.64439859900958,
-            "maximum_required_propulsion_power_kw": 1101.732783188115,
-            "maximum_required_total_power_kw": 1291.732783188115,
-            "maxium_engine_load_percent": 83.46460478697841,
-            "subtotal_kwh": 2152.8879719801917
-        },
-        "manoeuvring": {
-            "auxiliary_engines_kwh": 38.0,
-            "average_energy_consumption_kwh_per_nm": 53.9394210530688,
-            "maximum_required_propulsion_power_kw": 79.69710526534399,
-            "maximum_required_total_power_kw": 269.697105265344,
-            "maxium_engine_load_percent": 6.037659489798787,
-            "subtotal_kwh": 53.9394210530688
-        },
         "maximum_required_propulsion_power_kw": 1101.732783188115,
         "maximum_required_total_power_kw": 1291.732783188115,
         "total_kwh": 2681.8273930332607
     },
     "tests/test_imo_pinned.py::test_estimate_energy_consumption_pinned[vessel_data1-voyage_profile1-oil_tanker_long]_1": {
-        "anchored": {
-            "auxiliary_engines_kwh": 4900.0,
-            "maximum_required_total_power_kw": 490,
-            "subtotal_kwh": 4900.0
-        },
-        "at_berth": {
-            "auxiliary_engines_kwh": 14880.0,
-            "maximum_required_total_power_kw": 620,
-            "subtotal_kwh": 14880.0
-        },
-        "at_sea": {
-            "auxiliary_engines_kwh": 40000.0,
-            "average_energy_consumption_kwh_per_nm": 584.4559426735063,
-            "maximum_required_propulsion_power_kw": 8000.0,
-            "maximum_required_total_power_kw": 8560.0,
-            "maxium_engine_load_percent": 100.0,
-            "subtotal_kwh": 584455.9426735063
-        },
-        "manoeuvring": {
-            "auxiliary_engines_kwh": 385.0,
-            "average_energy_consumption_kwh_per_nm": 276.14352574838307,
-            "maximum_required_propulsion_power_kw": 1526.503265411671,
-            "maximum_required_total_power_kw": 2296.5032654116712,
-            "maxium_engine_load_percent": 19.081290817645886,
-            "subtotal_kwh": 1104.5741029935323
-        },
         "maximum_required_propulsion_power_kw": 8000.0,
         "maximum_required_total_power_kw": 8560.0,
         "total_kwh": 605340.5167764998
     },
     "tests/test_imo_pinned.py::test_estimate_energy_consumption_pinned[vessel_data2-voyage_profile2-general_cargo_medium]_1": {
-        "anchored": {
-            "auxiliary_engines_kwh": 1850.0,
-            "maximum_required_total_power_kw": 370,
-            "subtotal_kwh": 1850.0
-        },
-        "at_berth": {
-            "auxiliary_engines_kwh": 8640.0,
-            "maximum_required_total_power_kw": 720,
-            "subtotal_kwh": 8640.0
-        },
-        "at_sea": {
-            "auxiliary_engines_kwh": 13000.0,
-            "average_energy_consumption_kwh_per_nm": 291.8020484765501,
-            "maximum_required_propulsion_power_kw": 4416.965467047658,
-            "maximum_required_total_power_kw": 4936.965467047658,
-            "maxium_engine_load_percent": 88.33930934095316,
-            "subtotal_kwh": 116720.81939062005
-        },
-        "manoeuvring": {
-            "auxiliary_engines_kwh": 725.0,
-            "average_energy_consumption_kwh_per_nm": 278.1310172336815,
-            "maximum_required_propulsion_power_kw": 232.92591330134135,
-            "maximum_required_total_power_kw": 1682.9259133013413,
-            "maxium_engine_load_percent": 4.658518266026827,
-            "subtotal_kwh": 834.3930517010446
-        },
         "maximum_required_propulsion_power_kw": 4416.965467047658,
         "maximum_required_total_power_kw": 4936.965467047658,
         "total_kwh": 128045.21244232109
     },
     "tests/test_imo_pinned.py::test_estimate_energy_consumption_pinned[vessel_data3-voyage_profile3-offshore_short]_1": {
-        "anchored": {
-            "auxiliary_engines_kwh": 3200.0,
-            "maximum_required_total_power_kw": 320,
-            "subtotal_kwh": 3200.0
-        },
-        "at_berth": {
-            "auxiliary_engines_kwh": 3200.0,
-            "maximum_required_total_power_kw": 320,
-            "subtotal_kwh": 3200.0
-        },
-        "at_sea": {
-            "auxiliary_engines_kwh": 960.0,
-            "average_energy_consumption_kwh_per_nm": 132.0,
-            "maximum_required_propulsion_power_kw": 1000.0,
-            "maximum_required_total_power_kw": 1320.0,
-            "maxium_engine_load_percent": 100.0,
-            "subtotal_kwh": 3960.0
-        },
-        "manoeuvring": {
-            "auxiliary_engines_kwh": 320.0,
-            "average_energy_consumption_kwh_per_nm": 132.0,
-            "maximum_required_propulsion_power_kw": 1000.0,
-            "maximum_required_total_power_kw": 1320.0,
-            "maxium_engine_load_percent": 100.0,
-            "subtotal_kwh": 1320.0
-        },
         "maximum_required_propulsion_power_kw": 1000.0,
         "maximum_required_total_power_kw": 1320.0,
         "total_kwh": 11680.0
     },
     "tests/test_imo_pinned.py::test_estimate_energy_consumption_pinned[vessel_data4-voyage_profile4-ropax_frequent]_1": {
-        "anchored": {
-            "auxiliary_engines_kwh": 0.0,
-            "maximum_required_total_power_kw": 0.0,
-            "subtotal_kwh": 0.0
-        },
-        "at_berth": {
-            "auxiliary_engines_kwh": 7800.0,
-            "maximum_required_total_power_kw": 1950,
-            "subtotal_kwh": 7800.0
-        },
-        "at_sea": {
-            "auxiliary_engines_kwh": 9750.0,
-            "average_energy_consumption_kwh_per_nm": 322.8350419534144,
-            "maximum_required_propulsion_power_kw": 4506.700839068288,
-            "maximum_required_total_power_kw": 6456.700839068288,
-            "maxium_engine_load_percent": 90.13401678136574,
-            "subtotal_kwh": 32283.50419534144
-        },
-        "manoeuvring": {
-            "auxiliary_engines_kwh": 975.0,
-            "average_energy_consumption_kwh_per_nm": 279.8036067125463,
-            "maximum_required_propulsion_power_kw": 288.42885370037044,
-            "maximum_required_total_power_kw": 2238.4288537003704,
-            "maxium_engine_load_percent": 5.768577074007409,
-            "subtotal_kwh": 1119.2144268501852
-        },
         "maximum_required_propulsion_power_kw": 4506.700839068288,
         "maximum_required_total_power_kw": 6456.700839068288,
         "total_kwh": 41202.71862219163
     },
     "tests/test_imo_pinned.py::test_estimate_energy_consumption_with_7_percent_limit_pinned_1": {
-        "anchored": {
-            "auxiliary_engines_kwh": 1850.0,
-            "maximum_required_total_power_kw": 370,
-            "subtotal_kwh": 1850.0
-        },
-        "at_berth": {
-            "auxiliary_engines_kwh": 8640.0,
-            "maximum_required_total_power_kw": 720,
-            "subtotal_kwh": 8640.0
-        },
-        "at_sea": {
-            "auxiliary_engines_kwh": 13000.0,
-            "average_energy_consumption_kwh_per_nm": 291.8020484765501,
-            "maximum_required_propulsion_power_kw": 4416.965467047658,
-            "maximum_required_total_power_kw": 4936.965467047658,
-            "maxium_engine_load_percent": 88.33930934095316,
-            "subtotal_kwh": 116720.81939062005
-        },
-        "manoeuvring": {
-            "auxiliary_engines_kwh": 725.0,
-            "average_energy_consumption_kwh_per_nm": 241.66666666666666,
-            "maximum_required_propulsion_power_kw": 0.0,
-            "maximum_required_total_power_kw": 1450.0,
-            "maxium_engine_load_percent": 4.658518266026827,
-            "subtotal_kwh": 725.0
-        },
         "maximum_required_propulsion_power_kw": 4416.965467047658,
         "maximum_required_total_power_kw": 4936.965467047658,
         "total_kwh": 127935.81939062005
     },
     "tests/test_imo_pinned.py::test_estimate_energy_consumption_with_steam_boilers_pinned_1": {
-        "anchored": {
-            "auxiliary_engines_kwh": 4900.0,
-            "maximum_required_total_power_kw": 850,
-            "steam_boilers_kwh": 3600.0,
-            "subtotal_kwh": 8500.0
-        },
-        "at_berth": {
-            "auxiliary_engines_kwh": 14880.0,
-            "maximum_required_total_power_kw": 3870,
-            "steam_boilers_kwh": 78000.0,
-            "subtotal_kwh": 92880.0
-        },
-        "at_sea": {
-            "auxiliary_engines_kwh": 40000.0,
-            "average_energy_consumption_kwh_per_nm": 604.4559426735063,
-            "maximum_required_propulsion_power_kw": 8000.0,
-            "maximum_required_total_power_kw": 8840.0,
-            "maxium_engine_load_percent": 100.0,
-            "steam_boilers_kwh": 20000.0,
-            "subtotal_kwh": 604455.9426735063
-        },
-        "manoeuvring": {
-            "auxiliary_engines_kwh": 385.0,
-            "average_energy_consumption_kwh_per_nm": 321.14352574838307,
-            "maximum_required_propulsion_power_kw": 1526.503265411671,
-            "maximum_required_total_power_kw": 2656.5032654116712,
-            "maxium_engine_load_percent": 19.081290817645886,
-            "steam_boilers_kwh": 180.0,
-            "subtotal_kwh": 1284.5741029935323
-        },
         "maximum_required_propulsion_power_kw": 8000.0,
         "maximum_required_total_power_kw": 8840.0,
         "total_kwh": 707120.5167764998
     },
-    "tests/test_imo_pinned.py::test_estimate_fuel_consumption_complex_voyage_pinned_1": {
-        "anchored": {
-            "auxiliary_engines_kg": 1369.0,
-            "steam_boilers_kg": 960.0,
-            "subtotal_kg": 2329.0
-        },
-        "at_berth": {
-            "auxiliary_engines_kg": 3995.9999999999995,
-            "steam_boilers_kg": 1440.0,
-            "subtotal_kg": 5436.0
-        },
-        "at_sea": {
-            "auxiliary_engines_kg": 3614.5476190476193,
-            "average_fuel_consumption_l_per_nm": 49.43462371867064,
-            "propulsion_engines_kg": 20719.645906468006,
-            "steam_boilers_kg": 0.0,
-            "subtotal_kg": 24334.193525515624
-        },
-        "manoeuvring": {
-            "auxiliary_engines_kg": 210.12916666666666,
-            "average_fuel_consumption_l_per_nm": 67.79771880819366,
-            "propulsion_engines_kg": 0.0,
-            "steam_boilers_kg": 32.586666666666666,
-            "subtotal_kg": 242.71583333333334
-        },
-        "total_kg": 32341.909358848956
-    },
-    "tests/test_imo_pinned.py::test_estimate_fuel_consumption_double_ended_ferry_pinned_1": {
-        "anchored": {
-            "auxiliary_engines_kg": 0.0,
-            "steam_boilers_kg": 0.0,
-            "subtotal_kg": 0.0
-        },
-        "at_berth": {
-            "auxiliary_engines_kg": 1443.0,
-            "steam_boilers_kg": 499.2,
-            "subtotal_kg": 1942.2
-        },
-        "at_sea": {
-            "auxiliary_engines_kg": 1803.75,
-            "average_fuel_consumption_l_per_nm": 67.18292410803672,
-            "propulsion_engines_kg": 4209.121707669286,
-            "steam_boilers_kg": 0.0,
-            "subtotal_kg": 6012.871707669286
-        },
-        "manoeuvring": {
-            "auxiliary_engines_kg": 180.375,
-            "average_fuel_consumption_l_per_nm": 62.004189944134076,
-            "propulsion_engines_kg": 0.0,
-            "steam_boilers_kg": 41.6,
-            "subtotal_kg": 221.975
-        },
-        "total_kg": 8177.046707669286
-    },
-    "tests/test_imo_pinned.py::test_estimate_fuel_consumption_minimal_voyage_pinned_1": {
-        "anchored": {
-            "auxiliary_engines_kg": 0.0,
-            "steam_boilers_kg": 0.0,
-            "subtotal_kg": 0.0
-        },
-        "at_berth": {
-            "auxiliary_engines_kg": 35.15,
-            "steam_boilers_kg": 0.0,
-            "subtotal_kg": 35.15
-        },
-        "at_sea": {
-            "auxiliary_engines_kg": 0.0,
-            "average_fuel_consumption_l_per_nm": 0.0,
-            "propulsion_engines_kg": 0.0,
-            "steam_boilers_kg": 0.0,
-            "subtotal_kg": 0.0
-        },
-        "manoeuvring": {
-            "auxiliary_engines_kg": 0.0,
-            "average_fuel_consumption_l_per_nm": 0.0,
-            "propulsion_engines_kg": 0.0,
-            "steam_boilers_kg": 0.0,
-            "subtotal_kg": 0.0
-        },
-        "total_kg": 35.15
-    },
-    "tests/test_imo_pinned.py::test_estimate_fuel_consumption_offshore_vessel_pinned_1": {
-        "anchored": {
-            "auxiliary_engines_kg": 592.0,
-            "steam_boilers_kg": 0.0,
-            "subtotal_kg": 592.0
-        },
-        "at_berth": {
-            "auxiliary_engines_kg": 592.0,
-            "steam_boilers_kg": 0.0,
-            "subtotal_kg": 592.0
-        },
-        "at_sea": {
-            "auxiliary_engines_kg": 177.60000000000002,
-            "average_fuel_consumption_l_per_nm": 26.65642458100559,
-            "propulsion_engines_kg": 538.1250000000001,
-            "steam_boilers_kg": 0.0,
-            "subtotal_kg": 715.7250000000001
-        },
-        "manoeuvring": {
-            "auxiliary_engines_kg": 59.2,
-            "average_fuel_consumption_l_per_nm": 26.65642458100559,
-            "propulsion_engines_kg": 179.37500000000003,
-            "steam_boilers_kg": 0.0,
-            "subtotal_kg": 238.57500000000005
-        },
-        "total_kg": 2138.3
-    },
-    "tests/test_imo_pinned.py::test_estimate_fuel_consumption_pinned[vessel_data0-voyage_profile0-ferry_pax_daily]_1": {
-        "anchored": {
-            "auxiliary_engines_kg": 17.575,
-            "steam_boilers_kg": 0.0,
-            "subtotal_kg": 17.575
-        },
-        "at_berth": {
-            "auxiliary_engines_kg": 70.3,
-            "steam_boilers_kg": 0.0,
-            "subtotal_kg": 70.3
-        },
-        "at_sea": {
-            "auxiliary_engines_kg": 58.583333333333336,
-            "average_fuel_consumption_l_per_nm": 21.30314210718655,
-            "propulsion_engines_kg": 322.7429103853059,
-            "steam_boilers_kg": 0.0,
-            "subtotal_kg": 381.3262437186392
-        },
-        "manoeuvring": {
-            "auxiliary_engines_kg": 7.03,
-            "average_fuel_consumption_l_per_nm": 7.854748603351955,
-            "propulsion_engines_kg": 0.0,
-            "steam_boilers_kg": 0.0,
-            "subtotal_kg": 7.03
-        },
-        "total_kg": 476.23124371863923
-    },
-    "tests/test_imo_pinned.py::test_estimate_fuel_consumption_pinned[vessel_data1-voyage_profile1-oil_tanker_long]_1": {
-        "anchored": {
-            "auxiliary_engines_kg": 955.5,
-            "steam_boilers_kg": 1224.0,
-            "subtotal_kg": 2179.5
-        },
-        "at_berth": {
-            "auxiliary_engines_kg": 2901.6000000000004,
-            "steam_boilers_kg": 26520.0,
-            "subtotal_kg": 29421.6
-        },
-        "at_sea": {
-            "auxiliary_engines_kg": 7800.0,
-            "average_fuel_consumption_l_per_nm": 111.47899613680617,
-            "propulsion_engines_kg": 96990.47513294299,
-            "steam_boilers_kg": 6800.0,
-            "subtotal_kg": 111590.47513294299
-        },
-        "manoeuvring": {
-            "auxiliary_engines_kg": 75.075,
-            "average_fuel_consumption_l_per_nm": 70.72709227979584,
-            "propulsion_engines_kg": 146.91627748830254,
-            "steam_boilers_kg": 61.2,
-            "subtotal_kg": 283.19127748830255
-        },
-        "total_kg": 143474.7664104313
-    },
-    "tests/test_imo_pinned.py::test_estimate_fuel_consumption_pinned[vessel_data2-voyage_profile2-general_cargo_medium]_1": {
-        "anchored": {
-            "auxiliary_engines_kg": 342.25,
-            "steam_boilers_kg": 240.0,
-            "subtotal_kg": 582.25
-        },
-        "at_berth": {
-            "auxiliary_engines_kg": 1598.3999999999999,
-            "steam_boilers_kg": 576.0,
-            "subtotal_kg": 2174.3999999999996
-        },
-        "at_sea": {
-            "auxiliary_engines_kg": 2405.0,
-            "average_fuel_consumption_l_per_nm": 57.703511343982385,
-            "propulsion_engines_kg": 18252.857061145693,
-            "steam_boilers_kg": 0.0,
-            "subtotal_kg": 20657.857061145693
-        },
-        "manoeuvring": {
-            "auxiliary_engines_kg": 134.125,
-            "average_fuel_consumption_l_per_nm": 57.700186219739294,
-            "propulsion_engines_kg": 0.0,
-            "steam_boilers_kg": 20.8,
-            "subtotal_kg": 154.925
-        },
-        "total_kg": 23569.432061145693
-    },
-    "tests/test_imo_pinned.py::test_estimate_fuel_consumption_pinned[vessel_data3-voyage_profile3-offshore_short]_1": {
-        "anchored": {
-            "auxiliary_engines_kg": 592.0,
-            "steam_boilers_kg": 0.0,
-            "subtotal_kg": 592.0
-        },
-        "at_berth": {
-            "auxiliary_engines_kg": 592.0,
-            "steam_boilers_kg": 0.0,
-            "subtotal_kg": 592.0
-        },
-        "at_sea": {
-            "auxiliary_engines_kg": 177.60000000000002,
-            "average_fuel_consumption_l_per_nm": 26.65642458100559,
-            "propulsion_engines_kg": 538.1250000000001,
-            "steam_boilers_kg": 0.0,
-            "subtotal_kg": 715.7250000000001
-        },
-        "manoeuvring": {
-            "auxiliary_engines_kg": 59.2,
-            "average_fuel_consumption_l_per_nm": 26.65642458100559,
-            "propulsion_engines_kg": 179.37500000000003,
-            "steam_boilers_kg": 0.0,
-            "subtotal_kg": 238.57500000000005
-        },
-        "total_kg": 2138.3
-    },
-    "tests/test_imo_pinned.py::test_estimate_fuel_consumption_pinned[vessel_data4-voyage_profile4-ropax_frequent]_1": {
-        "anchored": {
-            "auxiliary_engines_kg": 0.0,
-            "steam_boilers_kg": 0.0,
-            "subtotal_kg": 0.0
-        },
-        "at_berth": {
-            "auxiliary_engines_kg": 1443.0,
-            "steam_boilers_kg": 499.2,
-            "subtotal_kg": 1942.2
-        },
-        "at_sea": {
-            "auxiliary_engines_kg": 1803.75,
-            "average_fuel_consumption_l_per_nm": 67.18292410803672,
-            "propulsion_engines_kg": 4209.121707669286,
-            "steam_boilers_kg": 0.0,
-            "subtotal_kg": 6012.871707669286
-        },
-        "manoeuvring": {
-            "auxiliary_engines_kg": 180.375,
-            "average_fuel_consumption_l_per_nm": 62.004189944134076,
-            "propulsion_engines_kg": 0.0,
-            "steam_boilers_kg": 41.6,
-            "subtotal_kg": 221.975
-        },
-        "total_kg": 8177.046707669286
-    },
-    "tests/test_integration_pinned.py::test_ais_to_vessel_data_to_fuel_consumption_pinned[60-20-20-5-5-12-2.8-56.0-12.0-ferry_pax]_1": {
-        "anchored": {
-            "auxiliary_engines_kg": 38.85,
-            "steam_boilers_kg": 160.0,
-            "subtotal_kg": 198.85
-        },
-        "at_berth": {
-            "auxiliary_engines_kg": 77.7,
-            "steam_boilers_kg": 332.8,
-            "subtotal_kg": 410.5
-        },
-        "at_sea": {
-            "auxiliary_engines_kg": 32.375,
-            "average_fuel_consumption_l_per_nm": 7.944198589718819,
-            "propulsion_engines_kg": 109.82615475596684,
-            "steam_boilers_kg": 0.0,
-            "subtotal_kg": 142.20115475596685
-        },
-        "manoeuvring": {
-            "auxiliary_engines_kg": 3.8850000000000002,
-            "average_fuel_consumption_l_per_nm": 16.497206703910614,
-            "propulsion_engines_kg": 0.0,
-            "steam_boilers_kg": 10.88,
-            "subtotal_kg": 14.765
-        },
-        "total_kg": 766.3161547559669
-    },
-    "tests/test_integration_pinned.py::test_ais_to_vessel_data_to_fuel_consumption_pinned[70-100-50-11-12-16-8.5-58.0-12.5-general_cargo]_1": {
-        "anchored": {
-            "auxiliary_engines_kg": 136.9,
-            "steam_boilers_kg": 96.0,
-            "subtotal_kg": 232.9
-        },
-        "at_berth": {
-            "auxiliary_engines_kg": 532.8,
-            "steam_boilers_kg": 192.0,
-            "subtotal_kg": 724.8
-        },
-        "at_sea": {
-            "auxiliary_engines_kg": 120.25,
-            "average_fuel_consumption_l_per_nm": 57.890804699808754,
-            "propulsion_engines_kg": 915.9954041265769,
-            "steam_boilers_kg": 0.0,
-            "subtotal_kg": 1036.245404126577
-        },
-        "manoeuvring": {
-            "auxiliary_engines_kg": 53.650000000000006,
-            "average_fuel_consumption_l_per_nm": 69.24022346368716,
-            "propulsion_engines_kg": 0.0,
-            "steam_boilers_kg": 8.32,
-            "subtotal_kg": 61.970000000000006
-        },
-        "total_kg": 2055.915404126577
-    },
-    "tests/test_integration_pinned.py::test_ais_to_vessel_data_to_fuel_consumption_pinned[80-150-50-15-15-14-12-57.0-11.0-oil_tanker]_1": {
-        "anchored": {
-            "auxiliary_engines_kg": 181.3,
-            "steam_boilers_kg": 230.4,
-            "subtotal_kg": 411.70000000000005
-        },
-        "at_berth": {
-            "auxiliary_engines_kg": 458.8,
-            "steam_boilers_kg": 4160.0,
-            "subtotal_kg": 4618.8
-        },
-        "at_sea": {
-            "auxiliary_engines_kg": 148.0,
-            "average_fuel_consumption_l_per_nm": 122.75282276860973,
-            "propulsion_engines_kg": 1921.275527558114,
-            "steam_boilers_kg": 128.00000000000003,
-            "subtotal_kg": 2197.275527558114
-        },
-        "manoeuvring": {
-            "auxiliary_engines_kg": 28.49,
-            "average_fuel_consumption_l_per_nm": 57.57541899441341,
-            "propulsion_engines_kg": 0.0,
-            "steam_boilers_kg": 23.040000000000003,
-            "subtotal_kg": 51.53
-        },
-        "total_kg": 7279.305527558114
-    },
+    "tests/test_imo_pinned.py::test_estimate_fuel_consumption_complex_voyage_pinned_1": 32341.909358848956,
+    "tests/test_imo_pinned.py::test_estimate_fuel_consumption_double_ended_ferry_pinned_1": 8177.046707669286,
+    "tests/test_imo_pinned.py::test_estimate_fuel_consumption_minimal_voyage_pinned_1": 35.15,
+    "tests/test_imo_pinned.py::test_estimate_fuel_consumption_offshore_vessel_pinned_1": 2138.3,
+    "tests/test_imo_pinned.py::test_estimate_fuel_consumption_pinned[vessel_data0-voyage_profile0-ferry_pax_daily]_1": 476.23124371863923,
+    "tests/test_imo_pinned.py::test_estimate_fuel_consumption_pinned[vessel_data1-voyage_profile1-oil_tanker_long]_1": 143474.7664104313,
+    "tests/test_imo_pinned.py::test_estimate_fuel_consumption_pinned[vessel_data2-voyage_profile2-general_cargo_medium]_1": 23569.432061145693,
+    "tests/test_imo_pinned.py::test_estimate_fuel_consumption_pinned[vessel_data3-voyage_profile3-offshore_short]_1": 2138.3,
+    "tests/test_imo_pinned.py::test_estimate_fuel_consumption_pinned[vessel_data4-voyage_profile4-ropax_frequent]_1": 8177.046707669286,
+    "tests/test_integration_pinned.py::test_ais_to_vessel_data_to_fuel_consumption_pinned[60-20-20-5-5-12-2.8-56.0-12.0-ferry_pax]_1": 766.3161547559669,
+    "tests/test_integration_pinned.py::test_ais_to_vessel_data_to_fuel_consumption_pinned[70-100-50-11-12-16-8.5-58.0-12.5-general_cargo]_1": 2055.915404126577,
+    "tests/test_integration_pinned.py::test_ais_to_vessel_data_to_fuel_consumption_pinned[80-150-50-15-15-14-12-57.0-11.0-oil_tanker]_1": 7279.305527558114,
     "tests/test_integration_pinned.py::test_complete_ferry_workflow_pinned_1": {
         "battery_system": {
-            "change_in_draft_m": 0.014357725651845246,
             "details": {
                 "battery_packs": {
-                    "capacity_kwh": 575.6112140930073,
-                    "volume_m3": 6.640822724109513,
-                    "weight_kg": 7557.218197930774
+                    "capacity_kwh": 575.7445416066179,
+                    "volume_m3": 4.285373619951275,
+                    "weight_kg": 5910.297949236076
                 },
                 "electrical_engines": {
-                    "power_kw": 120,
-                    "volume_m3": 0.072,
-                    "weight_kg": 134.196
+                    "power_kw": 20,
+                    "volume_m3": 0.012,
+                    "weight_kg": 22.366
                 }
             },
-            "total_volume_m3": 6.712822724109513,
-            "total_weight_kg": 7691.414197930774
+            "total_volume_m3": 4.297373619951275,
+            "total_weight_kg": 5932.663949236076
         },
         "energy_consumption": {
-            "anchored": {
-                "auxiliary_engines_kwh": 0.0,
-                "maximum_required_total_power_kw": 0.0,
-                "subtotal_kwh": 0.0
-            },
-            "at_berth": {
-                "auxiliary_engines_kwh": 0.0,
-                "maximum_required_total_power_kw": 0.0,
-                "subtotal_kwh": 0.0
-            },
-            "at_sea": {
-                "auxiliary_engines_kwh": 0.0,
-                "average_energy_consumption_kwh_per_nm": 0.0,
-                "maximum_required_propulsion_power_kw": 0.0,
-                "maximum_required_total_power_kw": 0.0,
-                "propulsion_engines_kwh": 0.0,
-                "subtotal_kwh": 0.0
-            },
-            "manoeuvring": {
-                "auxiliary_engines_kwh": 420.0,
-                "average_energy_consumption_kwh_per_nm": 30.077804190966464,
-                "maximum_required_propulsion_power_kw": 12.652803523251832,
-                "maximum_required_total_power_kw": 117.65280352325183,
-                "maxium_engine_load_percent": 1.8471947421520252,
-                "subtotal_kwh": 470.61121409300733
-            },
             "maximum_required_propulsion_power_kw": 12.652803523251832,
             "maximum_required_total_power_kw": 117.65280352325183,
             "total_kwh": 470.61121409300733
         },
-        "fuel_consumption": {
-            "anchored": {
-                "auxiliary_engines_kg": 0.0,
-                "steam_boilers_kg": 0.0,
-                "subtotal_kg": 0.0
-            },
-            "at_berth": {
-                "auxiliary_engines_kg": 0.0,
-                "steam_boilers_kg": 0.0,
-                "subtotal_kg": 0.0
-            },
-            "at_sea": {
-                "auxiliary_engines_kg": 0.0,
-                "average_fuel_consumption_l_per_nm": 0.0,
-                "propulsion_engines_kg": 0.0,
-                "steam_boilers_kg": 0.0,
-                "subtotal_kg": 0.0
-            },
-            "manoeuvring": {
-                "auxiliary_engines_kg": 77.7,
-                "average_fuel_consumption_l_per_nm": 21.087459800312295,
-                "propulsion_engines_kg": 0.0,
-                "steam_boilers_kg": 217.6,
-                "subtotal_kg": 295.3
-            },
-            "total_kg": 295.3
-        },
+        "fuel_consumption": 295.3,
         "gas_system": {
-            "change_in_draft_m": -0.004739742292126581,
             "details": {
                 "electrical_engines": {
-                    "power_kw": 120,
-                    "volume_m3": 0.072,
-                    "weight_kg": 134.196
+                    "power_kw": 20,
+                    "volume_m3": 0.012,
+                    "weight_kg": 22.366
                 },
                 "fuel_cell_system": {
-                    "power_kw": 115.12224281860146,
-                    "volume_m3": 0.8994469717297654,
-                    "weight_kg": 665.8421611670462
+                    "power_kw": 115.10738007350527,
+                    "volume_m3": 0.8993308495040245,
+                    "weight_kg": 665.7561982629765
                 },
                 "gas_tanks": {
-                    "capacity_kg": 30.709706051684627,
-                    "volume_m3": 1.7240829538799032,
-                    "weight_kg": 453.9695677205554
+                    "capacity_kg": 30.705741304978428,
+                    "volume_m3": 1.7238603678284086,
+                    "weight_kg": 453.9109584214203
                 },
                 "hydrogen": {
-                    "weight_kg": 30.709706051684627
+                    "weight_kg": 30.705741304978428
                 }
             },
-            "total_volume_m3": 2.6955299256096685,
-            "total_weight_kg": 1284.7174349392862
+            "total_volume_m3": 2.6351912173324332,
+            "total_weight_kg": 1172.7388979893751
         },
         "vessel_data": {
             "beam_m": 10,
             "design_draft_m": 2.8,
             "design_speed_kn": 15.723196851999262,
+            "displacement_kg": null,
             "double_ended": false,
+            "gear_type": null,
             "length_m": 40,
             "number_of_propulsion_engines": 2,
             "propulsion_engine_age": "after_2000",
             "propulsion_engine_fuel_type": "MDO",
             "propulsion_engine_power_kw": 342.4869948609484,
             "propulsion_engine_type": "MSD",
+            "refrigeration_power_kw": null,
+            "refrigeration_system_type": null,
             "size": 418.72656,
             "type": "ferry-ropax"
         },
         "voyage_data": {
             "legs_at_sea": [],
+            "legs_fishing": [],
             "legs_manoeuvring": [
                 {
                     "distance_nm": 15.646461793057028,
